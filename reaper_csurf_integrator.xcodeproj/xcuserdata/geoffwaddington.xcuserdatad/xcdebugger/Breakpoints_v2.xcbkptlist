@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "FBFBA4E5-6A83-4ADB-97D4-B76B73BA7FCB"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "18EEE970-0D3D-4F8E-8551-D1CEA9660765"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "2376"
+            endingLineNumber = "2376"
+            landmarkName = "ControlSurface::GoSubZone(enclosingZone, zoneName, value)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "18EEE970-0D3D-4F8E-8551-D1CEA9660765 - caa73b19020ab697"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ControlSurface::GoSubZone(Zone*, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, double)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/geoffwaddington/Desktop/reaper_csurf_integrator/reaper_csurf_integrator/control_surface_integrator.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "2376"
+                  endingLineNumber = "2376"
+                  offsetFromSymbolStart = "28">
+               </Location>
+               <Location
+                  uuid = "18EEE970-0D3D-4F8E-8551-D1CEA9660765 - caa73b19020ab697"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ControlSurface::GoSubZone(Zone*, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, double)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/geoffwaddington/Desktop/reaper_csurf_integrator/reaper_csurf_integrator/control_surface_integrator.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "2376"
+                  endingLineNumber = "2376"
+                  offsetFromSymbolStart = "108">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
