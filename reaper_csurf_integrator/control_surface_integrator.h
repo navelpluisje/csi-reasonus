@@ -825,10 +825,6 @@ public:
 class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
-protected:
-    OSC_ControlSurface* const surface_ = nullptr;
-    string oscAddress_ = "";
-    
 public:
     OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
     ~OSC_IntFeedbackProcessor() {}
