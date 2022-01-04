@@ -822,6 +822,22 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    OSC_ControlSurface* const surface_ = nullptr;
+    string oscAddress_ = "";
+    
+public:
+    OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
+    ~OSC_IntFeedbackProcessor() {}
+
+    virtual void ForceValue(double value) override;
+    virtual void ForceValue(int param, double value) override;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -1289,6 +1305,7 @@ public:
     
     virtual void LoadingZone(string zoneName) override;
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, double value);
+    void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, int value);
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, string value);
     
     virtual void ForceClearAllWidgets() override
@@ -2440,8 +2457,6 @@ private:
     map<string, Action*> actions_;
 
     vector <Page*> pages_;
-    
-    map<string, map<string, int>> fxParamIndices_;
     
     int currentPageIndex_ = 0;
     bool surfaceInDisplay_ = false;

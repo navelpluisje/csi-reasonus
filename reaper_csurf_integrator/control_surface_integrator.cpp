@@ -984,6 +984,8 @@ static void ProcessOSCWidget(int &lineNumber, ifstream &surfaceTemplateFile, vec
             new Touch_CSIMessageGenerator(surface, widget, tokenLine[1]);
         else if(tokenLine.size() > 1 && tokenLine[0] == "FB_Processor")
             widget->AddFeedbackProcessor(new OSC_FeedbackProcessor(surface, widget, tokenLine[1]));
+        else if(tokenLine.size() > 1 && tokenLine[0] == "FB_IntProcessor")
+            widget->AddFeedbackProcessor(new OSC_IntFeedbackProcessor(surface, widget, tokenLine[1]));
     }
 }
 
@@ -2066,6 +2068,18 @@ void OSC_FeedbackProcessor::ForceValue(string value)
     surface_->SendOSCMessage(this, oscAddress_, value);
 }
 
+void OSC_IntFeedbackProcessor::ForceValue(double value)
+{
+    lastDoubleValue_ = value;
+    surface_->SendOSCMessage(this, oscAddress_, (int)value);
+}
+
+void OSC_IntFeedbackProcessor::ForceValue(int param, double value)
+{
+    lastDoubleValue_ = value;
+    surface_->SendOSCMessage(this, oscAddress_, (int)value);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ControlSurface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2666,6 +2680,23 @@ void OSC_ControlSurface::SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor
     {
         oscpkt::Message message;
         message.init(oscAddress).pushFloat(value);
+        packetWriter_.init().addMessage(message);
+        outSocket_->sendPacket(packetWriter_.packetData(), packetWriter_.packetSize());
+    }
+    
+    if(TheManager->GetSurfaceOutDisplay())
+    {
+        if(TheManager->GetSurfaceOutDisplay())
+            DAW::ShowConsoleMsg(("OUT->" + name_ + " " + oscAddress + " " + to_string(value) + "\n").c_str());
+    }
+}
+
+void OSC_ControlSurface::SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, int value)
+{
+    if(outSocket_ != nullptr && outSocket_->isOk())
+    {
+        oscpkt::Message message;
+        message.init(oscAddress).pushInt64(value);
         packetWriter_.init().addMessage(message);
         outSocket_->sendPacket(packetWriter_.packetData(), packetWriter_.packetSize());
     }
