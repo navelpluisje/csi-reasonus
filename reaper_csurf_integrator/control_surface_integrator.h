@@ -585,6 +585,34 @@ public:
     }
 };
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ZoneManager
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    void DoAction(Widget* widget, double value)
+    {
+    
+    }
+    
+    void DoRelativeAction(Widget* widget, double delta)
+    {
+
+    }
+    
+    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
+    {
+
+    }
+    
+    void DoTouch(Widget* widget, double value)
+    {
+
+    }
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Widget
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -599,6 +627,7 @@ class Widget
     
 private:
     ControlSurface* const surface_;
+    ZoneManager* const zoneManager_;
     string const name_;
     vector<FeedbackProcessor*> feedbackProcessors_;
     
@@ -618,6 +647,8 @@ public:
     
     ControlSurface* GetSurface() { return surface_; }
     string GetName() { return name_; }
+    ZoneManager* GetZoneManager() { return zoneManager_; }
+    
     bool GetIsModifier() { return isModifier_; }
     void SetIsModifier() { isModifier_ = true; }
     
@@ -674,6 +705,8 @@ public:
     
     virtual void ProcessMessage(double value)
     {
+        widget_->GetZoneManager()->DoAction(widget_, value);
+        
         widget_->QueueAction(value);
     }
 };
@@ -688,6 +721,8 @@ public:
     
     virtual void ProcessMessage(double value) override
     {
+        widget_->GetZoneManager()->DoTouch(widget_, value);
+        
         widget_->QueueTouch(value);
     }
 };
@@ -843,6 +878,8 @@ protected:
     CSurfIntegrator* const CSurfIntegrator_ ;
     Page* const page_;
     string const name_;
+    ZoneManager* const zoneManager_;
+    
 
     Zone* homeZone_ = nullptr;
     
@@ -944,6 +981,12 @@ public:
             widget = nullptr;
         }
     };
+    
+    
+    ZoneManager* GetZoneManager() { return zoneManager_; }
+    
+    
+    
     
     Page* GetPage() { return page_; }
     string GetName() { return name_; }

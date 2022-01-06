@@ -1837,7 +1837,7 @@ void Zone::RequestUpdateWidget(Widget* widget)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Widget
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-Widget::Widget(ControlSurface* surface, string name) : surface_(surface), name_(name) {}
+Widget::Widget(ControlSurface* surface, string name) : surface_(surface), name_(name), zoneManager_(surface->GetZoneManager()) {}
 
 Widget::~Widget()
 {
@@ -2083,7 +2083,7 @@ void OSC_IntFeedbackProcessor::ForceValue(int param, double value)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ControlSurface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-ControlSurface::ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset):  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), zoneFolder_(zoneFolder), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX)
+ControlSurface::ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset):  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), zoneFolder_(zoneFolder), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager())
 {
     for(int i = 0; i < numChannels; i++)
         navigators_[i] = GetPage()->GetNavigatorForChannel(i + channelOffset);
