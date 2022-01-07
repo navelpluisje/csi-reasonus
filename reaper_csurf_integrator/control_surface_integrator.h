@@ -102,6 +102,7 @@ class FeedbackProcessor;
 class ZoneOld;
 class Zone;
 class ZoneManager;
+class ActionContextOld;
 class ActionContext;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -112,8 +113,15 @@ class Action
 public:
     virtual ~Action() {}
     
-    virtual void Touch(ActionContext* context, double value) {}
     virtual string GetName() { return "Action"; }
+    
+    virtual void Touch(ActionContextOld* context, double value) {}
+    virtual void RequestUpdate(ActionContextOld* context) {}
+    virtual void Do(ActionContextOld* context, double value) {}
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) { return 0.0; }
+    virtual double GetCurrentDBValue(ActionContextOld* context) { return 0.0; }
+
+    virtual void Touch(ActionContext* context, double value) {}
     virtual void RequestUpdate(ActionContext* context) {}
     virtual void Do(ActionContext* context, double value) {}
     virtual double GetCurrentNormalizedValue(ActionContext* context) { return 0.0; }
@@ -246,7 +254,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ActionContext
+class ActionContextOld
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
@@ -299,11 +307,9 @@ private:
     vector<vector<string>> properties_;
     
 public:
-    ActionContext(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties);
+    ActionContextOld(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties);
 
-    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties) {}
-
-    virtual ~ActionContext() {}
+    virtual ~ActionContextOld() {}
     
     Widget* GetWidget() { return widget_; }
     ZoneOld* GetZone() { return zone_; }
@@ -465,6 +471,225 @@ public:
     }
 };
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ActionContext
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    Action* const action_ = nullptr;
+    Widget* const widget_ = nullptr;
+    Zone* const zone_ = nullptr;
+    
+    Widget* associatedWidget_ = nullptr;
+    
+    string lastStringValue_ = "";
+    
+    int intParam_ = 0;
+    
+    string stringParam_ = "";
+    
+    int paramIndex_ = 0;
+    
+    string fxParamDisplayName_ = "";
+    
+    int commandId_ = 0;
+    
+    double rangeMinimum_ = 0.0;
+    double rangeMaximum_ = 1.0;
+    
+    vector<double> steppedValues_;
+    int steppedValuesIndex_ = 0;
+    
+    double deltaValue_ = 0.0;
+    vector<double> acceleratedDeltaValues_;
+    vector<int> acceleratedTickValues_;
+    int accumulatedIncTicks_ = 0;
+    int accumulatedDecTicks_ = 0;
+    
+    bool isFeedbackInverted_ = false;
+    double holdDelayAmount_ = 0.0;
+    double delayStartTime_ = 0.0;
+    double deferredValue_ = 0.0;
+    
+    bool shouldUseDisplayStyle_ = false;
+    int displayStyle_ = 0;
+    
+    bool supportsRGB_ = false;
+    vector<rgb_color> RGBValues_;
+    int currentRGBIndex_ = 0;
+    
+    bool supportsTrackColor_ = false;
+        
+    bool noFeedback_ = false;
+    
+    vector<vector<string>> properties_;
+    
+public:
+    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
+
+    virtual ~ActionContext() {}
+    
+    Widget* GetWidget() { return widget_; }
+    Zone* GetZone() { return zone_; }
+    int GetSlotIndex();
+    string GetName();
+
+    void SetAssociatedWidget(Widget* widget) { associatedWidget_ = widget; }
+    Widget* GetAssociatedWidget() { return associatedWidget_; }
+
+    int GetIntParam() { return intParam_; }
+    string GetStringParam() { return stringParam_; }
+    int GetCommandId() { return commandId_; }
+    bool GetShouldUseDisplayStyle() { return shouldUseDisplayStyle_; }
+    int GetDisplayStyle() { return displayStyle_; }
+    
+    MediaTrack* GetTrack();
+    
+    void DoRangeBoundAction(double value);
+    void DoSteppedValueAction(double value);
+    void DoAcceleratedSteppedValueAction(int accelerationIndex, double value);
+    void DoAcceleratedDeltaValueAction(int accelerationIndex, double value);
+    
+    Page* GetPage();
+    ControlSurface* GetSurface();
+    int GetParamIndex() { return paramIndex_; }
+    
+    bool GetSupportsRGB() { return supportsRGB_; }
+    
+    void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
+    void SetHoldDelayAmount(double holdDelayAmount) { holdDelayAmount_ = holdDelayAmount * 1000.0; } // holdDelayAmount is specified in seconds, holdDelayAmount_ is in milliseconds
+    
+    void DoAction(double value);
+    void DoRelativeAction(double value);
+    void DoRelativeAction(int accelerationIndex, double value);
+    
+    void RequestUpdate();
+    void RunDeferredActions();
+    void ClearWidget();
+    void UpdateWidgetValue(double value);
+    void UpdateWidgetValue(int param, double value);
+    void UpdateWidgetValue(string value);
+    void ForceWidgetValue(double value);
+    
+    void DoTouch(double value)
+    {
+        action_->Touch(this, value);
+    }
+
+    string GetFxParamDisplayName()
+    {
+        if(fxParamDisplayName_ != "")
+            return fxParamDisplayName_;
+        else if(MediaTrack* track = GetTrack())
+        {
+            char fxParamName[BUFSZ];
+            DAW::TrackFX_GetParamName(track, GetSlotIndex(), paramIndex_, fxParamName, sizeof(fxParamName));
+            return fxParamName;
+        }
+        
+        return "";
+    }
+
+    void SetCurrentRGB(rgb_color newColor)
+    {
+        supportsRGB_ = true;
+        RGBValues_[currentRGBIndex_] = newColor;
+    }
+    
+    rgb_color GetCurrentRGB()
+    {
+        rgb_color blankColor;
+        
+        if(RGBValues_.size() > 0 && currentRGBIndex_ < RGBValues_.size())
+            return RGBValues_[currentRGBIndex_];
+        else return blankColor;
+    }
+    
+    void SetSteppedValueIndex(double value)
+    {
+        int index = 0;
+        double delta = 100000000.0;
+        
+        for(int i = 0; i < steppedValues_.size(); i++)
+            if(abs(steppedValues_[i] - value) < delta)
+            {
+                delta = abs(steppedValues_[i] - value);
+                index = i;
+            }
+        
+        steppedValuesIndex_ = index;
+    }
+
+    string GetPanValueString(double panVal)
+    {
+        bool left = false;
+        
+        if(panVal < 0)
+        {
+            left = true;
+            panVal = -panVal;
+        }
+        
+        int panIntVal = int(panVal * 100.0);
+        string trackPanValueString = "";
+        
+        if(left)
+        {
+            if(panIntVal == 100)
+                trackPanValueString += "<";
+            else if(panIntVal < 100 && panIntVal > 9)
+                trackPanValueString += "< ";
+            else
+                trackPanValueString += "<  ";
+            
+            trackPanValueString += to_string(panIntVal);
+        }
+        else
+        {
+            trackPanValueString += "   ";
+            
+            trackPanValueString += to_string(panIntVal);
+            
+            if(panIntVal == 100)
+                trackPanValueString += ">";
+            else if(panIntVal < 100 && panIntVal > 9)
+                trackPanValueString += " >";
+            else
+                trackPanValueString += "  >";
+        }
+        
+        if(panIntVal == 0)
+            trackPanValueString = "  <C>  ";
+
+        return trackPanValueString;
+    }
+    
+    string GetPanWidthValueString(double widthVal)
+    {
+        bool reversed = false;
+        
+        if(widthVal < 0)
+        {
+            reversed = true;
+            widthVal = -widthVal;
+        }
+        
+        int widthIntVal = int(widthVal * 100.0);
+        string trackPanWidthString = "";
+        
+        if(reversed)
+            trackPanWidthString += "Rev ";
+        
+        trackPanWidthString += to_string(widthIntVal);
+        
+        if(widthIntVal == 0)
+            trackPanWidthString = " <Mno> ";
+
+        return trackPanWidthString;
+    }
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ZoneOld
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -489,8 +714,8 @@ private:
     vector<ZoneOld*> includedZones_;
     vector<ZoneOld*> subZones_;
 
-    map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
-    vector<ActionContext> defaultContexts_;
+    map<Widget*, map<string, vector<ActionContextOld>>> actionContextDictionary_;
+    vector<ActionContextOld> defaultContexts_;
     
 public:
     ZoneOld(ControlSurface* surface, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): surface_(surface), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
@@ -501,7 +726,7 @@ public:
     void Deactivate();
     bool TryActivate(Widget* widget);
     int GetSlotIndex();
-    vector<ActionContext> &GetActionContexts(Widget* widget);
+    vector<ActionContextOld> &GetActionContexts(Widget* widget);
 
     Navigator* GetNavigator() { return navigator_; }
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
@@ -540,7 +765,7 @@ public:
         widgets_.push_back(widget);
     }
     
-    void AddActionContext(Widget* widget, string modifier, ActionContext actionContext)
+    void AddActionContext(Widget* widget, string modifier, ActionContextOld actionContext)
     {
         actionContextDictionary_[widget][modifier].push_back(actionContext);
     }
@@ -959,6 +1184,8 @@ public:
     void LoadZone(string zoneName);
     Zone* GetZone(string zoneName);
     
+    ControlSurface* GetSurface() { return surface_; }
+    
     Widget* GetWidgetByName(string name)
     {
         if(widgetsByName_.count(name) > 0)
@@ -1169,9 +1396,6 @@ public:
     
     
     ZoneManager* GetZoneManager() { return zoneManager_; }
-    
-    
-    
     
     Page* GetPage() { return page_; }
     string GetName() { return name_; }
@@ -2783,12 +3007,12 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
-    ActionContext GetActionContext(string actionName, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties)
+    ActionContextOld GetActionContext(string actionName, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)
-            return ActionContext(actions_[actionName], widget, zone, params, properties);
+            return ActionContextOld(actions_[actionName], widget, zone, params, properties);
         else
-            return ActionContext(actions_["NoAction"], widget, zone, params, properties);
+            return ActionContextOld(actions_["NoAction"], widget, zone, params, properties);
     }
 
     ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)

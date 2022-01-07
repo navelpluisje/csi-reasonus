@@ -16,13 +16,13 @@ class FXParam : public FXAction
 public:
     virtual string GetName() override { return "FXParam"; }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::TrackFX_SetParam(track, context->GetSlotIndex(), context->GetParamIndex(), value);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -43,7 +43,7 @@ class FXParamRelative : public FXAction
 public:
     virtual string GetName() override { return "FXParamRelative"; }
     
-    virtual void Do(ActionContext* context, double relativeValue) override
+    virtual void Do(ActionContextOld* context, double relativeValue) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -58,7 +58,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -84,7 +84,7 @@ private:
 public:
     virtual string GetName() override { return "FocusedFXParam"; }
    
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = DAW::GetTrack(trackNum_))
         {
@@ -96,21 +96,21 @@ public:
         return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(DAW::GetLastTouchedFX(&trackNum_, &fxSlotNum_, &fxParamNum_))
             if(DAW::GetTrack(trackNum_))
                 context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(DAW::GetLastTouchedFX(&trackNum_, &fxSlotNum_, &fxParamNum_))
             if(MediaTrack* track = DAW::GetTrack(trackNum_))
                 DAW::TrackFX_SetParam(track, fxSlotNum_, fxParamNum_, value);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(DAW::GetLastTouchedFX(&trackNum_, &fxSlotNum_, &fxParamNum_))
         {
@@ -132,7 +132,7 @@ class TrackVolume : public Action
 public:
     virtual string GetName() override { return "TrackVolume"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -144,7 +144,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -152,13 +152,13 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::CSurf_SetSurfaceVolume(track, DAW::CSurf_OnVolumeChange(track, normalizedToVol(value), false), NULL);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -173,7 +173,7 @@ class SoftTakeover7BitTrackVolume : public Action
 public:
     virtual string GetName() override { return "SoftTakeover7BitTrackVolume"; }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -186,7 +186,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
     }
@@ -199,7 +199,7 @@ class SoftTakeover14BitTrackVolume : public Action
 public:
     virtual string GetName() override { return "SoftTakeover14BitTrackVolume"; }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -212,7 +212,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
     }
@@ -225,7 +225,7 @@ class TrackVolumeDB : public Action
 public:
     virtual string GetName() override { return "TrackVolumeDB"; }
     
-    virtual double GetCurrentDBValue(ActionContext* context) override
+    virtual double GetCurrentDBValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -237,7 +237,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(GetCurrentDBValue(context));
@@ -245,13 +245,13 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::CSurf_SetSurfaceVolume(track, DAW::CSurf_OnVolumeChange(track, DB2VAL(value), false), NULL);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -266,7 +266,7 @@ class MCUTrackPan : public Action
 public:
     virtual string GetName() override { return "MCUTrackPan"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -293,7 +293,7 @@ public:
         return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -308,7 +308,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -331,7 +331,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanTouched(value);
     }
@@ -344,7 +344,7 @@ class TrackPan : public Action
 public:
     virtual string GetName() override { return "TrackPan"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -359,7 +359,7 @@ public:
         return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(context->GetIntParam(), GetCurrentNormalizedValue(context));
@@ -367,7 +367,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -376,7 +376,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -394,7 +394,7 @@ class TrackPanPercent : public Action
 public:
     virtual string GetName() override { return "TrackPanPercent"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -409,14 +409,14 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             if(GetPanMode(track) != 6)
                 DAW::CSurf_SetSurfacePan(track, DAW::CSurf_OnPanChange(track, value / 100.0, false), NULL);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -438,7 +438,7 @@ class TrackPanWidth : public Action
 public:
     virtual string GetName() override { return "TrackPanWidth"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_WIDTH"));
@@ -446,7 +446,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -457,14 +457,14 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             if(GetPanMode(track) != 6)
                 DAW::CSurf_OnWidthChange(track, normalizedToPan(value), false);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanWidthTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -480,7 +480,7 @@ class TrackPanWidthPercent : public Action
 public:
     virtual string GetName() override { return "TrackPanWidthPercent"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -491,14 +491,14 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             if(GetPanMode(track) != 6)
                 DAW::CSurf_OnWidthChange(track, value / 100.0, false);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanWidthTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -516,7 +516,7 @@ class TrackPanL : public Action
 public:
     virtual string GetName() override { return "TrackPanL"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANL"));
@@ -524,7 +524,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -535,7 +535,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -547,7 +547,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanLeftTouched(value);
     }
@@ -560,7 +560,7 @@ class TrackPanLPercent : public Action
 public:
     virtual string GetName() override { return "TrackPanLPercent"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -571,7 +571,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -583,7 +583,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanLeftTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -604,7 +604,7 @@ class TrackPanR : public Action
 public:
     virtual string GetName() override { return "TrackPanR"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANR"));
@@ -612,7 +612,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -623,7 +623,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -635,7 +635,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanRightTouched(value);
     }
@@ -648,7 +648,7 @@ class TrackPanRPercent : public Action
 public:
     virtual string GetName() override { return "TrackPanRPercent"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -659,7 +659,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -671,7 +671,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         context->GetZone()->GetNavigator()->SetIsPanRightTouched(value);
         if(MediaTrack* track = context->GetTrack())
@@ -692,7 +692,7 @@ class TrackSendVolume : public Action
 public:
     virtual string GetName() override { return "TrackSendVolume"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -705,7 +705,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -713,7 +713,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -722,7 +722,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -745,7 +745,7 @@ class TrackSendVolumeDB : public Action
 public:
     virtual string GetName() override { return "TrackSendVolumeDB"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -759,7 +759,7 @@ public:
         
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -768,7 +768,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -791,7 +791,7 @@ class TrackSendPan : public Action
 public:
     virtual string GetName() override { return "TrackSendPan"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -804,7 +804,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -812,7 +812,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -821,7 +821,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -844,7 +844,7 @@ class TrackSendPanPercent : public Action
 public:
     virtual string GetName() override { return "TrackSendPanPercent"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -857,7 +857,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -866,7 +866,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -889,7 +889,7 @@ class TrackSendMute : public Action
 public:
     virtual string GetName() override { return "TrackSendMute"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -902,7 +902,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -910,7 +910,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -930,7 +930,7 @@ class TrackSendInvertPolarity : public Action
 public:
     virtual string GetName() override { return "TrackSendInvertPolarity"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetTrackSendInfo_Value(track, 0, context->GetSlotIndex(), "B_PHASE");
@@ -938,7 +938,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -946,7 +946,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -966,7 +966,7 @@ class TrackSendStereoMonoToggle : public Action
 public:
     virtual string GetName() override { return "TrackSendStereoMonoToggle"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetTrackSendInfo_Value(track, 0, context->GetSlotIndex(), "B_MONO");
@@ -974,7 +974,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -982,7 +982,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1002,7 +1002,7 @@ class TrackSendPrePost : public Action
 public:
     virtual string GetName() override { return "TrackSendPrePost"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetTrackSendInfo_Value(track, 0, context->GetSlotIndex(), "I_SENDMODE");
@@ -1010,7 +1010,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1023,7 +1023,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1048,7 +1048,7 @@ class TrackReceiveVolume : public Action
 public:
     virtual string GetName() override { return "TrackReceiveVolume"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1060,7 +1060,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -1068,13 +1068,13 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::SetTrackSendUIVol(track, -(context->GetSlotIndex() + 1), normalizedToVol(value), 0);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1096,7 +1096,7 @@ class TrackReceiveVolumeDB : public Action
 public:
     virtual string GetName() override { return "TrackReceiveVolumeDB"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1109,7 +1109,7 @@ public:
         
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1117,7 +1117,7 @@ public:
         }
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1139,7 +1139,7 @@ class TrackReceivePan : public Action
 public:
     virtual string GetName() override { return "TrackReceivePan"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1151,7 +1151,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -1159,13 +1159,13 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::SetTrackSendUIPan(track, -(context->GetSlotIndex() + 1), normalizedToPan(value), 0);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1187,7 +1187,7 @@ class TrackReceivePanPercent : public Action
 public:
     virtual string GetName() override { return "TrackReceivePanPercent"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1199,13 +1199,13 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
             DAW::SetTrackSendUIPan(track, -(context->GetSlotIndex() + 1), value / 100.0, 0);
     }
     
-    virtual void Touch(ActionContext* context, double value) override
+    virtual void Touch(ActionContextOld* context, double value) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1227,7 +1227,7 @@ class TrackReceiveMute : public Action
 public:
     virtual string GetName() override { return "TrackReceivMute"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1239,7 +1239,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -1247,7 +1247,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1267,7 +1267,7 @@ class TrackReceiveInvertPolarity : public Action
 public:
     virtual string GetName() override { return "TrackReceiveInvertPolarity"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetTrackSendInfo_Value(track, -1, context->GetSlotIndex(), "B_PHASE");
@@ -1275,7 +1275,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -1283,7 +1283,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1303,7 +1303,7 @@ class TrackReceivePrePost : public Action
 public:
     virtual string GetName() override { return "TrackReceivePrePost"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetTrackSendInfo_Value(track, -1, context->GetSlotIndex(), "I_SENDMODE");
@@ -1311,7 +1311,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1324,7 +1324,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1349,7 +1349,7 @@ class FXNameDisplay : public Action
 public:
     virtual string GetName() override { return "FXNameDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(context->GetName());
@@ -1365,7 +1365,7 @@ class FXMenuNameDisplay : public Action
 public:
     virtual string GetName() override { return "FXMenuNameDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1397,7 +1397,7 @@ class FXParamNameDisplay : public Action
 public:
     virtual string GetName() override { return "FXParamNameDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(context->GetFxParamDisplayName());
@@ -1413,7 +1413,7 @@ class FXParamValueDisplay : public Action
 public:
     virtual string GetName() override { return "FXParamValueDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1433,7 +1433,7 @@ class FocusedFXParamNameDisplay : public Action
 public:
     virtual string GetName() override { return "FocusedFXParamNameDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         int trackNum = 0;
         int fxSlotNum = 0;
@@ -1460,7 +1460,7 @@ class FocusedFXParamValueDisplay : public Action
 public:
     virtual string GetName() override { return "FocusedFXParamValueDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         int trackNum = 0;
         int fxSlotNum = 0;
@@ -1487,7 +1487,7 @@ class TrackSendNameDisplay : public Action
 public:
     virtual string GetName() override { return "TrackSendNameDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1509,7 +1509,7 @@ class TrackSendVolumeDisplay : public Action
 public:
     virtual string GetName() override { return "TrackSendVolumeDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1539,7 +1539,7 @@ class TrackSendPanDisplay : public Action
 public:
     virtual string GetName() override { return "TrackSendPanDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1565,7 +1565,7 @@ class TrackSendPrePostDisplay : public Action
 public:
     virtual string GetName() override { return "TrackSendPrePostDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1602,7 +1602,7 @@ class TrackReceiveNameDisplay : public Action
 public:
     virtual string GetName() override { return "TrackReceiveNameDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1628,7 +1628,7 @@ class TrackReceiveVolumeDisplay : public Action
 public:
     virtual string GetName() override { return "TrackReceiveVolumeDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1654,7 +1654,7 @@ class TrackReceivePanDisplay : public Action
 public:
     virtual string GetName() override { return "TrackReceivePanDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1680,7 +1680,7 @@ class TrackReceivePrePostDisplay : public Action
 public:
     virtual string GetName() override { return "TrackReceivePrePostDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1717,7 +1717,7 @@ class FixedTextDisplay : public Action
 public:
     virtual string GetName() override { return "FixedTextDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(context->GetStringParam());
     }
@@ -1730,7 +1730,7 @@ class FixedRGBColourDisplay : public Action
 public:
     virtual string GetName() override { return "FixedRGBColourDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(0);
     }
@@ -1743,7 +1743,7 @@ class TrackNameDisplay : public Action
 public:
     virtual string GetName() override { return "TrackNameDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1775,7 +1775,7 @@ class TrackVolumeDisplay : public Action
 public:
     virtual string GetName() override { return "TrackVolumeDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1798,7 +1798,7 @@ class TrackPanDisplay : public Action
 public:
     virtual string GetName() override { return "TrackPanDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1819,7 +1819,7 @@ class TrackPanWidthDisplay : public Action
 public:
     virtual string GetName() override { return "TrackPanWidthDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1839,7 +1839,7 @@ class TrackPanLeftDisplay : public Action
 public:
     virtual string GetName() override { return "TrackPanLeftDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1859,7 +1859,7 @@ class TrackPanRightDisplay : public Action
 public:
     virtual string GetName() override { return "TrackPanRightDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1879,7 +1879,7 @@ class MCUTrackPanDisplay : public Action
 public:
     virtual string GetName() override { return "MCUTrackPanDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -1918,7 +1918,7 @@ class Rewind : public Action
 public:
     virtual string GetName() override { return "Rewind"; }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1933,7 +1933,7 @@ class FastForward : public Action
 public:
     virtual string GetName() override { return "FastForward"; }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1948,7 +1948,7 @@ class Play : public Action
 public:
     virtual string GetName() override { return "Play"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         int playState = DAW::GetPlayState();
         if(playState == 1 || playState == 2 || playState == 5 || playState == 6) // playing or paused or recording or paused whilst recording
@@ -1958,12 +1958,12 @@ public:
         return playState;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -1978,7 +1978,7 @@ class Stop : public Action
 public:
     virtual string GetName() override { return "Stop"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         int stopState = DAW::GetPlayState();
         if(stopState == 0 || stopState == 2 || stopState == 6) // stopped or paused or paused whilst recording
@@ -1988,12 +1988,12 @@ public:
         return stopState;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2008,7 +2008,7 @@ class Record : public Action
 public:
     virtual string GetName() override { return "Record"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         int recordState = DAW::GetPlayState();
         if(recordState == 5 || recordState == 6) // recording or paused whilst recording
@@ -2018,12 +2018,12 @@ public:
         return recordState;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2038,7 +2038,7 @@ class TrackToggleVCASpill : public Action
 public:
     virtual string GetName() override { return "TrackToggleVCASpill"; }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2054,7 +2054,7 @@ class TrackSelect : public Action
 public:
     virtual string GetName() override { return "TrackSelect"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "I_SELECTED");
@@ -2062,7 +2062,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2070,7 +2070,7 @@ public:
             context->ClearWidget();
     }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
 
@@ -2089,7 +2089,7 @@ class TrackUniqueSelect : public Action
 public:
     virtual string GetName() override { return "TrackUniqueSelect"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "I_SELECTED");
@@ -2097,7 +2097,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2105,7 +2105,7 @@ public:
             context->ClearWidget();
     }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
 
@@ -2124,7 +2124,7 @@ class TrackRangeSelect : public Action
 public:
     virtual string GetName() override { return "TrackRangeSelect"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "I_SELECTED");
@@ -2132,7 +2132,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2140,7 +2140,7 @@ public:
             context->ClearWidget();
     }
 
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         // GAW TBD  fix highest track bug 
         
@@ -2198,7 +2198,7 @@ class TrackRecordArm : public Action
 public:
     virtual string GetName() override { return "TrackRecordArm"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "I_RECARM");
@@ -2206,7 +2206,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2214,7 +2214,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2232,7 +2232,7 @@ class TrackMute : public Action
 public:
     virtual string GetName() override { return "TrackMute"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -2244,7 +2244,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2252,7 +2252,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2272,7 +2272,7 @@ class TrackSolo : public Action
 public:
     virtual string GetName() override { return "TrackSolo"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "I_SOLO") > 0 ? 1 : 0;
@@ -2280,7 +2280,7 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2288,7 +2288,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2306,7 +2306,7 @@ class TrackInvertPolarity : public Action
 public:
     virtual string GetName() override { return "TrackInvertPolarity"; }
     
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             return DAW::GetMediaTrackInfo_Value(track, "B_PHASE");
@@ -2314,7 +2314,7 @@ public:
             return 0.0;
     }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(context->GetTrack())
             context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
@@ -2322,7 +2322,7 @@ public:
             context->ClearWidget();
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2342,7 +2342,7 @@ class GlobalAutoMode : public Action
 public:
     virtual string GetName() override { return "GlobalAutoMode"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         if(context->GetIntParam() == DAW::GetGlobalAutomationOverride())
             return 1.0;
@@ -2350,12 +2350,12 @@ public:
             return 0.0;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2370,7 +2370,7 @@ class TrackAutoMode : public Action
 public:
     virtual string GetName() override { return "TrackAutoMode"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         double retVal = 0.0;
         
@@ -2386,12 +2386,12 @@ public:
         return retVal;
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0)
             return; // ignore button releases
@@ -2410,14 +2410,14 @@ class CycleTrackAutoMode : public Action
 public:
     virtual string GetName() override { return "CycleTrackAutoMode"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->GetPage()->SetAutoModeIndex();
      
         context->UpdateWidgetValue(context->GetPage()->GetAutoModeDisplayName());
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0)
             return;
@@ -2433,7 +2433,7 @@ class TrackAutoModeDisplay : public Action
 public:
     virtual string GetName() override { return "TrackAutoModeDisplay"; }
     
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(context->GetPage()->GetAutoModeDisplayName(DAW::GetMediaTrackInfo_Value(track, "I_AUTOMODE")));
@@ -2447,7 +2447,7 @@ class TimeDisplay : public Action
 public:
     virtual string GetName() override { return "TimeDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(0);
     }
@@ -2460,7 +2460,7 @@ class EuConTimeDisplay : public Action
 public:
     virtual string GetName() override { return "EuConTimeDisplay"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->GetSurface()->UpdateTimeDisplay();
     }
@@ -2473,17 +2473,17 @@ class CycleTimeline : public Action
 public:
     virtual string GetName() override { return "CycleTimeline"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
     {
         return DAW::GetSetRepeatEx(nullptr, -1);
     }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    virtual void Do(ActionContext* context, double value) override
+    virtual void Do(ActionContextOld* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -2498,7 +2498,7 @@ class TrackOutputMeter : public Action
 public:
     virtual string GetName() override { return "TrackOutputMeter"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(volToNormalized(DAW::Track_GetPeakInfo(track, context->GetIntParam())));
@@ -2514,7 +2514,7 @@ class TrackOutputMeterAverageLR : public Action
 public:
     virtual string GetName() override { return "TrackOutputMeterAverageLR"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -2534,7 +2534,7 @@ class TrackOutputMeterMaxPeakLR : public Action
 public:
     virtual string GetName() override { return "TrackOutputMeterMaxPeakLR"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         if(MediaTrack* track = context->GetTrack())
         {
@@ -2557,7 +2557,7 @@ class FXGainReductionMeter : public Action
 public:
     virtual string GetName() override { return "FXGainReductionMeter"; }
 
-    virtual void RequestUpdate(ActionContext* context) override
+    virtual void RequestUpdate(ActionContextOld* context) override
     {
         char buffer[BUFSZ];
         

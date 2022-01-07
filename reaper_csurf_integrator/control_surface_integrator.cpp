@@ -541,7 +541,7 @@ static void ProcessZoneFileOld(string filePath, ControlSurface* surface)
                                 for(auto action : actions)
                                 {
                                     
-                                    
+                                    /*
                                     
                                     #ifdef _WIN32
                                     // GAW -- This hack is only needed for Mac OS
@@ -551,14 +551,14 @@ static void ProcessZoneFileOld(string filePath, ControlSurface* surface)
                                         continue;
                                     #endif
                                     
-                                    
+                                    */
                                     
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
                                     vector<string> memberParams;
                                     for(int j = 0; j < action->params.size(); j++)
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                     
-                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                    ActionContextOld context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
                                                                         
                                     if(action->isFeedbackInverted)
                                         context.SetIsFeedbackInverted();
@@ -866,7 +866,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                 for(auto action : actions)
                                 {
                                     
-                                    
+                                    /*
                                     
                                     #ifdef _WIN32
                                     // GAW -- This hack is only needed for Mac OS
@@ -876,12 +876,13 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                         continue;
                                     #endif
                                     
-                                    
+                                    */
                                     
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
                                     vector<string> memberParams;
                                     for(int j = 0; j < action->params.size(); j++)
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
+                                    
                                     
                                     ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
                                                                         
@@ -894,6 +895,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                     string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                     
                                     zone->AddActionContext(widget, expandedModifier, context);
+                                    
                                 }
                             }
                         }
@@ -1735,8 +1737,396 @@ MediaTrack* FocusedFXNavigator::GetTrack()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionContext
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ActionContext::ActionContext(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
-{   
+ActionContextOld::ActionContextOld(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
+{
+    for(auto property : properties)
+    {
+        if(property.size() == 0)
+            continue;
+
+        if(property[0] == "NoFeedback")
+            noFeedback_ = true;
+    }
+    
+    widget->SetProperties(properties);
+    
+    string actionName = "";
+    
+    if(params.size() > 0)
+        actionName = params[0];
+    
+    // Action with int param, could include leading minus sign
+    if(params.size() > 1 && (isdigit(params[1][0]) ||  params[1][0] == '-'))  // C++ 11 says empty strings can be queried without catastrophe :)
+    {
+        intParam_= atol(params[1].c_str());
+    }
+    
+    // Action with param index, must be positive
+    if(params.size() > 1 && isdigit(params[1][0]))  // C++ 11 says empty strings can be queried without catastrophe :)
+    {
+        paramIndex_ = atol(params[1].c_str());
+    }
+    
+    // Action with string param
+    if(params.size() > 1)
+        stringParam_ = params[1];
+    
+    if(actionName == "TrackVolumeDB" || actionName == "TrackSendVolumeDB")
+    {
+        rangeMinimum_ = -144.0;
+        rangeMaximum_ = 24.0;
+    }
+    
+    if(actionName == "TrackPanPercent" || actionName == "TrackPanWidthPercent" || actionName == "TrackPanLPercent" || actionName == "TrackPanRPercent")
+    {
+        rangeMinimum_ = -100.0;
+        rangeMaximum_ = 100.0;
+    }
+   
+    if(actionName == "Reaper" && params.size() > 1)
+    {
+        if (isdigit(params[1][0]))
+        {
+            commandId_ =  atol(params[1].c_str());
+        }
+        else // look up by string
+        {
+            commandId_ = DAW::NamedCommandLookup(params[1].c_str());
+            
+            if(commandId_ == 0) // can't find it
+                commandId_ = 65535; // no-op
+        }
+    }
+    
+    if(actionName == "FXParam" && params.size() > 1 && isdigit(params[1][0])) // C++ 11 says empty strings can be queried without catastrophe :)
+    {
+        paramIndex_ = atol(params[1].c_str());
+    }
+    
+    if(actionName == "FXParamValueDisplay" && params.size() > 1 && isdigit(params[1][0]))
+    {
+        paramIndex_ = atol(params[1].c_str());
+        
+        if(params.size() > 2 && params[2] != "[" && params[2] != "{" && isdigit(params[2][0]))
+        {
+            shouldUseDisplayStyle_ = true;
+            displayStyle_ = atol(params[2].c_str());
+        }
+    }
+    
+    if(actionName == "FXParamNameDisplay" && params.size() > 1 && isdigit(params[1][0]))
+    {
+        paramIndex_ = atol(params[1].c_str());
+        
+        if(params.size() > 2 && params[2] != "{" && params[2] != "[")
+            fxParamDisplayName_ = params[2];
+    }
+    
+    if(actionName == "MCUTrackPanDisplay"&& params.size() > 1)
+    {
+        SetAssociatedWidget(GetSurface()->GetWidgetByName(params[1]));
+    }
+    
+    if(params.size() > 0)
+    {
+        SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);
+        SetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
+    }
+    
+    if(acceleratedTickValues_.size() < 1)
+        acceleratedTickValues_.push_back(10);
+
+}
+
+Page* ActionContextOld::GetPage()
+{
+    return widget_->GetSurface()->GetPage();
+}
+
+ControlSurface* ActionContextOld::GetSurface()
+{
+    return widget_->GetSurface();
+}
+
+MediaTrack* ActionContextOld::GetTrack()
+{
+    return zone_->GetNavigator()->GetTrack();
+}
+
+int ActionContextOld::GetSlotIndex()
+{
+    return zone_->GetSlotIndex();
+}
+
+string ActionContextOld::GetName()
+{
+    return zone_->GetNameOrAlias();
+}
+
+void ActionContextOld::RunDeferredActions()
+{
+    if(holdDelayAmount_ != 0.0 && delayStartTime_ != 0.0 && DAW::GetCurrentNumberOfMilliseconds() > (delayStartTime_ + holdDelayAmount_))
+    {
+        DoRangeBoundAction(deferredValue_);
+        
+        delayStartTime_ = 0.0;
+        deferredValue_ = 0.0;
+    }
+}
+
+void ActionContextOld::RequestUpdate()
+{
+    if(noFeedback_)
+        return;
+    
+    action_->RequestUpdate(this);
+}
+
+void ActionContextOld::ClearWidget()
+{
+    widget_->Clear();
+}
+
+void ActionContextOld::UpdateWidgetValue(double value)
+{
+    if(steppedValues_.size() > 0)
+        SetSteppedValueIndex(value);
+
+    value = isFeedbackInverted_ == false ? value : 1.0 - value;
+   
+    widget_->UpdateValue(value);
+
+    if(supportsRGB_)
+    {
+        currentRGBIndex_ = value == 0 ? 0 : 1;
+        widget_->UpdateRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
+    }
+    else if(supportsTrackColor_)
+    {
+        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        {
+            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
+            
+            int r = (*rgb_colour >> 0) & 0xff;
+            int g = (*rgb_colour >> 8) & 0xff;
+            int b = (*rgb_colour >> 16) & 0xff;
+            
+            widget_->UpdateRGBValue(r, g, b);
+        }
+    }
+}
+
+void ActionContextOld::UpdateWidgetValue(int param, double value)
+{
+    if(steppedValues_.size() > 0)
+        SetSteppedValueIndex(value);
+
+    value = isFeedbackInverted_ == false ? value : 1.0 - value;
+        
+    widget_->UpdateValue(param, value);
+    
+    currentRGBIndex_ = value == 0 ? 0 : 1;
+    
+    if(supportsRGB_)
+    {
+        currentRGBIndex_ = value == 0 ? 0 : 1;
+        widget_->UpdateRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
+    }
+    else if(supportsTrackColor_)
+    {
+        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        {
+            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
+            
+            int r = (*rgb_colour >> 0) & 0xff;
+            int g = (*rgb_colour >> 8) & 0xff;
+            int b = (*rgb_colour >> 16) & 0xff;
+            
+            widget_->UpdateRGBValue(r, g, b);
+        }
+    }
+}
+
+void ActionContextOld::UpdateWidgetValue(string value)
+{
+    widget_->UpdateValue(value);
+}
+
+void ActionContextOld::ForceWidgetValue(double value)
+{
+    if(steppedValues_.size() > 0)
+        SetSteppedValueIndex(value);
+    
+    value = isFeedbackInverted_ == false ? value : 1.0 - value;
+    
+    widget_->ForceValue(value);
+
+    if(supportsRGB_)
+    {
+        currentRGBIndex_ = value == 0 ? 0 : 1;
+        widget_->ForceRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
+    }
+    else if(supportsTrackColor_)
+    {
+        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        {
+            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
+            
+            int r = (*rgb_colour >> 0) & 0xff;
+            int g = (*rgb_colour >> 8) & 0xff;
+            int b = (*rgb_colour >> 16) & 0xff;
+            
+            widget_->ForceRGBValue(r, g, b);
+        }
+    }
+}
+
+void ActionContextOld::DoAction(double value)
+{
+    if(holdDelayAmount_ != 0.0)
+    {
+        if(value == 0.0)
+        {
+            deferredValue_ = 0.0;
+            delayStartTime_ = 0.0;
+        }
+        else
+        {
+            deferredValue_ = value;
+            delayStartTime_ =  DAW::GetCurrentNumberOfMilliseconds();
+        }
+    }
+    else
+    {
+        if(steppedValues_.size() > 0)
+        {
+            if(value != 0.0) // ignore release messages
+            {
+                if(steppedValuesIndex_ == steppedValues_.size() - 1)
+                {
+                    if(steppedValues_[0] < steppedValues_[steppedValuesIndex_]) // GAW -- only wrap if 1st value is lower
+                        steppedValuesIndex_ = 0;
+                }
+                else
+                    steppedValuesIndex_++;
+                
+                DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+            }
+        }
+        else
+            DoRangeBoundAction(value);
+    }
+}
+
+void ActionContextOld::DoRelativeAction(double delta)
+{
+    if(steppedValues_.size() > 0)
+        DoSteppedValueAction(delta);
+    else
+        DoRangeBoundAction(action_->GetCurrentNormalizedValue(this) + delta);
+}
+
+void ActionContextOld::DoRelativeAction(int accelerationIndex, double delta)
+{
+    if(steppedValues_.size() > 0)
+        DoAcceleratedSteppedValueAction(accelerationIndex, delta);
+    else if(acceleratedDeltaValues_.size() > 0)
+        DoAcceleratedDeltaValueAction(accelerationIndex, delta);
+    else
+        DoRangeBoundAction(action_->GetCurrentNormalizedValue(this) + delta);
+}
+
+void ActionContextOld::DoRangeBoundAction(double value)
+{
+    if(value > rangeMaximum_)
+        value = rangeMaximum_;
+    
+    if(value < rangeMinimum_)
+        value = rangeMinimum_;
+    
+    action_->Do(this, value);
+}
+
+void ActionContextOld::DoSteppedValueAction(double delta)
+{
+    if(delta > 0)
+    {
+        steppedValuesIndex_++;
+        
+        if(steppedValuesIndex_ > steppedValues_.size() - 1)
+            steppedValuesIndex_ = steppedValues_.size() - 1;
+        
+        DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+    }
+    else
+    {
+        steppedValuesIndex_--;
+        
+        if(steppedValuesIndex_ < 0 )
+            steppedValuesIndex_ = 0;
+        
+        DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+    }
+}
+
+void ActionContextOld::DoAcceleratedSteppedValueAction(int accelerationIndex, double delta)
+{
+    if(delta > 0)
+    {
+        accumulatedIncTicks_++;
+        accumulatedDecTicks_ = accumulatedDecTicks_ - 1 < 0 ? 0 : accumulatedDecTicks_ - 1;
+    }
+    else if(delta < 0)
+    {
+        accumulatedDecTicks_++;
+        accumulatedIncTicks_ = accumulatedIncTicks_ - 1 < 0 ? 0 : accumulatedIncTicks_ - 1;
+    }
+    
+    accelerationIndex = accelerationIndex > acceleratedTickValues_.size() - 1 ? acceleratedTickValues_.size() - 1 : accelerationIndex;
+    accelerationIndex = accelerationIndex < 0 ? 0 : accelerationIndex;
+    
+    if(delta > 0 && accumulatedIncTicks_ >= acceleratedTickValues_[accelerationIndex])
+    {
+        accumulatedIncTicks_ = 0;
+        accumulatedDecTicks_ = 0;
+        
+        steppedValuesIndex_++;
+        
+        if(steppedValuesIndex_ > steppedValues_.size() - 1)
+            steppedValuesIndex_ = steppedValues_.size() - 1;
+        
+        DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+    }
+    else if(delta < 0 && accumulatedDecTicks_ >= acceleratedTickValues_[accelerationIndex])
+    {
+        accumulatedIncTicks_ = 0;
+        accumulatedDecTicks_ = 0;
+        
+        steppedValuesIndex_--;
+        
+        if(steppedValuesIndex_ < 0 )
+            steppedValuesIndex_ = 0;
+        
+        DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+    }
+}
+
+void ActionContextOld::DoAcceleratedDeltaValueAction(int accelerationIndex, double delta)
+{
+    accelerationIndex = accelerationIndex > acceleratedDeltaValues_.size() - 1 ? acceleratedDeltaValues_.size() - 1 : accelerationIndex;
+    accelerationIndex = accelerationIndex < 0 ? 0 : accelerationIndex;
+    
+    if(delta > 0.0)
+        DoRangeBoundAction(action_->GetCurrentNormalizedValue(this) + acceleratedDeltaValues_[accelerationIndex]);
+    else
+        DoRangeBoundAction(action_->GetCurrentNormalizedValue(this) - acceleratedDeltaValues_[accelerationIndex]);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ActionContext
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
+{
     for(auto property : properties)
     {
         if(property.size() == 0)
@@ -2120,6 +2510,7 @@ void ActionContext::DoAcceleratedDeltaValueAction(int accelerationIndex, double 
         DoRangeBoundAction(action_->GetCurrentNormalizedValue(this) - acceleratedDeltaValues_[accelerationIndex]);
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Zone
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2151,7 +2542,7 @@ void ZoneOld::Deactivate()
         widget->Clear();
 }
 
-vector<ActionContext>& ZoneOld::GetActionContexts(Widget* widget)
+vector<ActionContextOld>& ZoneOld::GetActionContexts(Widget* widget)
 {
     string widgetName = widget->GetName();
     string modifier = "";
@@ -2196,17 +2587,17 @@ void ZoneOld::RequestUpdateWidget(Widget* widget)
     
     if(GetActionContexts(widget).size() > 0)
     {
-        ActionContext& context = GetActionContexts(widget)[0];
+        ActionContextOld& context = GetActionContexts(widget)[0];
         context.RequestUpdate();
     }
 }
-/*
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Zone
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Zone::Activate()
 {
-    surface_->LoadingZone(GetName());
+    zoneManager_->GetSurface()->LoadingZone(GetName());
     
     for(auto zone : includedZones_)
         zone->Activate();
@@ -2238,7 +2629,7 @@ vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
     string modifier = "";
     
     if( ! widget->GetIsModifier())
-        modifier = surface_->GetPage()->GetModifier();
+        modifier = widget->GetSurface()->GetPage()->GetModifier();
     
     if(touchIds_.count(widgetName) > 0 && activeTouchIds_.count(touchIds_[widgetName]) > 0 && activeTouchIds_[touchIds_[widgetName]] == true && actionContextDictionary_[widget].count(touchIds_[widgetName] + "+" + modifier) > 0)
         return actionContextDictionary_[widget][touchIds_[widgetName] + "+" + modifier];
@@ -2255,15 +2646,15 @@ int Zone::GetSlotIndex()
     if(navigationStyle_ == Standard)
         return slotIndex_;
     else if(navigationStyle_ == SendSlot)
-        return surface_->GetPage()->GetSendSlot();
+        return zoneManager_->GetSendSlot();
     else if(navigationStyle_ == ReceiveSlot)
-        return surface_->GetPage()->GetReceiveSlot();
+        return zoneManager_->GetReceiveSlot();
     else if(navigationStyle_ == FXMenuSlot)
-        return surface_->GetPage()->GetFXMenuSlot();
+        return zoneManager_->GetFXMenuSlot();
     else if(navigationStyle_ == SelectedTrackSendSlot)
-        return slotIndex_ + surface_->GetPage()->GetSendSlot();
+        return slotIndex_ + zoneManager_->GetSendSlot();
     else if(navigationStyle_ == SelectedTrackReceiveSlot)
-        return slotIndex_ + surface_->GetPage()->GetReceiveSlot();
+        return slotIndex_ + zoneManager_->GetReceiveSlot();
     else
         return 0;
 }
@@ -2281,7 +2672,7 @@ void Zone::RequestUpdateWidget(Widget* widget)
         context.RequestUpdate();
     }
 }
-*/
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Widget
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
