@@ -99,7 +99,9 @@ class OSC_ControlSurface;
 class Widget;
 class TrackNavigationManager;
 class FeedbackProcessor;
+class ZoneOld;
 class Zone;
+class ZoneManager;
 class ActionContext;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -250,7 +252,7 @@ class ActionContext
 private:
     Action* const action_ = nullptr;
     Widget* const widget_ = nullptr;
-    Zone* const zone_ = nullptr;
+    ZoneOld* const zone_ = nullptr;
     
     Widget* associatedWidget_ = nullptr;
     
@@ -297,11 +299,14 @@ private:
     vector<vector<string>> properties_;
     
 public:
-    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
+    ActionContext(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties);
+
+    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties) {}
+
     virtual ~ActionContext() {}
     
     Widget* GetWidget() { return widget_; }
-    Zone* GetZone() { return zone_; }
+    ZoneOld* GetZone() { return zone_; }
     int GetSlotIndex();
     string GetName();
 
@@ -461,11 +466,136 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Zone
+class ZoneOld
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
     ControlSurface* const surface_ = nullptr;
+    Navigator* navigator_= nullptr;
+    string const name_ = "";
+    string const alias_ = "";
+    string const sourceFilePath_ = "";
+    
+    map<string, string> touchIds_;
+        
+    map<string, bool> activeTouchIds_;
+    
+    NavigationStyle const navigationStyle_ = Standard;
+    
+    int slotIndex_ = 0;
+
+    vector<Widget*> widgets_;
+    
+    vector<ZoneOld*> includedZones_;
+    vector<ZoneOld*> subZones_;
+
+    map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
+    vector<ActionContext> defaultContexts_;
+    
+public:
+    ZoneOld(ControlSurface* surface, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): surface_(surface), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    ZoneOld() {}
+    
+    void Activate();
+    void Activate(vector<ZoneOld*> *activeZones);
+    void Deactivate();
+    bool TryActivate(Widget* widget);
+    int GetSlotIndex();
+    vector<ActionContext> &GetActionContexts(Widget* widget);
+
+    Navigator* GetNavigator() { return navigator_; }
+    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
+    void AddIncludedZone(ZoneOld* &zone) { includedZones_.push_back(zone); }
+    void RequestUpdateWidget(Widget* widget);
+
+    void SetSlotIndex(int index)
+    {
+        slotIndex_ = index;
+        
+        for(auto subZone : subZones_)
+            subZone->SetSlotIndex(index);
+    }
+
+    void AddSubZone(ZoneOld* &subZone)
+    {
+        subZone->SetNavigator(GetNavigator());
+        subZones_.push_back(subZone);
+    }
+
+    string GetName()
+    {
+        return name_;
+    }
+    
+    string GetNameOrAlias()
+    {
+        if(alias_ != "")
+            return alias_;
+        else
+            return name_;
+    }
+    
+    void AddWidget(Widget* widget)
+    {
+        widgets_.push_back(widget);
+    }
+    
+    void AddActionContext(Widget* widget, string modifier, ActionContext actionContext)
+    {
+        actionContextDictionary_[widget][modifier].push_back(actionContext);
+    }
+    
+    void RequestUpdate(vector<Widget*> &usedWidgets)
+    {
+        for(auto widget : widgets_)
+        {
+            if(find(usedWidgets.begin(), usedWidgets.end(), widget) == usedWidgets.end())
+            {
+                usedWidgets.push_back(widget);
+
+                RequestUpdateWidget(widget);
+            }
+        }
+        
+        for(auto zone : includedZones_)
+            zone->RequestUpdate(usedWidgets);
+    }
+        
+    void DoAction(Widget* widget, double value)
+    {
+        for(auto &context : GetActionContexts(widget))
+            context.DoAction(value);
+    }
+    
+    void DoTouch(Widget* widget, string widgetName, double value)
+    {
+        activeTouchIds_[widgetName + "Touch"] = value;
+        activeTouchIds_[widgetName + "TouchPress"] = value;
+        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
+
+        for(auto &context : GetActionContexts(widget))
+            context.DoTouch(value);
+    }
+    
+    void DoRelativeAction(Widget* widget, double delta)
+    {
+        for(auto &context : GetActionContexts(widget))
+            context.DoRelativeAction(delta);
+    }
+    
+    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
+    {
+        for(auto &context : GetActionContexts(widget))
+            context.DoRelativeAction(accelerationIndex, delta);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Zone
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    ZoneManager* const zoneManager_ = nullptr;
     Navigator* navigator_= nullptr;
     string const name_ = "";
     string const alias_ = "";
@@ -487,8 +617,8 @@ private:
     map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
     vector<ActionContext> defaultContexts_;
     
-public:   
-    Zone(ControlSurface* surface, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): surface_(surface), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+public:
+    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
     void Activate();
@@ -585,34 +715,6 @@ public:
     }
 };
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ZoneManager
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    void DoAction(Widget* widget, double value)
-    {
-    
-    }
-    
-    void DoRelativeAction(Widget* widget, double delta)
-    {
-
-    }
-    
-    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
-    {
-
-    }
-    
-    void DoTouch(Widget* widget, double value)
-    {
-
-    }
-};
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Widget
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -645,8 +747,8 @@ public:
     Widget(ControlSurface* surface, string name);
     ~Widget();
     
-    ControlSurface* GetSurface() { return surface_; }
     string GetName() { return name_; }
+    ControlSurface* GetSurface() { return surface_; }
     ZoneManager* GetZoneManager() { return zoneManager_; }
     
     bool GetIsModifier() { return isModifier_; }
@@ -666,7 +768,7 @@ public:
     void Clear();
     void ForceClear();
 
-    void HandleQueuedActions(Zone* zone);
+    void HandleQueuedActions(ZoneOld* zone);
     void QueueAction(double value);
     void QueueRelativeAction(double delta);
     void QueueRelativeAction(int accelerationIndex, double delta);
@@ -689,54 +791,6 @@ public:
     {
         feedbackProcessors_.push_back(feedbackProcessor);
     }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CSIMessageGenerator
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Widget* const widget_;
-    CSIMessageGenerator(Widget* widget) : widget_(widget) {}
-    
-public:
-    CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message);
-    virtual ~CSIMessageGenerator() {}
-    
-    virtual void ProcessMessage(double value)
-    {
-        widget_->GetZoneManager()->DoAction(widget_, value);
-        
-        widget_->QueueAction(value);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Touch_CSIMessageGenerator : CSIMessageGenerator
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    Touch_CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message) : CSIMessageGenerator(surface, widget, message) {}
-    virtual ~Touch_CSIMessageGenerator() {}
-    
-    virtual void ProcessMessage(double value) override
-    {
-        widget_->GetZoneManager()->DoTouch(widget_, value);
-        
-        widget_->QueueTouch(value);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Midi_CSIMessageGenerator : public CSIMessageGenerator
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Midi_CSIMessageGenerator(Widget* widget) : CSIMessageGenerator(widget) {}
-    
-public:
-    virtual ~Midi_CSIMessageGenerator() {}
-    virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -869,6 +923,132 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ZoneManager
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    ControlSurface* const surface_;
+    string const zoneFolder_ = "";
+    
+    map<int, Navigator*> navigators_;
+    vector<Widget*> widgets_;
+    map<string, Widget*> widgetsByName_;
+    
+    map<string, string> zoneFilenames_;
+    map<string, Zone*> zonesByName_;
+    vector<Zone*> zones_;
+    
+public:
+    ZoneManager(ControlSurface* surface, string zoneFolder) : surface_(surface),  zoneFolder_(zoneFolder) {}
+    
+    void InitZones();
+    
+    Navigator* GetMasterTrackNavigator();
+    Navigator* GetSelectedTrackNavigator();
+    Navigator* GetFocusedFXNavigator();
+    Navigator* GetDefaultNavigator();
+    Navigator* GetNavigatorForChannel(int channelNum);
+    int GetSendSlot();
+    int GetReceiveSlot();
+    int GetFXMenuSlot();
+    int GetNumChannels();
+    int GetNumSendSlots();
+    int GetNumReceiveSlots();
+    int GetNumFXSlots();
+    
+    void LoadZone(string zoneName);
+    Zone* GetZone(string zoneName);
+    
+    Widget* GetWidgetByName(string name)
+    {
+        if(widgetsByName_.count(name) > 0)
+            return widgetsByName_[name];
+        else
+            return nullptr;
+    }
+    
+    
+    void AddZone(Zone* zone)
+    {
+        zonesByName_[zone->GetName()] = zone;
+        zones_.push_back(zone);
+    }
+    
+    void AddZoneFilename(string name, string filename)
+    {
+        zoneFilenames_[name] = filename;
+    }
+    
+    void DoAction(Widget* widget, double value)
+    {
+    
+    }
+    
+    void DoRelativeAction(Widget* widget, double delta)
+    {
+
+    }
+    
+    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
+    {
+
+    }
+    
+    void DoTouch(Widget* widget, double value)
+    {
+
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Widget* const widget_;
+    CSIMessageGenerator(Widget* widget) : widget_(widget) {}
+    
+public:
+    CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message);
+    virtual ~CSIMessageGenerator() {}
+    
+    virtual void ProcessMessage(double value)
+    {
+        widget_->GetZoneManager()->DoAction(widget_, value);
+        
+        widget_->QueueAction(value);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Touch_CSIMessageGenerator : CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    Touch_CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message) : CSIMessageGenerator(surface, widget, message) {}
+    virtual ~Touch_CSIMessageGenerator() {}
+    
+    virtual void ProcessMessage(double value) override
+    {
+        widget_->GetZoneManager()->DoTouch(widget_, value);
+        
+        widget_->QueueTouch(value);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Midi_CSIMessageGenerator : public CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Midi_CSIMessageGenerator(Widget* widget) : CSIMessageGenerator(widget) {}
+    
+public:
+    virtual ~Midi_CSIMessageGenerator() {}
+    virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) {}
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -880,22 +1060,30 @@ protected:
     string const name_;
     ZoneManager* const zoneManager_;
     
-
-    Zone* homeZone_ = nullptr;
+    string const zoneFolder_ = "";
+    int const numChannels_ = 0;
+    int const numSends_ = 0;
+    int const numFXSlots_ = 0;
     
     map<string, CSIMessageGenerator*> CSIMessageGeneratorsByMessage_;
     
-    vector<Zone*> activeFocusedFXZones_;
-    vector<Zone*> activeSelectedTrackFXZones_;
-    vector<Zone*> activeSelectedTrackFXMenuFXZones_;
-    vector<Zone*> activeSelectedTrackFXMenuZones_;
     
-    vector<Zone*> activeSelectedTrackSendsZones_;
-    vector<Zone*> activeSelectedTrackReceivesZones_;
+    
+    ZoneOld* homeZone_ = nullptr;
+    
 
-    vector<Zone*> activeZones_;
+    
+    vector<ZoneOld*> activeFocusedFXZones_;
+    vector<ZoneOld*> activeSelectedTrackFXZones_;
+    vector<ZoneOld*> activeSelectedTrackFXMenuFXZones_;
+    vector<ZoneOld*> activeSelectedTrackFXMenuZones_;
+    
+    vector<ZoneOld*> activeSelectedTrackSendsZones_;
+    vector<ZoneOld*> activeSelectedTrackReceivesZones_;
 
-    vector<vector<Zone*> *> allActiveZones_;
+    vector<ZoneOld*> activeZones_;
+
+    vector<vector<ZoneOld*> *> allActiveZones_;
     
     void LoadDefaultZoneOrder()
     {
@@ -910,10 +1098,7 @@ protected:
         allActiveZones_.push_back(&activeZones_);
     }
     
-    string const zoneFolder_ = "";
-    int const numChannels_ = 0;
-    int const numSends_ = 0;
-    int const numFXSlots_ = 0;
+
     
     bool shouldBroadcastGoZone_ = false;
     bool shouldReceiveGoZone_ = false;
@@ -946,16 +1131,16 @@ protected:
     void InitZones(string zoneFolder);
 
     map<string, string> zoneFilenames_;
-    map<string, Zone*> zonesByName_;
-    vector<Zone*> zones_;
+    map<string, ZoneOld*> zonesByName_;
+    vector<ZoneOld*> zones_;
     
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
 
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
-    void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<Zone*> *activeZones);
+    void MapSelectedTrackFXSlotToWidgets(vector<ZoneOld*> *activeZones, int fxSlot);
+    void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<ZoneOld*> *activeZones);
     
-    void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
+    void GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value);
     
     virtual void InitHardwiredWidgets()
     {
@@ -1031,14 +1216,14 @@ public:
 
     Navigator* GetNavigatorForChannel(int channelNum);
 
-    Zone* GetDefaultZone() { return homeZone_; }
+    ZoneOld* GetDefaultZone() { return homeZone_; }
 
     virtual void SetHasMCUMeters(int displayType) {}
     
     void LoadZone(string zoneName);
-    Zone* GetZone(string zoneName);
+    ZoneOld* GetZone(string zoneName);
     void GoZone(string zoneName, double value);
-    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
+    void GoSubZone(ZoneOld* enclosingZone, string zoneName, double value);
     virtual void LoadingZone(string zoneName) {}
     virtual void HandleExternalInput() {}
 
@@ -1110,7 +1295,7 @@ public:
             homeZone_->Activate();
     }
         
-    void MoveToFirst(vector<Zone*> *zones)
+    void MoveToFirst(vector<ZoneOld*> *zones)
     {
         auto result = find(allActiveZones_.begin(), allActiveZones_.end(), zones);
         
@@ -1130,7 +1315,7 @@ public:
         zoneFilenames_[name] = filename;
     }
     
-    void AddZone(Zone* zone)
+    void AddZone(ZoneOld* zone)
     {
         zonesByName_[zone->GetName()] = zone;
         zones_.push_back(zone);
@@ -2598,8 +2783,16 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
+    ActionContext GetActionContext(string actionName, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties)
+    {
+        if(actions_.count(actionName) > 0)
+            return ActionContext(actions_[actionName], widget, zone, params, properties);
+        else
+            return ActionContext(actions_["NoAction"], widget, zone, params, properties);
+    }
+
     ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
-    {      
+    {
         if(actions_.count(actionName) > 0)
             return ActionContext(actions_[actionName], widget, zone, params, properties);
         else
