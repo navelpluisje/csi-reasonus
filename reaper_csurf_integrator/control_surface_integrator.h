@@ -1199,12 +1199,11 @@ private:
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
     
-    void MapSelectedTrackFXToWidgets();
+    //void MapSelectedTrackFXToWidgets();
     void UnmapSelectedTrackFXFromWidgets();
     void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
     
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
-    
     
     virtual void InitHardwiredWidgets()
     {
@@ -1219,6 +1218,11 @@ public:
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
     virtual ~ZoneManager() {}
+    
+    
+    void Initialize(string templateFilename, string zoneFolder);
+    
+    void MapSelectedTrackFXToWidgets();
     
     
     Zone* GetDefaultZone() { return homeZone_; }
@@ -1800,8 +1804,15 @@ public:
     
     
     
+    
+    
+    
+    
     virtual void RequestUpdate()
     {
+        
+        
+        //*
         CheckFocusedFXState();
         
         vector<Widget*> usedWidgets;
@@ -1820,8 +1831,19 @@ public:
             if (it == usedWidgets.end() )
                 widget->Clear();
         }
+        
+        //*/
+        
+        //zoneManager_->RequestUpdate();
+        
+        
+        
+        
     }
 
+    
+    
+    
     
     
     
@@ -1897,12 +1919,12 @@ private:
     
     void ProcessMidiMessage(const MIDI_event_ex_t* evt);
    
-    void InitWidgets(string templateFilename, string zoneFolder);
+    void Initialize(string templateFilename, string zoneFolder);
 
     void InitializeMCU();
     void InitializeMCUXT();
     
-    virtual void Initialize()
+    virtual void InitializeMeters()
     {
         if(hasMCUMeters_)
         {
@@ -1917,7 +1939,7 @@ public:
     Midi_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, midi_Input* midiInput, midi_Output* midiOutput)
     : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), midiInput_(midiInput), midiOutput_(midiOutput)
     {
-        InitWidgets(templateFilename, zoneFolder);
+        Initialize(templateFilename, zoneFolder);
     }
     
     virtual ~Midi_ControlSurface() {}
@@ -1963,14 +1985,14 @@ private:
     oscpkt::PacketReader packetReader_;
     oscpkt::PacketWriter packetWriter_;
     
-    void InitWidgets(string templateFilename, string zoneFolder);
+    void Initialize(string templateFilename, string zoneFolder);
     void ProcessOSCMessage(string message, double value);
 
 public:
     OSC_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, oscpkt::UdpSocket* inSocket, oscpkt::UdpSocket* outSocket)
     : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), inSocket_(inSocket), outSocket_(outSocket)
     {
-        InitWidgets(templateFilename, zoneFolder);
+        Initialize(templateFilename, zoneFolder);
     }
     
     virtual ~OSC_ControlSurface() {}
