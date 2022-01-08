@@ -954,7 +954,6 @@ class Widget
     
 private:
     ControlSurface* const surface_;
-    ZoneManager* const zoneManager_;
     string const name_;
     vector<FeedbackProcessor*> feedbackProcessors_;
     
@@ -969,12 +968,12 @@ private:
     void LogInput(double value);
    
 public:
-    Widget(ControlSurface* surface, string name);
+    Widget(ControlSurface* surface, string name) : surface_(surface), name_(name) {}
     ~Widget();
     
     string GetName() { return name_; }
     ControlSurface* GetSurface() { return surface_; }
-    ZoneManager* GetZoneManager() { return zoneManager_; }
+    ZoneManager* GetZoneManager();
     
     bool GetIsModifier() { return isModifier_; }
     void SetIsModifier() { isModifier_ = true; }
@@ -1184,14 +1183,10 @@ private:
         allActiveZones_.push_back(&activeSelectedTrackSendsZones_);
         allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
         allActiveZones_.push_back(&activeZones_);
-    }
-    
+    }    
     
     map<int, Navigator*> navigators_;
-    vector<Widget*> widgets_;
-    map<string, Widget*> widgetsByName_;
-    
-       
+ 
     map<string, string> zoneFilenames_;
     map<string, Zone*> zonesByName_;
     vector<Zone*> zones_;
@@ -1199,21 +1194,11 @@ private:
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
     
-    //void MapSelectedTrackFXToWidgets();
     void UnmapSelectedTrackFXFromWidgets();
     void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
     
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
-    
-    virtual void InitHardwiredWidgets()
-    {
-        // Add the "hardwired" widgets
-        AddWidget(new Widget(surface_, "OnTrackSelection"));
-        AddWidget(new Widget(surface_, "OnPageEnter"));
-        AddWidget(new Widget(surface_, "OnPageLeave"));
-        AddWidget(new Widget(surface_, "OnInitialization"));
-    }
-    
+        
 public:
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
@@ -1328,71 +1313,16 @@ public:
         
         if(homeZone_ != nullptr)
             homeZone_->RequestUpdate(usedWidgets);
-        
+        /*
         for(auto widget : widgets_)
         {
             auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
             
             if (it == usedWidgets.end() )
                 widget->Clear();
-        }
+        }*/
     }
-
-    
-    
-    
-    
-    virtual void ForceClearAllWidgets()
-    {
-        for(auto widget : widgets_)
-            widget->ForceClear();
-    }
-    
-    void ClearCache()
-    {
-        for(auto widget : widgets_)
-        {
-            widget->UpdateValue(0.0);
-            widget->UpdateValue(0, 0.0);
-            widget->UpdateValue("");
-            widget->ClearCache();
-        }
-    }
-    
-    void AddWidget(Widget* widget)
-    {
-        widgets_.push_back(widget);
-        widgetsByName_[widget->GetName()] = widget;
-    }
-
-    Widget* GetWidgetByName(string name)
-    {
-        if(widgetsByName_.count(name) > 0)
-            return widgetsByName_[name];
-        else
-            return nullptr;
-    }
-    
-    void OnPageEnter()
-    {
-        if(widgetsByName_.count("OnPageEnter") > 0)
-            widgetsByName_["OnPageEnter"]->QueueAction(1.0);
-    }
-    
-    void OnPageLeave()
-    {
-        if(widgetsByName_.count("OnPageLeave") > 0)
-            widgetsByName_["OnPageLeave"]->QueueAction(1.0);
-    }
-    
-    void OnInitialization()
-    {
-        if(widgetsByName_.count("OnInitialization") > 0)
-            widgetsByName_["OnInitialization"]->QueueAction(1.0);
-    }
-
-
-    
+   
     void DoAction(Widget* widget, double value)
     {
     
@@ -1425,7 +1355,7 @@ protected:
     CSIMessageGenerator(Widget* widget) : widget_(widget) {}
     
 public:
-    CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message);
+    CSIMessageGenerator(Widget* widget, string message);
     virtual ~CSIMessageGenerator() {}
     
     virtual void ProcessMessage(double value)
@@ -1441,7 +1371,7 @@ class Touch_CSIMessageGenerator : CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    Touch_CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message) : CSIMessageGenerator(surface, widget, message) {}
+    Touch_CSIMessageGenerator(Widget* widget, string message) : CSIMessageGenerator(widget, message) {}
     virtual ~Touch_CSIMessageGenerator() {}
     
     virtual void ProcessMessage(double value) override
@@ -1824,15 +1754,19 @@ public:
         if(homeZone_ != nullptr)
             homeZone_->RequestUpdate(usedWidgets);
         
+        //*/
+        
+        
+        /*
         for(auto widget : widgets_)
         {
             auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
             
             if (it == usedWidgets.end() )
                 widget->Clear();
-        }
+        }*/
         
-        //*/
+
         
         //zoneManager_->RequestUpdate();
         

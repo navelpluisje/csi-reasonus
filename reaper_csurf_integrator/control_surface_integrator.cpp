@@ -851,7 +851,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             if(navigators.size() > 1)
                                 surfaceWidgetName = regex_replace(surfaceWidgetName, regex("[|]"), to_string(i + 1));
                             
-                            Widget* widget = zoneManager->GetWidgetByName(surfaceWidgetName);
+                            Widget* widget = zoneManager->GetSurface()->GetWidgetByName(surfaceWidgetName);
                             
                             if(widget == nullptr)
                                 continue;
@@ -1105,299 +1105,6 @@ static int strToHex(string valueStr)
     return strtol(valueStr.c_str(), nullptr, 16);
 }
 
-static void ProcessMidiWidgetOld(int &lineNumber, ifstream &surfaceTemplateFile, vector<string> tokens,  Midi_ControlSurface* surface)
-{
-    if(tokens.size() < 2)
-        return;
-    
-    string widgetName = tokens[1];
-
-    Widget* widget = new Widget(surface, widgetName);
-    
-    if(! widget)
-        return;
-    
-    surface->AddWidget(widget);
-
-    vector<vector<string>> tokenLines;
-    
-    for (string line; getline(surfaceTemplateFile, line) ; )
-    {
-        line = regex_replace(line, regex(TabChars), " ");
-        line = regex_replace(line, regex(CRLFChars), "");
-
-        lineNumber++;
-        
-        if(line == "" || line[0] == '\r' || line[0] == '/') // ignore comment lines and blank lines
-            continue;
-        
-        vector<string> tokens(GetTokens(line));
-        
-        if(tokens[0] == "WidgetEnd")    // finito baybay - Widget list complete
-            break;
-        
-        tokenLines.push_back(tokens);
-    }
-    
-    if(tokenLines.size() < 1)
-        return;
-    
-    for(int i = 0; i < tokenLines.size(); i++)
-    {
-        int size = tokenLines[i].size();
-        
-        string widgetClass = tokenLines[i][0];
-
-        // Control Signal Generators
-        if(widgetClass == "AnyPress" && (size == 4 || size == 7))
-            new AnyPress_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        if(widgetClass == "Press" && size == 4)
-            new PressRelease_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "Press" && size == 7)
-            new PressRelease_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6])));
-        else if(widgetClass == "Fader14Bit" && size == 4)
-            new Fader14Bit_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "Fader7Bit" && size== 4)
-            new Fader7Bit_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "Encoder" && size == 4)
-            new Encoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "Encoder" && size > 4)
-            new AcceleratedEncoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), tokenLines[i]);
-        else if(widgetClass == "MFTEncoder" && size > 4)
-            new MFT_AcceleratedEncoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), tokenLines[i]);
-        else if(widgetClass == "EncoderPlain" && size == 4)
-            new EncoderPlain_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "EncoderPlainReverse" && size == 4)
-            new EncoderPlainReverse_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        else if(widgetClass == "Touch" && size == 7)
-            new Touch_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6])));
-        else if(widgetClass == "Toggle" && size == 4)
-            new Toggle_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-
-        // Feedback Processors
-        FeedbackProcessor* feedbackProcessor = nullptr;
-
-        if(widgetClass == "FB_TwoState" && size == 7)
-        {
-            feedbackProcessor = new TwoState_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6])));
-        }
-        else if(widgetClass == "FB_NovationLaunchpadMiniRGB7Bit" && size == 4)
-        {
-            feedbackProcessor = new NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_MFT_RGB" && size == 4)
-        {
-            feedbackProcessor = new MFT_RGB_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_FaderportRGB7Bit" && size == 4)
-        {
-            feedbackProcessor = new FaderportRGB7Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_Fader14Bit" && size == 4)
-        {
-            feedbackProcessor = new Fader14Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_Fader7Bit" && size == 4)
-        {
-            feedbackProcessor = new Fader7Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_Encoder" && size == 4)
-        {
-            feedbackProcessor = new Encoder_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_VUMeter" && size == 4)
-        {
-            feedbackProcessor = new VUMeter_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_GainReductionMeter" && size == 4)
-        {
-            feedbackProcessor = new GainReductionMeter_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
-        }
-        else if(widgetClass == "FB_MCUTimeDisplay" && size == 1)
-        {
-            feedbackProcessor = new MCU_TimeDisplay_Midi_FeedbackProcessor(surface, widget);
-        }
-        else if(widgetClass == "FB_QConProXMasterVUMeter" && size == 2)
-        {
-            feedbackProcessor = new QConProXMasterVUMeter_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]));
-        }
-        else if((widgetClass == "FB_MCUVUMeter" || widgetClass == "FB_MCUXTVUMeter") && size == 2)
-        {
-            int displayType = widgetClass == "FB_MCUVUMeter" ? 0x14 : 0x15;
-            
-            feedbackProcessor = new MCUVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
-            
-            surface->SetHasMCUMeters(displayType);
-        }
-        else if(widgetClass == "FB_SCE24_Text" && size == 3)
-        {
-            feedbackProcessor = new SCE24_Text_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]), stoi(tokenLines[i][2]));
-        }
-        else if(widgetClass == "FB_SCE24_Bar" && size == 3)
-        {
-            feedbackProcessor = new SCE24_Bar_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]), stoi(tokenLines[i][2]));
-        }
-        else if(widgetClass == "FB_SCE24_OLEDButton" && size == 3)
-        {
-            feedbackProcessor = new SCE24_OLEDButton_Midi_FeedbackProcessor(surface, widget, strToHex(tokenLines[i][1]), stoi(tokenLines[i][2]));
-        }
-        else if(widgetClass == "FB_SCE24_LEDButton" && size == 2)
-        {
-            feedbackProcessor = new SCE24_LEDButton_Midi_FeedbackProcessor(surface, widget, strToHex(tokenLines[i][1]));
-        }
-        else if(widgetClass == "FB_SCE24_Background" && size == 2)
-        {
-            feedbackProcessor = new SCE24_Background_Midi_FeedbackProcessor(surface, widget, strToHex(tokenLines[i][1]));
-        }
-        else if(widgetClass == "FB_SCE24_Ring" && size == 2)
-        {
-            feedbackProcessor = new SCE24_Ring_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]));
-        }
-        else if((widgetClass == "FB_MCUDisplayUpper" || widgetClass == "FB_MCUDisplayLower" || widgetClass == "FB_MCUXTDisplayUpper" || widgetClass == "FB_MCUXTDisplayLower") && size == 2)
-        {
-            if(widgetClass == "FB_MCUDisplayUpper")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 0, 0x14, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_MCUDisplayLower")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x14, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_MCUXTDisplayUpper")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 0, 0x15, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_MCUXTDisplayLower")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x15, 0x12, stoi(tokenLines[i][1]));
-        }
-        
-        else if((widgetClass == "FB_C4DisplayUpper" || widgetClass == "FB_C4DisplayLower") && size == 3)
-        {
-            if(widgetClass == "FB_C4DisplayUpper")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 0, 0x17, stoi(tokenLines[i][1]) + 0x30, stoi(tokenLines[i][2]));
-            else if(widgetClass == "FB_C4DisplayLower")
-                feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x17, stoi(tokenLines[i][1]) + 0x30, stoi(tokenLines[i][2]));
-        }
-        
-        else if((widgetClass == "FB_FP8Display" || widgetClass == "FB_FP16Display"
-                 || widgetClass == "FB_FP8DisplayUpper" || widgetClass == "FB_FP16DisplayUpper"
-                 || widgetClass == "FB_FP8DisplayUpperMiddle" || widgetClass == "FB_FP16DisplayUpperMiddle"
-                 || widgetClass == "FB_FP8DisplayLowerMiddle" || widgetClass == "FB_FP16DisplayLowerMiddle"
-                 || widgetClass == "FB_FP8DisplayLower" || widgetClass == "FB_FP16DisplayLower") && size == 2)
-        {
-            if(widgetClass == "FB_FP8Display" || widgetClass == "FB_FP8DisplayUpper")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]), 0x00);
-            else if(widgetClass == "FB_FP8DisplayUpperMiddle")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]), 0x01);
-            else if(widgetClass == "FB_FP8DisplayLowerMiddle")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]), 0x02);
-            else if(widgetClass == "FB_FP8DisplayLower")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]), 0x03);
-
-            else if(widgetClass == "FB_FP16Display" ||  widgetClass == "FB_FP16DisplayUpper")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]), 0x00);
-            else if(widgetClass == "FB_FP16DisplayUpperMiddle")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]), 0x01);
-            else if(widgetClass == "FB_FP16DisplayLowerMiddle")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]), 0x02);
-            else if(widgetClass == "FB_FP16DisplayLower")
-                feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]), 0x03);
-        }
-        
-        else if((widgetClass == "FB_QConLiteDisplayUpper" || widgetClass == "FB_QConLiteDisplayUpperMid" || widgetClass == "FB_QConLiteDisplayLowerMid" || widgetClass == "FB_QConLiteDisplayLower") && size == 2)
-        {
-            if(widgetClass == "FB_QConLiteDisplayUpper")
-                feedbackProcessor = new QConLiteDisplay_Midi_FeedbackProcessor(surface, widget, 0, 0x14, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_QConLiteDisplayUpperMid")
-                feedbackProcessor = new QConLiteDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x14, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_QConLiteDisplayLowerMid")
-                feedbackProcessor = new QConLiteDisplay_Midi_FeedbackProcessor(surface, widget, 2, 0x14, 0x12, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_QConLiteDisplayLower")
-                feedbackProcessor = new QConLiteDisplay_Midi_FeedbackProcessor(surface, widget, 3, 0x14, 0x12, stoi(tokenLines[i][1]));
-        }
-
-        if(feedbackProcessor != nullptr)
-            widget->AddFeedbackProcessor(feedbackProcessor);
-    }
-}
-
-static void ProcessOSCWidgetOld(int &lineNumber, ifstream &surfaceTemplateFile, vector<string> tokens,  OSC_ControlSurface* surface)
-{
-    if(tokens.size() < 2)
-        return;
-    
-    Widget* widget = new Widget(surface, tokens[1]);
-    
-    if(! widget)
-        return;
-    
-    surface->AddWidget(widget);
-
-    vector<vector<string>> tokenLines;
-
-    for (string line; getline(surfaceTemplateFile, line) ; )
-    {
-        line = regex_replace(line, regex(TabChars), " ");
-        line = regex_replace(line, regex(CRLFChars), "");
-
-        lineNumber++;
-        
-        if(line == "" || line[0] == '\r' || line[0] == '/') // ignore comment lines and blank lines
-            continue;
-        
-        vector<string> tokens(GetTokens(line));
-        
-        if(tokens[0] == "WidgetEnd")    // finito baybay - Widget list complete
-            break;
-        
-        tokenLines.push_back(tokens);
-    }
-
-    for(auto tokenLine : tokenLines)
-    {
-        if(tokenLine.size() > 1 && tokenLine[0] == "Control")
-            new CSIMessageGenerator(surface, widget, tokenLine[1]);
-        else if(tokenLine.size() > 1 && tokenLine[0] == "Touch")
-            new Touch_CSIMessageGenerator(surface, widget, tokenLine[1]);
-        else if(tokenLine.size() > 1 && tokenLine[0] == "FB_Processor")
-            widget->AddFeedbackProcessor(new OSC_FeedbackProcessor(surface, widget, tokenLine[1]));
-        else if(tokenLine.size() > 1 && tokenLine[0] == "FB_IntProcessor")
-            widget->AddFeedbackProcessor(new OSC_IntFeedbackProcessor(surface, widget, tokenLine[1]));
-    }
-}
-
-static void ProcessWidgetFileOld(string filePath, ControlSurface* surface)
-{
-    int lineNumber = 0;
-    
-    try
-    {
-        ifstream file(filePath);
-        
-        for (string line; getline(file, line) ; )
-        {
-            line = regex_replace(line, regex(TabChars), " ");
-            line = regex_replace(line, regex(CRLFChars), "");
-            
-            lineNumber++;
-            
-            if(line == "" || line[0] == '\r' || line[0] == '/') // ignore comment lines and blank lines
-                continue;
-            
-            vector<string> tokens(GetTokens(line));
-            
-            if(tokens.size() > 0 && tokens[0] == "Widget")
-            {
-                if(filePath[filePath.length() - 3] == 'm')
-                    ProcessMidiWidgetOld(lineNumber, file, tokens, (Midi_ControlSurface*)surface);
-                if(filePath[filePath.length() - 3] == 'o')
-                    ProcessOSCWidgetOld(lineNumber, file, tokens, (OSC_ControlSurface*)surface);
-            }
-        }
-    }
-    catch (exception &e)
-    {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", filePath.c_str(), lineNumber);
-        DAW::ShowConsoleMsg(buffer);
-    }
-}
-
-/*
 static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, vector<string> tokens,  Midi_ControlSurface* surface)
 {
     if(tokens.size() < 2)
@@ -1643,9 +1350,9 @@ static void ProcessOSCWidget(int &lineNumber, ifstream &surfaceTemplateFile, vec
     for(auto tokenLine : tokenLines)
     {
         if(tokenLine.size() > 1 && tokenLine[0] == "Control")
-            new CSIMessageGenerator(surface, widget, tokenLine[1]);
+            new CSIMessageGenerator(widget, tokenLine[1]);
         else if(tokenLine.size() > 1 && tokenLine[0] == "Touch")
-            new Touch_CSIMessageGenerator(surface, widget, tokenLine[1]);
+            new Touch_CSIMessageGenerator(widget, tokenLine[1]);
         else if(tokenLine.size() > 1 && tokenLine[0] == "FB_Processor")
             widget->AddFeedbackProcessor(new OSC_FeedbackProcessor(surface, widget, tokenLine[1]));
         else if(tokenLine.size() > 1 && tokenLine[0] == "FB_IntProcessor")
@@ -1689,10 +1396,6 @@ static void ProcessWidgetFile(string filePath, ControlSurface* surface)
         DAW::ShowConsoleMsg(buffer);
     }
 }
-
-
-
-*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Manager
@@ -2980,8 +2683,6 @@ void Zone::RequestUpdateWidget(Widget* widget)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Widget
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-Widget::Widget(ControlSurface* surface, string name) : surface_(surface), name_(name), zoneManager_(surface->GetZoneManager()) {}
-
 Widget::~Widget()
 {
     for(auto feedbackProcessor :feedbackProcessors_)
@@ -2991,6 +2692,10 @@ Widget::~Widget()
     }
 };
 
+ZoneManager* Widget::GetZoneManager()
+{
+    return surface_->GetZoneManager();
+}
 
 void Widget::HandleQueuedActions(ZoneOld* zone)
 {
@@ -3142,9 +2847,9 @@ void Widget::LogInput(double value)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CSIMessageGenerator::CSIMessageGenerator(ControlSurface* surface, Widget* widget, string message) : widget_(widget)
+CSIMessageGenerator::CSIMessageGenerator(Widget* widget, string message) : widget_(widget)
 {
-    surface->AddCSIMessageGenerator(message, this);
+    widget->GetSurface()->AddCSIMessageGenerator(message, this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3238,14 +2943,14 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
 void ZoneManager::Initialize(string templateFilename, string zoneFolder)
 {
     //ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/Midi/" + templateFilename, this);
-    InitHardwiredWidgets();
+    //InitHardwiredWidgets();
     
     InitZones();
     
     MakeHomeDefault();
 
     
-    ForceClearAllWidgets();
+    //ForceClearAllWidgets();
     surface_->GetPage()->ForceRefreshTimeDisplay();
 }
 
@@ -3422,10 +3127,7 @@ void ZoneManager::GoZone(vector<Zone*> *activeZones, string zoneName, double val
         activeSelectedTrackFXMenuZones_.clear();
         activeSelectedTrackFXMenuFXZones_.clear();
         activeFocusedFXZones_.clear();
-        
-        for(auto widget : widgets_)
-            widget->ClearAllQueues();
-        
+                
         LoadDefaultZoneOrder();
         
         if(homeZone_ != nullptr)
@@ -3966,7 +3668,7 @@ void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, doub
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Midi_ControlSurface::Initialize(string templateFilename, string zoneFolder)
 {
-    ProcessWidgetFileOld(string(DAW::GetResourcePath()) + "/CSI/Surfaces/Midi/" + templateFilename, this);
+    ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/Midi/" + templateFilename, this);
     InitHardwiredWidgets();
     InitializeMeters();
     
@@ -4054,7 +3756,7 @@ void Midi_ControlSurface::SendMidiMessage(int first, int second, int third)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void OSC_ControlSurface::Initialize(string templateFilename, string zoneFolder)
 {
-    ProcessWidgetFileOld(string(DAW::GetResourcePath()) + "/CSI/Surfaces/OSC/" + templateFilename, this);
+    ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/OSC/" + templateFilename, this);
     InitHardwiredWidgets();
     
     zoneManager_->InitZones();
