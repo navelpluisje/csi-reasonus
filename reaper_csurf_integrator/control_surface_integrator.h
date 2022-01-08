@@ -1155,16 +1155,73 @@ private:
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
     
+    int const numChannels_ = 0;
+    int const numSends_ = 0;
+    int const numFXSlots_ = 0;
+    
+    Zone* homeZone_ = nullptr;
+       
+    vector<Zone*> activeFocusedFXZones_;
+    vector<Zone*> activeSelectedTrackFXZones_;
+    vector<Zone*> activeSelectedTrackFXMenuFXZones_;
+    vector<Zone*> activeSelectedTrackFXMenuZones_;
+    
+    vector<Zone*> activeSelectedTrackSendsZones_;
+    vector<Zone*> activeSelectedTrackReceivesZones_;
+
+    vector<Zone*> activeZones_;
+
+    vector<vector<Zone*> *> allActiveZones_;
+    
+    void LoadDefaultZoneOrder()
+    {
+        allActiveZones_.clear();
+        
+        allActiveZones_.push_back(&activeFocusedFXZones_);
+        allActiveZones_.push_back(&activeSelectedTrackFXZones_);
+        allActiveZones_.push_back(&activeSelectedTrackFXMenuFXZones_);
+        allActiveZones_.push_back(&activeSelectedTrackFXMenuZones_);
+        allActiveZones_.push_back(&activeSelectedTrackSendsZones_);
+        allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
+        allActiveZones_.push_back(&activeZones_);
+    }
+    
+    
     map<int, Navigator*> navigators_;
     vector<Widget*> widgets_;
     map<string, Widget*> widgetsByName_;
     
+       
     map<string, string> zoneFilenames_;
     map<string, Zone*> zonesByName_;
     vector<Zone*> zones_;
     
+    void MapFocusedFXToWidgets();
+    void UnmapFocusedFXFromWidgets();
+    
+    void MapSelectedTrackFXToWidgets();
+    void UnmapSelectedTrackFXFromWidgets();
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    
+    void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
+    
+    
+    virtual void InitHardwiredWidgets()
+    {
+        // Add the "hardwired" widgets
+        AddWidget(new Widget(surface_, "OnTrackSelection"));
+        AddWidget(new Widget(surface_, "OnPageEnter"));
+        AddWidget(new Widget(surface_, "OnPageLeave"));
+        AddWidget(new Widget(surface_, "OnInitialization"));
+    }
+    
 public:
-    ZoneManager(ControlSurface* surface, string zoneFolder) : surface_(surface),  zoneFolder_(zoneFolder) {}
+    ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
+    
+    virtual ~ZoneManager() {}
+    
+    
+    Zone* GetDefaultZone() { return homeZone_; }
     
     void InitZones();
     
@@ -1183,9 +1240,127 @@ public:
     
     void LoadZone(string zoneName);
     Zone* GetZone(string zoneName);
+    void GoZone(string zoneName, double value);
+    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     ControlSurface* GetSurface() { return surface_; }
     
+    void MakeHomeDefault()
+    {
+        homeZone_ = GetZone("Home");
+
+        if(homeZone_ != nullptr)
+            homeZone_->Activate();
+    }
+        
+    void MoveToFirst(vector<Zone*> *zones)
+    {
+        auto result = find(allActiveZones_.begin(), allActiveZones_.end(), zones);
+        
+        if(result == allActiveZones_.begin()) // already first
+            return;
+        
+        if(result != allActiveZones_.end())
+        {
+            auto resultValue = *result;
+            allActiveZones_.erase(result);
+            allActiveZones_.insert(allActiveZones_.begin(), resultValue);
+        }
+    }
+    
+    void AddZoneFilename(string name, string filename)
+    {
+        zoneFilenames_[name] = filename;
+    }
+    
+    void AddZone(Zone* zone)
+    {
+        zonesByName_[zone->GetName()] = zone;
+        zones_.push_back(zone);
+    }
+       
+    map<int, map<int, int>> focusedFXDictionary;
+    
+    void CheckFocusedFXState()
+    {
+        int trackNumber = 0;
+        int itemNumber = 0;
+        int fxIndex = 0;
+        
+        int retval = DAW::GetFocusedFX2(&trackNumber, &itemNumber, &fxIndex);
+        
+        if((retval & 1) && (fxIndex > -1))
+        {
+            int lastRetval = -1;
+
+            if(focusedFXDictionary.count(trackNumber) > 0 && focusedFXDictionary[trackNumber].count(fxIndex) > 0)
+                lastRetval = focusedFXDictionary[trackNumber][fxIndex];
+            
+            if(lastRetval != retval)
+            {
+                if(retval == 1)
+                    MapFocusedFXToWidgets();
+                
+                else if(retval & 4)
+                    UnmapFocusedFXFromWidgets();
+                
+                if(focusedFXDictionary[trackNumber].count(trackNumber) < 1)
+                    focusedFXDictionary[trackNumber] = map<int, int>();
+                                   
+                focusedFXDictionary[trackNumber][fxIndex] = retval;;
+            }
+        }
+    }
+    
+    virtual void RequestUpdate()
+    {
+        CheckFocusedFXState();
+        
+        vector<Widget*> usedWidgets;
+
+        for(auto activeZones : allActiveZones_)
+            for(auto zone : *activeZones)
+                zone->RequestUpdate(usedWidgets);
+        
+        if(homeZone_ != nullptr)
+            homeZone_->RequestUpdate(usedWidgets);
+        
+        for(auto widget : widgets_)
+        {
+            auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
+            
+            if (it == usedWidgets.end() )
+                widget->Clear();
+        }
+    }
+
+    
+    
+    
+    
+    virtual void ForceClearAllWidgets()
+    {
+        for(auto widget : widgets_)
+            widget->ForceClear();
+    }
+    
+    void ClearCache()
+    {
+        for(auto widget : widgets_)
+        {
+            widget->UpdateValue(0.0);
+            widget->UpdateValue(0, 0.0);
+            widget->UpdateValue("");
+            widget->ClearCache();
+        }
+    }
+    
+    void AddWidget(Widget* widget)
+    {
+        widgets_.push_back(widget);
+        widgetsByName_[widget->GetName()] = widget;
+    }
+
     Widget* GetWidgetByName(string name)
     {
         if(widgetsByName_.count(name) > 0)
@@ -1194,17 +1369,25 @@ public:
             return nullptr;
     }
     
-    
-    void AddZone(Zone* zone)
+    void OnPageEnter()
     {
-        zonesByName_[zone->GetName()] = zone;
-        zones_.push_back(zone);
+        if(widgetsByName_.count("OnPageEnter") > 0)
+            widgetsByName_["OnPageEnter"]->QueueAction(1.0);
     }
     
-    void AddZoneFilename(string name, string filename)
+    void OnPageLeave()
     {
-        zoneFilenames_[name] = filename;
+        if(widgetsByName_.count("OnPageLeave") > 0)
+            widgetsByName_["OnPageLeave"]->QueueAction(1.0);
     }
+    
+    void OnInitialization()
+    {
+        if(widgetsByName_.count("OnInitialization") > 0)
+            widgetsByName_["OnInitialization"]->QueueAction(1.0);
+    }
+
+
     
     void DoAction(Widget* widget, double value)
     {
@@ -1225,6 +1408,8 @@ public:
     {
 
     }
+    
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1287,7 +1472,6 @@ protected:
     string const name_;
     ZoneManager* const zoneManager_;
     
-    string const zoneFolder_ = "";
     int const numChannels_ = 0;
     int const numSends_ = 0;
     int const numFXSlots_ = 0;
@@ -1296,10 +1480,12 @@ protected:
     
     
     
+    
+    
+    string const zoneFolder_ = "";
+    
     ZoneOld* homeZone_ = nullptr;
-    
-
-    
+       
     vector<ZoneOld*> activeFocusedFXZones_;
     vector<ZoneOld*> activeSelectedTrackFXZones_;
     vector<ZoneOld*> activeSelectedTrackFXMenuFXZones_;
@@ -1347,14 +1533,23 @@ protected:
     bool shouldReceiveMapTrackReceivesSlot_ = false;
     bool shouldBroadcastMapTrackFXMenusSlot_ = false;
     bool shouldReceiveMapTrackFXMenusSlot_ = false;
+    
+    
+    
 
     map<int, Navigator*> navigators_;
     
     vector<Widget*> widgets_;
     map<string, Widget*> widgetsByName_;
+    
+    
+    
 
     virtual void SurfaceOutMonitor(Widget* widget, string address, string value);
 
+    
+    
+    
     void InitZones(string zoneFolder);
 
     map<string, string> zoneFilenames_;
@@ -1368,7 +1563,7 @@ protected:
     void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<ZoneOld*> *activeZones);
     
     void GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value);
-    
+
     virtual void InitHardwiredWidgets()
     {
         // Add the "hardwired" widgets
@@ -1408,6 +1603,9 @@ public:
     int GetNumReceiveSlots() { return numSends_; }
     int GetNumFXSlots() { return numFXSlots_; }
     
+    
+    
+    
     void MapSelectedTrackSendsToWidgets();
     void MapSelectedTrackReceivesToWidgets();
     void MapSelectedTrackFXToWidgets();
@@ -1434,6 +1632,10 @@ public:
     
     void MapSelectedTrackFXMenuSlotToWidgets(int slot);
 
+    
+    
+    
+    
     void TrackFXListChanged();
     
     void OnTrackSelection();
@@ -1442,21 +1644,39 @@ public:
 
     ZoneOld* GetDefaultZone() { return homeZone_; }
 
+    
+    
     virtual void SetHasMCUMeters(int displayType) {}
+    
+    
+    
     
     void LoadZone(string zoneName);
     ZoneOld* GetZone(string zoneName);
     void GoZone(string zoneName, double value);
     void GoSubZone(ZoneOld* enclosingZone, string zoneName, double value);
+    
+    
+    
     virtual void LoadingZone(string zoneName) {}
     virtual void HandleExternalInput() {}
 
+    
+    
     virtual void UpdateTimeDisplay() {}
 
     virtual bool GetIsEuConFXAreaFocused() { return false; }
 
+    
+    
     virtual void ForceRefreshTimeDisplay() {}
    
+    
+    
+    
+    
+    
+    
     virtual void SetBroadcastGoZone() { shouldBroadcastGoZone_ = true; }
     virtual bool GetBroadcastGoZone() { return shouldBroadcastGoZone_; }
     
@@ -1578,6 +1798,8 @@ public:
         }
     }
     
+    
+    
     virtual void RequestUpdate()
     {
         CheckFocusedFXState();
@@ -1600,6 +1822,10 @@ public:
         }
     }
 
+    
+    
+    
+    
     virtual void ForceClearAllWidgets()
     {
         for(auto widget : widgets_)
