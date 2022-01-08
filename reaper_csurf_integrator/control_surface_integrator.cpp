@@ -242,7 +242,7 @@ static void GetWidgetNameAndProperties(string line, string &widgetName, string &
     
     modifier = modifierSlots[0] + modifierSlots[1] + modifierSlots[2] + modifierSlots[3] + modifierSlots[4];
 }
-
+/*
 static void PreProcessZoneFileOld(string filePath, ControlSurface* surface)
 {
     string zoneName = "";
@@ -287,7 +287,7 @@ static void PreProcessZoneFileOld(string filePath, ControlSurface* surface)
         DAW::ShowConsoleMsg(buffer);
     }
 }
-
+*/
 static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 {
     string zoneName = "";
@@ -332,7 +332,7 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
         DAW::ShowConsoleMsg(buffer);
     }
 }
-
+/*
 static void ProcessZoneFileOld(string filePath, ControlSurface* surface)
 {
     vector<string> includedZones;
@@ -541,17 +541,6 @@ static void ProcessZoneFileOld(string filePath, ControlSurface* surface)
                                 for(auto action : actions)
                                 {
                                     
-                                    /*
-                                    
-                                    #ifdef _WIN32
-                                    // GAW -- This hack is only needed for Mac OS
-                                    #else
-                                    // GAW HACK to ensure only SubZone1, SubZone2, SubZone3, etc. get used to trigger GoSubZone
-                                    if(action->actionName == "GoSubZone" && widget->GetName().find("SubZone") == string::npos)
-                                        continue;
-                                    #endif
-                                    
-                                    */
                                     
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
                                     vector<string> memberParams;
@@ -657,7 +646,7 @@ static void ProcessZoneFileOld(string filePath, ControlSurface* surface)
         DAW::ShowConsoleMsg(buffer);
     }
 }
-
+*/
 static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
 {
     vector<string> includedZones;
@@ -866,17 +855,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                 for(auto action : actions)
                                 {
                                     
-                                    /*
-                                    
-                                    #ifdef _WIN32
-                                    // GAW -- This hack is only needed for Mac OS
-                                    #else
-                                    // GAW HACK to ensure only SubZone1, SubZone2, SubZone3, etc. get used to trigger GoSubZone
-                                    if(action->actionName == "GoSubZone" && widget->GetName().find("SubZone") == string::npos)
-                                        continue;
-                                    #endif
-                                    
-                                    */
+
                                     
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
                                     vector<string> memberParams;
@@ -2587,7 +2566,7 @@ int ZoneOld::GetSlotIndex()
 
 void ZoneOld::RequestUpdateWidget(Widget* widget)
 {
-    widget->HandleQueuedActions(this);
+    //widget->HandleQueuedActions(this);
       
     for(auto &context : GetActionContexts(widget))
         context.RunDeferredActions();
@@ -2697,6 +2676,10 @@ ZoneManager* Widget::GetZoneManager()
     return surface_->GetZoneManager();
 }
 
+
+
+
+/*
 void Widget::HandleQueuedActions(ZoneOld* zone)
 {
     vector<double> queuedActionValues;
@@ -2773,6 +2756,12 @@ void Widget::QueueTouch(double value)
     queuedTouchActionValues_.push_back(value);
     WDL_mutex.Leave();
 }
+*/
+
+
+
+
+
 
 void Widget::SetProperties(vector<vector<string>> properties)
 {
@@ -3177,13 +3166,39 @@ int ZoneManager::GetNumFXSlots() { return surface_->GetNumFXSlots(); }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ControlSurface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-ControlSurface::ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), zoneFolder_(zoneFolder), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset))
+void ControlSurface::SurfaceOutMonitor(Widget* widget, string address, string value)
 {
-    for(int i = 0; i < numChannels; i++)
-        navigators_[i] = GetPage()->GetNavigatorForChannel(i + channelOffset);
-   
-    LoadDefaultZoneOrder();
+    if(TheManager->GetSurfaceOutDisplay())
+        DAW::ShowConsoleMsg(("OUT->" + name_ + " " + address + " " + value + "\n").c_str());
 }
+
+void ControlSurface::TrackFXListChanged()
+{
+    OnTrackSelection();
+}
+
+void ControlSurface::OnTrackSelection()
+{
+    if(widgetsByName_.count("OnTrackSelection") > 0)
+    {
+        if(page_->GetSelectedTrack())
+            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 1.0);
+        else
+            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 0.0);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void ControlSurface::InitZones(string zoneFolder)
 {
@@ -3193,7 +3208,7 @@ void ControlSurface::InitZones(string zoneFolder)
         listZoneFiles(DAW::GetResourcePath() + string("/CSI/Zones/") + zoneFolder + "/", zoneFilesToProcess); // recursively find all the .zon files, starting at zoneFolder
         
         for(auto zoneFilename : zoneFilesToProcess)
-            PreProcessZoneFileOld(zoneFilename, this);
+            PreProcessZoneFile(zoneFilename, zoneManager_);
     }
     catch (exception &e)
     {
@@ -3203,12 +3218,14 @@ void ControlSurface::InitZones(string zoneFolder)
     }
 }
 
-void ControlSurface::SurfaceOutMonitor(Widget* widget, string address, string value)
-{
-    if(TheManager->GetSurfaceOutDisplay())
-        DAW::ShowConsoleMsg(("OUT->" + name_ + " " + address + " " + value + "\n").c_str());
-}
 
+
+
+
+
+
+
+/*
 Navigator* ControlSurface::GetNavigatorForChannel(int channelNum)
 {
     if(channelNum < 0)
@@ -3219,6 +3236,126 @@ Navigator* ControlSurface::GetNavigatorForChannel(int channelNum)
     else
         return nullptr;
 }
+*/
+
+
+
+
+void ControlSurface::LoadZone(string zoneName)
+{
+    if(zonesByName_.count(zoneName) == 0)
+    {
+        if(zoneFilenames_.count(zoneName) > 0)
+            ProcessZoneFile(zoneFilenames_[zoneName], zoneManager_);
+    }
+}
+
+ZoneOld* ControlSurface::GetZone(string zoneName)
+{
+    if(zonesByName_.count(zoneName) > 0)
+        return zonesByName_[zoneName];
+
+    if(zoneFilenames_.count(zoneName) > 0)
+    {
+        LoadZone(zoneName);
+        
+        if(zonesByName_.count(zoneName) > 0)
+            return zonesByName_[zoneName];
+    }
+    else if(isdigit(zoneName.back())) // e.g Channel14 -- the base Zone is Channel
+    {
+        string baseName = zoneName;
+        
+        while(isdigit(baseName.back()))
+             baseName = baseName.substr(0, baseName.length() - 1);
+        
+        if(zoneFilenames_.count(baseName) > 0)
+        {
+            LoadZone(baseName);
+            
+            if(zonesByName_.count(zoneName) > 0)
+                return zonesByName_[zoneName];
+        }
+    }
+
+    return nullptr;
+}
+
+void ControlSurface::GoSubZone(ZoneOld* enclosingZone, string zoneName, double value)
+{
+    for(auto activeZones : allActiveZones_)
+    {
+        for(auto zone : *activeZones)
+        {
+            if(zone == enclosingZone)
+            {
+                GoZone(activeZones, zoneName, value);
+                if(zonesByName_.count(zoneName) > 0)
+                    zonesByName_[zoneName]->SetSlotIndex(enclosingZone->GetSlotIndex());
+            }
+        }
+    }
+}
+
+void ControlSurface::GoZone(string zoneName, double value)
+{
+    // GAW TBD -- Use Zone name to determine in which activeZoneList to put this activated Zone
+    
+    GoZone(&activeZones_, zoneName, value);
+}
+
+void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value)
+{
+    if(zoneName == "Home")
+    {
+        activeZones_.clear();
+        activeSelectedTrackSendsZones_.clear();
+        activeSelectedTrackReceivesZones_.clear();
+        activeSelectedTrackFXMenuZones_.clear();
+        activeSelectedTrackFXMenuZones_.clear();
+        activeSelectedTrackFXMenuFXZones_.clear();
+        activeFocusedFXZones_.clear();
+        
+        //for(auto widget : widgets_)
+            //widget->ClearAllQueues();
+        
+        LoadDefaultZoneOrder();
+        
+        if(homeZone_ != nullptr)
+            homeZone_->Activate();
+    }
+    else
+    {
+        GetZone(zoneName);
+
+        if(zonesByName_.count(zoneName) > 0)
+        {
+            ZoneOld* zone = zonesByName_[zoneName];
+            
+            if(value == 1) // adding
+            {
+                zone->Activate(activeZones);
+            }
+            else // removing
+            {
+                zone->Deactivate();
+                
+                auto it = find(activeZones->begin(),activeZones->end(), zone);
+                
+                if ( it != activeZones->end() )
+                    activeZones->erase(it);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 void ControlSurface::UnmapTrackSendsSlotFromWidgets()
 {
@@ -3527,136 +3664,6 @@ void ControlSurface::MapFocusedFXToWidgets()
             {
                 zone->SetSlotIndex(fxSlot);
                 zone->Activate(&activeFocusedFXZones_);
-            }
-        }
-    }
-}
-
-void ControlSurface::TrackFXListChanged()
-{
-    OnTrackSelection();
-}
-
-void ControlSurface::OnTrackSelection()
-{
-    if(widgetsByName_.count("OnTrackSelection") > 0)
-    {
-        if(page_->GetSelectedTrack())
-        {
-            widgetsByName_["OnTrackSelection"]->QueueAction(1.0);
-            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 1.0);
-        }
-        else
-        {
-            widgetsByName_["OnTrackSelection"]->QueueAction(0.0);
-            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 0.0);
-        }
-    }
-}
-
-void ControlSurface::LoadZone(string zoneName)
-{
-    if(zonesByName_.count(zoneName) == 0)
-    {
-        if(zoneFilenames_.count(zoneName) > 0)
-            ProcessZoneFileOld(zoneFilenames_[zoneName], this);
-    }
-}
-
-ZoneOld* ControlSurface::GetZone(string zoneName)
-{
-    if(zonesByName_.count(zoneName) > 0)
-        return zonesByName_[zoneName];
-
-    if(zoneFilenames_.count(zoneName) > 0)
-    {
-        LoadZone(zoneName);
-        
-        if(zonesByName_.count(zoneName) > 0)
-            return zonesByName_[zoneName];
-    }
-    else if(isdigit(zoneName.back())) // e.g Channel14 -- the base Zone is Channel
-    {
-        string baseName = zoneName;
-        
-        while(isdigit(baseName.back()))
-             baseName = baseName.substr(0, baseName.length() - 1);
-        
-        if(zoneFilenames_.count(baseName) > 0)
-        {
-            LoadZone(baseName);
-            
-            if(zonesByName_.count(zoneName) > 0)
-                return zonesByName_[zoneName];
-        }
-    }
-
-    return nullptr;
-}
-
-void ControlSurface::GoSubZone(ZoneOld* enclosingZone, string zoneName, double value)
-{
-    for(auto activeZones : allActiveZones_)
-    {
-        for(auto zone : *activeZones)
-        {
-            if(zone == enclosingZone)
-            {
-                GoZone(activeZones, zoneName, value);
-                if(zonesByName_.count(zoneName) > 0)
-                    zonesByName_[zoneName]->SetSlotIndex(enclosingZone->GetSlotIndex());
-            }
-        }
-    }
-}
-
-void ControlSurface::GoZone(string zoneName, double value)
-{
-    // GAW TBD -- Use Zone name to determine in which activeZoneList to put this activated Zone
-    
-    GoZone(&activeZones_, zoneName, value);
-}
-
-void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value)
-{
-    if(zoneName == "Home")
-    {
-        activeZones_.clear();
-        activeSelectedTrackSendsZones_.clear();
-        activeSelectedTrackReceivesZones_.clear();
-        activeSelectedTrackFXMenuZones_.clear();
-        activeSelectedTrackFXMenuZones_.clear();
-        activeSelectedTrackFXMenuFXZones_.clear();
-        activeFocusedFXZones_.clear();
-        
-        for(auto widget : widgets_)
-            widget->ClearAllQueues();
-        
-        LoadDefaultZoneOrder();
-        
-        if(homeZone_ != nullptr)
-            homeZone_->Activate();
-    }
-    else
-    {
-        GetZone(zoneName);
-
-        if(zonesByName_.count(zoneName) > 0)
-        {
-            ZoneOld* zone = zonesByName_[zoneName];
-            
-            if(value == 1) // adding
-            {
-                zone->Activate(activeZones);
-            }
-            else // removing
-            {
-                zone->Deactivate();
-                
-                auto it = find(activeZones->begin(),activeZones->end(), zone);
-                
-                if ( it != activeZones->end() )
-                    activeZones->erase(it);
             }
         }
     }

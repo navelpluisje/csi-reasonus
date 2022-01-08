@@ -944,6 +944,9 @@ public:
 class Widget
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
+    
+    /*
+    
     struct QueuedAcceleratedRelativeAction
     {
         QueuedAcceleratedRelativeAction(int idx, double val) : index(idx), delta(val) {}
@@ -951,6 +954,9 @@ class Widget
         double delta = 0.0;
         int index = 0;
     };
+    
+    */
+    
     
 private:
     ControlSurface* const surface_;
@@ -960,11 +966,18 @@ private:
     bool isModifier_ = false;
     bool isToggled_ = false;
     
+    
+    /*
+    
     vector<double> queuedActionValues_;
     vector<double> queuedRelativeActionValues_;
     vector<QueuedAcceleratedRelativeAction> queuedAcceleratedRelativeActionValues_;
     vector<double> queuedTouchActionValues_;
      
+    
+    */
+    
+    
     void LogInput(double value);
    
 public:
@@ -992,17 +1005,29 @@ public:
     void Clear();
     void ForceClear();
 
+    void GetFormattedFXParamValue(char *buffer, int bufferSize)
+    {
+        //currentWidgetContext_.GetFormattedFXParamValue(buffer, bufferSize);
+    }
+    
+    void AddFeedbackProcessor(FeedbackProcessor* feedbackProcessor)
+    {
+        feedbackProcessors_.push_back(feedbackProcessor);
+    }
+    
+    
+    
+    
+   /*
+    
+    
     void HandleQueuedActions(ZoneOld* zone);
     void QueueAction(double value);
     void QueueRelativeAction(double delta);
     void QueueRelativeAction(int accelerationIndex, double delta);
     void QueueTouch(double value);
 
-    void GetFormattedFXParamValue(char *buffer, int bufferSize)
-    {
-        //currentWidgetContext_.GetFormattedFXParamValue(buffer, bufferSize);
-    }
-
+    
     void ClearAllQueues()
     {
         queuedActionValues_.clear();
@@ -1011,10 +1036,10 @@ public:
         queuedTouchActionValues_.clear();
     }
     
-    void AddFeedbackProcessor(FeedbackProcessor* feedbackProcessor)
-    {
-        feedbackProcessors_.push_back(feedbackProcessor);
-    }
+    */
+    
+    
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1365,7 +1390,7 @@ public:
     {
         widget_->GetZoneManager()->DoAction(widget_, value);
         
-        widget_->QueueAction(value);
+        //widget_->QueueAction(value);
     }
 };
 
@@ -1381,7 +1406,7 @@ public:
     {
         widget_->GetZoneManager()->DoTouch(widget_, value);
         
-        widget_->QueueTouch(value);
+        //widget_->QueueTouch(value);
     }
 };
 
@@ -1402,8 +1427,8 @@ class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
-
+    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), zoneFolder_(zoneFolder), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
+    
     CSurfIntegrator* const CSurfIntegrator_ ;
     Page* const page_;
     string const name_;
@@ -1471,10 +1496,7 @@ protected:
     bool shouldBroadcastMapTrackFXMenusSlot_ = false;
     bool shouldReceiveMapTrackFXMenusSlot_ = false;
     
-    
-    
 
-    map<int, Navigator*> navigators_;
     
     vector<Widget*> widgets_;
     map<string, Widget*> widgetsByName_;
@@ -1577,7 +1599,7 @@ public:
     
     void OnTrackSelection();
 
-    Navigator* GetNavigatorForChannel(int channelNum);
+    //Navigator* GetNavigatorForChannel(int channelNum);
 
     ZoneOld* GetDefaultZone() { return homeZone_; }
 
@@ -1829,19 +1851,19 @@ public:
     void OnPageEnter()
     {
         if(widgetsByName_.count("OnPageEnter") > 0)
-            widgetsByName_["OnPageEnter"]->QueueAction(1.0);
+            zoneManager_->DoAction(widgetsByName_["OnPageEnter"], 1.0);
     }
     
     void OnPageLeave()
     {
         if(widgetsByName_.count("OnPageLeave") > 0)
-            widgetsByName_["OnPageLeave"]->QueueAction(1.0);
+            zoneManager_->DoAction(widgetsByName_["OnPageLeave"], 1.0);
     }
     
     void OnInitialization()
     {
         if(widgetsByName_.count("OnInitialization") > 0)
-            widgetsByName_["OnInitialization"]->QueueAction(1.0);
+            zoneManager_->DoAction(widgetsByName_["OnInitialization"], 1.0);
     }
 };
 
