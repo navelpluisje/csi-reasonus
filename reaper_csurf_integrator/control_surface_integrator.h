@@ -1183,7 +1183,7 @@ private:
         allActiveZones_.push_back(&activeSelectedTrackSendsZones_);
         allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
         allActiveZones_.push_back(&activeZones_);
-    }    
+    }
     
     map<int, Navigator*> navigators_;
  
@@ -1205,7 +1205,7 @@ public:
     virtual ~ZoneManager() {}
     
     
-    void Initialize(string templateFilename, string zoneFolder);
+    void Initialize();
     
     void MapSelectedTrackFXToWidgets();
     
@@ -1325,6 +1325,9 @@ public:
    
     void DoAction(Widget* widget, double value)
     {
+        
+        if(homeZone_ != nullptr)
+            homeZone_->DoAction(widget, value);
     
     }
     
@@ -1757,14 +1760,7 @@ public:
         //*/
         
         
-        /*
-        for(auto widget : widgets_)
-        {
-            auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
-            
-            if (it == usedWidgets.end() )
-                widget->Clear();
-        }*/
+
         
 
         
@@ -1773,6 +1769,18 @@ public:
         
         
         
+        
+        
+        
+        
+        /*
+        for(auto widget : widgets_)
+        {
+            auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
+            
+            if (it == usedWidgets.end() )
+                widget->Clear();
+        }*/
     }
 
     

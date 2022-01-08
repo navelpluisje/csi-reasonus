@@ -2940,18 +2940,11 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
 }
 
 
-void ZoneManager::Initialize(string templateFilename, string zoneFolder)
+void ZoneManager::Initialize()
 {
-    //ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/Midi/" + templateFilename, this);
-    //InitHardwiredWidgets();
-    
     InitZones();
     
     MakeHomeDefault();
-
-    
-    //ForceClearAllWidgets();
-    surface_->GetPage()->ForceRefreshTimeDisplay();
 }
 
 
@@ -3549,9 +3542,15 @@ void ControlSurface::OnTrackSelection()
     if(widgetsByName_.count("OnTrackSelection") > 0)
     {
         if(page_->GetSelectedTrack())
+        {
             widgetsByName_["OnTrackSelection"]->QueueAction(1.0);
+            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 1.0);
+        }
         else
+        {
             widgetsByName_["OnTrackSelection"]->QueueAction(0.0);
+            zoneManager_->DoAction(widgetsByName_["OnTrackSelection"], 0.0);
+        }
     }
 }
 
@@ -3672,15 +3671,20 @@ void Midi_ControlSurface::Initialize(string templateFilename, string zoneFolder)
     InitHardwiredWidgets();
     InitializeMeters();
     
-    zoneManager_->InitZones();
-    InitZones(zoneFolder);
-    
-    
-    zoneManager_->MakeHomeDefault();
-    MakeHomeDefault();
 
     
+    
+    InitZones(zoneFolder);
+
+    MakeHomeDefault();
+    
     ForceClearAllWidgets();
+
+    
+    
+    zoneManager_->Initialize();
+    
+    
     GetPage()->ForceRefreshTimeDisplay();
 }
 
@@ -3759,15 +3763,20 @@ void OSC_ControlSurface::Initialize(string templateFilename, string zoneFolder)
     ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/OSC/" + templateFilename, this);
     InitHardwiredWidgets();
     
-    zoneManager_->InitZones();
+    
+    
     InitZones(zoneFolder);
     
-    
-    zoneManager_->MakeHomeDefault();
     MakeHomeDefault();
-    
-    
+   
     ForceClearAllWidgets();
+    
+    
+    
+    
+    zoneManager_->Initialize();
+    
+    
     GetPage()->ForceRefreshTimeDisplay();
 }
 
