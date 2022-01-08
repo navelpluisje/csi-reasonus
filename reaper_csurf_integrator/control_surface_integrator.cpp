@@ -1405,7 +1405,7 @@ void Manager::InitActionsDictionary()
     actions_["PageNameDisplay"] =                   new PageNameDisplay();
     actions_["GoZone"] =                            new GoZone();
     actions_["GoSubZone"] =                         new GoSubZone();
-    
+    /*
     actions_["SetBroadcastGoZone"] =                new SetBroadcastGoZone();
     actions_["SetReceiveGoZone"] =                  new SetReceiveGoZone();
     actions_["SetBroadcastGoFXSlot"] =              new SetBroadcastGoFXSlot();
@@ -1424,7 +1424,7 @@ void Manager::InitActionsDictionary()
     actions_["SetReceiveMapTrackReceivesSlotToWidgets"] =       new SetReceiveMapTrackReceivesSlotToWidgets();
     actions_["SetBroadcastMapTrackFXMenusSlotToWidgets"] =      new SetBroadcastMapTrackFXMenusSlotToWidgets();
     actions_["SetReceiveMapTrackFXMenusSlotToWidgets"] =        new SetReceiveMapTrackFXMenusSlotToWidgets();
-    
+    */
     actions_["MapSelectedTrackSendsToWidgets"] =        new MapSelectedTrackSendsToWidgets();
     actions_["MapSelectedTrackReceivesToWidgets"] =     new MapSelectedTrackReceivesToWidgets();
     actions_["MapSelectedTrackFXToWidgets"] =           new MapSelectedTrackFXToWidgets();
