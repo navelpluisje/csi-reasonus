@@ -1427,7 +1427,7 @@ class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), zoneFolder_(zoneFolder), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
+    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
     
     CSurfIntegrator* const CSurfIntegrator_ ;
     Page* const page_;
@@ -1439,13 +1439,11 @@ protected:
     int const numFXSlots_ = 0;
     
     map<string, CSIMessageGenerator*> CSIMessageGeneratorsByMessage_;
+
     
     
     
-    
-    
-    string const zoneFolder_ = "";
-    
+    /*
     ZoneOld* homeZone_ = nullptr;
        
     vector<ZoneOld*> activeFocusedFXZones_;
@@ -1459,7 +1457,7 @@ protected:
     vector<ZoneOld*> activeZones_;
 
     vector<vector<ZoneOld*> *> allActiveZones_;
-    
+
     void LoadDefaultZoneOrder()
     {
         allActiveZones_.clear();
@@ -1472,7 +1470,7 @@ protected:
         allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
         allActiveZones_.push_back(&activeZones_);
     }
-    
+    */
 
     
     bool shouldBroadcastGoZone_ = false;
@@ -1509,7 +1507,6 @@ protected:
     
     
     
-    void InitZones(string zoneFolder);
 
     map<string, string> zoneFilenames_;
     map<string, ZoneOld*> zonesByName_;
@@ -1601,7 +1598,7 @@ public:
 
     //Navigator* GetNavigatorForChannel(int channelNum);
 
-    ZoneOld* GetDefaultZone() { return homeZone_; }
+    //ZoneOld* GetDefaultZone() { return homeZone_; }
 
     
     
@@ -1690,14 +1687,8 @@ public:
     virtual void SetReceiveMapTrackFXMenusSlot() { shouldReceiveMapTrackFXMenusSlot_ = true; }
     virtual bool GetReceiveMapTrackFXMenusSlot() { return shouldReceiveMapTrackFXMenusSlot_; }
    
-    void MakeHomeDefault()
-    {
-        homeZone_ = GetZone("Home");
 
-        if(homeZone_ != nullptr)
-            homeZone_->Activate();
-    }
-        
+   /*
     void MoveToFirst(vector<ZoneOld*> *zones)
     {
         auto result = find(allActiveZones_.begin(), allActiveZones_.end(), zones);
@@ -1756,7 +1747,7 @@ public:
             }
         }
     }
-    
+    */
     
     
     
@@ -1767,7 +1758,7 @@ public:
     {
         
         
-        //*
+        /*
         CheckFocusedFXState();
         
         vector<Widget*> usedWidgets;
@@ -1779,7 +1770,7 @@ public:
         if(homeZone_ != nullptr)
             homeZone_->RequestUpdate(usedWidgets);
         
-        //*/
+        */
         
         
 
@@ -1967,12 +1958,6 @@ public:
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, double value);
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, int value);
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, string value);
-    
-    virtual void ForceClearAllWidgets() override
-    {
-        LoadingZone("Home");
-        ControlSurface::ForceClearAllWidgets();
-    }
     
     virtual void HandleExternalInput() override
     {

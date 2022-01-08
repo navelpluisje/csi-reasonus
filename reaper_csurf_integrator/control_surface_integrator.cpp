@@ -2511,7 +2511,7 @@ void ZoneOld::Activate()
 void ZoneOld::Activate(vector<ZoneOld*> *activeZones)
 {
     Activate();
-    
+    /*
     auto it = find(activeZones->begin(), activeZones->end(), this);
     
     if ( it != activeZones->end() )
@@ -2520,6 +2520,7 @@ void ZoneOld::Activate(vector<ZoneOld*> *activeZones)
     activeZones->insert(activeZones->begin(), this);
     
     surface_->MoveToFirst(activeZones);
+     */
 }
 
 void ZoneOld::Deactivate()
@@ -3200,24 +3201,6 @@ void ControlSurface::OnTrackSelection()
 
 
 
-void ControlSurface::InitZones(string zoneFolder)
-{
-    try
-    {
-        vector<string> zoneFilesToProcess;
-        listZoneFiles(DAW::GetResourcePath() + string("/CSI/Zones/") + zoneFolder + "/", zoneFilesToProcess); // recursively find all the .zon files, starting at zoneFolder
-        
-        for(auto zoneFilename : zoneFilesToProcess)
-            PreProcessZoneFile(zoneFilename, zoneManager_);
-    }
-    catch (exception &e)
-    {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble parsing Zone folders\n");
-        DAW::ShowConsoleMsg(buffer);
-    }
-}
-
 
 
 
@@ -3243,11 +3226,13 @@ Navigator* ControlSurface::GetNavigatorForChannel(int channelNum)
 
 void ControlSurface::LoadZone(string zoneName)
 {
+    /*
     if(zonesByName_.count(zoneName) == 0)
     {
         if(zoneFilenames_.count(zoneName) > 0)
             ProcessZoneFile(zoneFilenames_[zoneName], zoneManager_);
     }
+     */
 }
 
 ZoneOld* ControlSurface::GetZone(string zoneName)
@@ -3283,6 +3268,7 @@ ZoneOld* ControlSurface::GetZone(string zoneName)
 
 void ControlSurface::GoSubZone(ZoneOld* enclosingZone, string zoneName, double value)
 {
+    /*
     for(auto activeZones : allActiveZones_)
     {
         for(auto zone : *activeZones)
@@ -3295,17 +3281,21 @@ void ControlSurface::GoSubZone(ZoneOld* enclosingZone, string zoneName, double v
             }
         }
     }
+     */
 }
 
 void ControlSurface::GoZone(string zoneName, double value)
 {
+    /*
     // GAW TBD -- Use Zone name to determine in which activeZoneList to put this activated Zone
     
     GoZone(&activeZones_, zoneName, value);
+     */
 }
 
 void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value)
 {
+    /*
     if(zoneName == "Home")
     {
         activeZones_.clear();
@@ -3315,9 +3305,9 @@ void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, doub
         activeSelectedTrackFXMenuZones_.clear();
         activeSelectedTrackFXMenuFXZones_.clear();
         activeFocusedFXZones_.clear();
-        
-        //for(auto widget : widgets_)
-            //widget->ClearAllQueues();
+
+        for(auto widget : widgets_)
+            widget->ClearAllQueues();
         
         LoadDefaultZoneOrder();
         
@@ -3347,6 +3337,8 @@ void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, doub
             }
         }
     }
+    
+    */
 }
 
 
@@ -3359,26 +3351,31 @@ void ControlSurface::GoZone(vector<ZoneOld*> *activeZones, string zoneName, doub
 
 void ControlSurface::UnmapTrackSendsSlotFromWidgets()
 {
+    /*
     for(int i = 0; i < numChannels_; i ++)
     {
         string trackNum = to_string(i + 1);
         
         GoZone(&activeSelectedTrackSendsZones_, "TrackSendSlot" + trackNum, 0);
     }
+    */
 }
 
 void ControlSurface::MapTrackSendsSlotToWidgets()
 {
+    /*
     for(int i = 0; i < numChannels_; i ++)
     {
         string trackNum = to_string(i + 1);
         
         GoZone(&activeSelectedTrackSendsZones_, "TrackSendSlot" + trackNum, 1);
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackSendsSlotFromWidgets()
 {
+    /*
     for(auto zone : activeSelectedTrackSendsZones_)
         zone->Deactivate();
 
@@ -3393,12 +3390,14 @@ void ControlSurface::UnmapSelectedTrackSendsSlotFromWidgets()
             string sendNum = to_string(i + 1);
             
             GoZone(&activeSelectedTrackSendsZones_, "SelectedTrackSendSlot" + sendNum, 0);
+        }
     }
-    }
+    */
 }
 
 void ControlSurface::MapSelectedTrackSendsSlotToWidgets()
 {
+    /*
     if(numSends_ == 1)
     {
         GoZone(&activeSelectedTrackSendsZones_, "SelectedTrackSendSlot", 1);
@@ -3412,46 +3411,56 @@ void ControlSurface::MapSelectedTrackSendsSlotToWidgets()
             GoZone(&activeSelectedTrackSendsZones_, "SelectedTrackSendSlot" + sendNum, 1);
         }
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackSendsFromWidgets()
 {
+    /*
     for(auto zone : activeSelectedTrackSendsZones_)
         zone->Deactivate();
 
     activeSelectedTrackSendsZones_.clear();
+    */
 }
 
 void ControlSurface::MapSelectedTrackSendsToWidgets()
 {
+    /*
     UnmapSelectedTrackSendsFromWidgets();
     
     if(MediaTrack* track = GetPage()->GetSelectedTrack())
         MapSelectedTrackItemsToWidgets(track, "SelectedTrackSend", GetNumSendSlots(), &activeSelectedTrackSendsZones_);
+    */
 }
 
 void ControlSurface::UnmapTrackReceivesSlotFromWidgets()
 {
+    /*
     for(int i = 0; i < numChannels_; i ++)
     {
         string trackNum = to_string(i + 1);
         
         GoZone(&activeSelectedTrackReceivesZones_, "TrackReceiveSlot" + trackNum, 0);
     }
+    */
 }
 
 void ControlSurface::MapTrackReceivesSlotToWidgets()
 {
+    /*
     for(int i = 0; i < numChannels_; i ++)
     {
         string trackNum = to_string(i + 1);
         
         GoZone(&activeSelectedTrackReceivesZones_, "TrackReceiveSlot" + trackNum, 1);
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackReceivesSlotFromWidgets()
 {
+    /*
     for(auto zone : activeSelectedTrackReceivesZones_)
         zone->Deactivate();
 
@@ -3468,10 +3477,12 @@ void ControlSurface::UnmapSelectedTrackReceivesSlotFromWidgets()
             GoZone(&activeSelectedTrackReceivesZones_, "SelectedTrackReceiveSlot" + receiveNum, 0);
         }
     }
+    */
 }
 
 void ControlSurface::MapSelectedTrackReceivesSlotToWidgets()
 {
+    /*
     if(numSends_ == 1)
     {
         GoZone(&activeSelectedTrackReceivesZones_, "SelectedTrackReceiveSlot", 1);
@@ -3485,43 +3496,53 @@ void ControlSurface::MapSelectedTrackReceivesSlotToWidgets()
             GoZone(&activeSelectedTrackReceivesZones_, "SelectedTrackReceiveSlot" + receiveNum, 1);
         }
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackReceivesFromWidgets()
 {
+    /*
     for(auto zone : activeSelectedTrackReceivesZones_)
         zone->Deactivate();
     activeSelectedTrackReceivesZones_.clear();
+    */
 }
 
 void ControlSurface::MapSelectedTrackReceivesToWidgets()
 {
+    /*
     UnmapSelectedTrackReceivesFromWidgets();
     
     if(MediaTrack* track = GetPage()->GetSelectedTrack())
         MapSelectedTrackItemsToWidgets(track, "SelectedTrackReceive", GetNumSendSlots(), &activeSelectedTrackReceivesZones_);
+    */
 }
 
 void ControlSurface::UnmapTrackFXMenusSlotFromWidgets()
 {
+    /*
     UnmapSelectedTrackReceivesFromWidgets();
     
     if(MediaTrack* track = GetPage()->GetSelectedTrack())
         MapSelectedTrackItemsToWidgets(track, "SelectedTrackReceive", GetNumSendSlots(), &activeSelectedTrackReceivesZones_);
+    */
 }
 
 void ControlSurface::MapTrackFXMenusSlotToWidgets()
 {
+    /*
     for(int i = 0; i < numChannels_; i ++)
     {
         string trackNum = to_string(i + 1);
         
         GoZone(&activeSelectedTrackFXMenuZones_, "TrackFXMenuSlot" + trackNum, 1);
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackFXFromMenu()
 {
+    /*
     for(auto zone : activeSelectedTrackFXMenuZones_)
         zone->Deactivate();
     activeSelectedTrackFXMenuZones_.clear();
@@ -3529,38 +3550,22 @@ void ControlSurface::UnmapSelectedTrackFXFromMenu()
     for(auto zone : activeSelectedTrackFXMenuFXZones_)
         zone->Deactivate();
     activeSelectedTrackFXMenuFXZones_.clear();
+    */
 }
 
 void ControlSurface::MapSelectedTrackFXToMenu()
 {
+    /*
     UnmapSelectedTrackFXFromMenu();
-    
-/*
-    
-#ifdef _WIN32
-// GAW -- This hack is only needed for Mac OS
-#else
-    // GAW TOTAL Hack to prevent crash
-    for(int i = 0; i < 100; i++)
-    {
-        string numStr = to_string(i + 1);
-        
-        if(Widget* widget = GetWidgetByName("SubZone" + numStr))
-        {
-            for(int i = 0; i < 10; i++)
-                widget->QueueAction(1.0);
-        }
-    }
-#endif
-*/
-    
     
     if(MediaTrack* track = GetPage()->GetSelectedTrack())
         MapSelectedTrackItemsToWidgets(track, "SelectedTrackFXMenu", GetNumFXSlots(), &activeSelectedTrackFXMenuZones_);
+    */
 }
 
 void ControlSurface::MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfSlots, vector<ZoneOld*> *activeZones)
 {
+    /*
     for(int i = 0; i < numberOfSlots; i++)
     {
         string name = baseName;
@@ -3571,13 +3576,16 @@ void ControlSurface::MapSelectedTrackItemsToWidgets(MediaTrack* track, string ba
         if(ZoneOld* zone = GetZone(name))
             zone->Activate(activeZones);
     }
+    */
 }
 
 void ControlSurface::UnmapSelectedTrackFXFromWidgets()
 {
+    /*
     for(auto zone : activeSelectedTrackFXZones_)
         zone->Deactivate();
     activeSelectedTrackFXZones_.clear();
+    */
 }
 
 void ControlSurface::MapSelectedTrackFXToWidgets()
@@ -3585,17 +3593,17 @@ void ControlSurface::MapSelectedTrackFXToWidgets()
     
 
     
-    //*
+    /*
     UnmapSelectedTrackFXFromWidgets();
     
     if(MediaTrack* selectedTrack = GetPage()->GetSelectedTrack())
         for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
             MapSelectedTrackFXSlotToWidgets(&activeSelectedTrackFXZones_, i);
-     //*/
+     */
     
     
     
-    //zoneManager_->MapSelectedTrackFXToWidgets();
+    zoneManager_->MapSelectedTrackFXToWidgets();
     
     
     
@@ -3604,15 +3612,18 @@ void ControlSurface::MapSelectedTrackFXToWidgets()
 
 void ControlSurface::MapSelectedTrackFXMenuSlotToWidgets(int fxSlot)
 {
+    /*
     for(auto zone : activeSelectedTrackFXMenuFXZones_)
         zone->Deactivate();
     activeSelectedTrackFXMenuFXZones_.clear();
     
     MapSelectedTrackFXSlotToWidgets(&activeSelectedTrackFXMenuFXZones_, fxSlot);
+    */
 }
 
 void ControlSurface::MapSelectedTrackFXSlotToWidgets(vector<ZoneOld*> *activeZones, int fxSlot)
 {
+    /*
     MediaTrack* selectedTrack = GetPage()->GetSelectedTrack();
     
     if(selectedTrack == nullptr)
@@ -3630,18 +3641,22 @@ void ControlSurface::MapSelectedTrackFXSlotToWidgets(vector<ZoneOld*> *activeZon
             zone->Activate(activeZones);
         }
     }
+    */
 }
 
 void ControlSurface::UnmapFocusedFXFromWidgets()
 {
+    /*
     for(auto zone : activeFocusedFXZones_)
         zone->Deactivate();
 
     activeFocusedFXZones_.clear();
+     */
 }
 
 void ControlSurface::MapFocusedFXToWidgets()
 {
+    /*
     UnmapFocusedFXFromWidgets();
     
     int trackNumber = 0;
@@ -3667,6 +3682,7 @@ void ControlSurface::MapFocusedFXToWidgets()
             }
         }
     }
+     */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3677,21 +3693,7 @@ void Midi_ControlSurface::Initialize(string templateFilename, string zoneFolder)
     ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/Midi/" + templateFilename, this);
     InitHardwiredWidgets();
     InitializeMeters();
-    
-
-    
-    
-    InitZones(zoneFolder);
-
-    MakeHomeDefault();
-    
-    ForceClearAllWidgets();
-
-    
-    
     zoneManager_->Initialize();
-    
-    
     GetPage()->ForceRefreshTimeDisplay();
 }
 
@@ -3769,21 +3771,7 @@ void OSC_ControlSurface::Initialize(string templateFilename, string zoneFolder)
 {
     ProcessWidgetFile(string(DAW::GetResourcePath()) + "/CSI/Surfaces/OSC/" + templateFilename, this);
     InitHardwiredWidgets();
-    
-    
-    
-    InitZones(zoneFolder);
-    
-    MakeHomeDefault();
-   
-    ForceClearAllWidgets();
-    
-    
-    
-    
     zoneManager_->Initialize();
-    
-    
     GetPage()->ForceRefreshTimeDisplay();
 }
 
