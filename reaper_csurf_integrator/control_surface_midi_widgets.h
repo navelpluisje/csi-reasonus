@@ -36,8 +36,6 @@ public:
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
     {
         widget_->GetZoneManager()->DoAction(widget_, midiMessage->IsEqualTo(press_) ? 1 : 0);
-        
-        //widget_->QueueAction(midiMessage->IsEqualTo(press_) ? 1 : 0);
     }
 };
 
@@ -61,8 +59,6 @@ public:
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
     {
         widget_->GetZoneManager()->DoTouch(widget_, midiMessage->IsEqualTo(press_) ? 1 : 0);
-        
-        //widget_->QueueTouch(midiMessage->IsEqualTo(press_) ? 1 : 0);
     }
 };
 
@@ -106,8 +102,6 @@ public:
     {
         // Doesn't matter what value was sent, just do it
         widget_->GetZoneManager()->DoAction(widget_, 1);
-        
-        //widget_->QueueAction(1);
     }
 };
 
@@ -125,8 +119,6 @@ public:
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
     {
         widget_->GetZoneManager()->DoAction(widget_, int14ToNormalized(midiMessage->midi_message[2], midiMessage->midi_message[1]));
-        
-       //widget_->QueueAction(int14ToNormalized(midiMessage->midi_message[2], midiMessage->midi_message[1]));
     }
 };
 
@@ -144,8 +136,6 @@ public:
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
     {
         widget_->GetZoneManager()->DoAction(widget_, midiMessage->midi_message[2] / 127.0);
-        
-        //widget_->QueueAction(midiMessage->midi_message[2] / 127.0);
     }
 };
 
@@ -261,17 +251,9 @@ public:
         delta = delta / 2.0;
 
         if(accelerationIndicesForIncrement_.count(val) > 0)
-        {
             widget_->GetZoneManager()->DoRelativeAction(widget_, accelerationIndicesForIncrement_[val], delta);
-            
-            //widget_->QueueRelativeAction(accelerationIndicesForIncrement_[val], delta);
-        }
         else if(accelerationIndicesForDecrement_.count(val) > 0)
-        {
             widget_->GetZoneManager()->DoRelativeAction(widget_, accelerationIndicesForDecrement_[val], delta);
-            
-            //widget_->QueueRelativeAction(accelerationIndicesForDecrement_[val], delta);
-        }
     }
 };
 
@@ -319,19 +301,9 @@ public:
         int val = midiMessage->midi_message[2];
         
         if(accelerationIndicesForIncrement_.count(val) > 0)
-        {
             widget_->GetZoneManager()->DoRelativeAction(widget_, accelerationIndicesForIncrement_[val], 0.001);
-            
-            //widget_->QueueRelativeAction(accelerationIndicesForIncrement_[val], 0.001);
-        }
-        
         else if(accelerationIndicesForDecrement_.count(val) > 0)
-        {
-            widget_->GetZoneManager()->DoRelativeAction(widget_, accelerationIndicesForDecrement_[val], -0.001);
-         
-            //widget_->QueueRelativeAction(accelerationIndicesForDecrement_[val], -0.001);
-        }
-    }
+            widget_->GetZoneManager()->DoRelativeAction(widget_, accelerationIndicesForDecrement_[val], -0.001);    }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,8 +327,6 @@ public:
         delta = delta / 2.0;
 
         widget_->GetZoneManager()->DoRelativeAction(widget_, delta);
-        
-        //widget_->QueueRelativeAction(delta);
     }
 };
 
@@ -379,8 +349,6 @@ public:
             delta = -delta;
         
         widget_->GetZoneManager()->DoRelativeAction(widget_, delta);
-        
-        //widget_->QueueRelativeAction(delta);
     }
 };
 
@@ -403,8 +371,6 @@ public:
             delta = -delta;
         
         widget_->GetZoneManager()->DoRelativeAction(widget_, delta);
-        
-        //widget_->QueueRelativeAction(delta);
     }
 };
 

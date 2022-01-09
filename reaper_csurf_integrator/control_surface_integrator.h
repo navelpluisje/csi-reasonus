@@ -1011,6 +1011,12 @@ public:
    
     void DoAction(Widget* widget, double value)
     {
+        for(auto activeZones : allActiveZones_)
+            for(auto zone : *activeZones)
+                zone->DoAction(widget, value);
+
+        
+        
         
         if(homeZone_ != nullptr)
             homeZone_->DoAction(widget, value);
