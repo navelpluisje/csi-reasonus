@@ -807,38 +807,13 @@ class ZoneManager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
-    
-    /*
-    bool shouldBroadcastGoZone_ = false;
-    bool shouldReceiveGoZone_ = false;
-    bool shouldBroadcastGoFXSlot_ = false;
-    bool shouldReceiveGoFXSlot_ = false;
-    
-    bool shouldBroadcastMapSelectedTrackSends_ = false;
-    bool shouldReceiveMapSelectedTrackSends_ = false;
-    bool shouldBroadcastMapSelectedTrackReceives_ = false;
-    bool shouldReceiveMapSelectedTrackReceives_ = false;
-    bool shouldBroadcastMapSelectedTrackFX_ = false;
-    bool shouldReceiveMapSelectedTrackFX_ = false;
-    bool shouldBroadcastMapSelectedTrackFXMenu_ = false;
-    bool shouldReceiveMapSelectedTrackFXMenu_ = false;
-    
-    bool shouldBroadcastMapTrackSendsSlot_ = false;
-    bool shouldReceiveMapTrackSendsSlot_ = false;
-    bool shouldBroadcastMapTrackReceivesSlot_ = false;
-    bool shouldReceiveMapTrackReceivesSlot_ = false;
-    bool shouldBroadcastMapTrackFXMenusSlot_ = false;
-    bool shouldReceiveMapTrackFXMenusSlot_ = false;
-    */
-    
     vector<BroadcastType> broadcast_;
     vector<BroadcastType> receiveBroadcast_;
 
-    
-    
-    
-    
-    
+    vector<MappingType> map_;
+    vector<MappingType> unmap_;
+    vector<MappingType> toggleMap_;
+
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
     
@@ -905,9 +880,39 @@ private:
                 broadcast.push_back(BroadcastType::MapTrackFXMenusSlot);
         }
     }
+       
+    void SetMap(vector<MappingType> &map, ActionContext* context)
+    {
+        for(string param : context->GetMappingTypes())
+        {
+            if(param == "TrackSendsSlot")
+                map.push_back(MappingType::TrackSendsSlot);
+            else if(param == "SelectedTrackSends")
+                map.push_back(MappingType::SelectedTrackSends);
+            else if(param == "SelectedTrackSendsSlot")
+                map.push_back(MappingType::SelectedTrackSendsSlot);
+            else if(param == "TrackReceivesSlot")
+                map.push_back(MappingType::TrackReceivesSlot);
+            else if(param == "SelectedTrackReceives")
+                map.push_back(MappingType::SelectedTrackReceives);
+            else if(param == "SelectedTrackReceivesSlot")
+                map.push_back(MappingType::SelectedTrackReceivesSlot);
+            else if(param == "FocusedFX")
+                map.push_back(MappingType::FocusedFX);
+            else if(param == "SelectedTrackFX")
+                map.push_back(MappingType::SelectedTrackFX);
+            else if(param == "SelectedTrackFXMenu")
+                map.push_back(MappingType::SelectedTrackFXMenu);
+            else if(param == "SelectedTrackFXMenuSlot")
+                map.push_back(MappingType::SelectedTrackFXMenuSlot);
+            else if(param == "TrackFXMenu")
+                map.push_back(MappingType::TrackFXMenu);
+            else if(param == "TrackFXMenusSlott")
+                map.push_back(MappingType::TrackFXMenusSlot);
+        }
+    }
     
 public:
-    
     void SetBroadcast(ActionContext* context)
     {
         SetBroadcast(broadcast_, context);
@@ -916,6 +921,27 @@ public:
     void SetReceiveBroadcast(ActionContext* context)
     {
         SetBroadcast(receiveBroadcast_, context);
+    }
+
+    void Map(ActionContext* context)
+    {
+        SetMap(map_, context);
+        // GAW TBD - now map everything in the list
+        
+        
+        MapSelectedTrackFXToWidgets(); // GAW HACK for now
+    }
+
+    void Unmap(ActionContext* context)
+    {
+        SetMap(unmap_, context);
+        // GAW TBD - now unmap everything in the list
+    }
+
+    void ToggleMap(ActionContext* context)
+    {
+        SetMap(toggleMap_, context);
+        // GAW TBD - now toggleMap everything in the list
     }
 
     void MapSelectedTrackFXToWidgets();
@@ -1107,8 +1133,6 @@ public:
     {
 
     }
-    
-
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
