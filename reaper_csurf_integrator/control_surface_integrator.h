@@ -99,10 +99,8 @@ class OSC_ControlSurface;
 class Widget;
 class TrackNavigationManager;
 class FeedbackProcessor;
-class ZoneOld;
 class Zone;
 class ZoneManager;
-class ActionContextOld;
 class ActionContext;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,12 +112,6 @@ public:
     virtual ~Action() {}
     
     virtual string GetName() { return "Action"; }
-    
-    virtual void Touch(ActionContextOld* context, double value) {}
-    virtual void RequestUpdate(ActionContextOld* context) {}
-    virtual void Do(ActionContextOld* context, double value) {}
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) { return 0.0; }
-    virtual double GetCurrentDBValue(ActionContextOld* context) { return 0.0; }
 
     virtual void Touch(ActionContext* context, double value) {}
     virtual void RequestUpdate(ActionContext* context) {}
@@ -252,225 +244,6 @@ public:
     
     virtual MediaTrack* GetTrack() override;
 };
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ActionContextOld
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-private:
-    Action* const action_ = nullptr;
-    Widget* const widget_ = nullptr;
-    ZoneOld* const zone_ = nullptr;
-    
-    Widget* associatedWidget_ = nullptr;
-    
-    string lastStringValue_ = "";
-    
-    int intParam_ = 0;
-    
-    string stringParam_ = "";
-    
-    int paramIndex_ = 0;
-    
-    string fxParamDisplayName_ = "";
-    
-    int commandId_ = 0;
-    
-    double rangeMinimum_ = 0.0;
-    double rangeMaximum_ = 1.0;
-    
-    vector<double> steppedValues_;
-    int steppedValuesIndex_ = 0;
-    
-    double deltaValue_ = 0.0;
-    vector<double> acceleratedDeltaValues_;
-    vector<int> acceleratedTickValues_;
-    int accumulatedIncTicks_ = 0;
-    int accumulatedDecTicks_ = 0;
-    
-    bool isFeedbackInverted_ = false;
-    double holdDelayAmount_ = 0.0;
-    double delayStartTime_ = 0.0;
-    double deferredValue_ = 0.0;
-    
-    bool shouldUseDisplayStyle_ = false;
-    int displayStyle_ = 0;
-    
-    bool supportsRGB_ = false;
-    vector<rgb_color> RGBValues_;
-    int currentRGBIndex_ = 0;
-    
-    bool supportsTrackColor_ = false;
-        
-    bool noFeedback_ = false;
-    
-    vector<vector<string>> properties_;
-    
-public:
-    ActionContextOld(Action* action, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties);
-
-    virtual ~ActionContextOld() {}
-    
-    Widget* GetWidget() { return widget_; }
-    ZoneOld* GetZone() { return zone_; }
-    int GetSlotIndex();
-    string GetName();
-
-    void SetAssociatedWidget(Widget* widget) { associatedWidget_ = widget; }
-    Widget* GetAssociatedWidget() { return associatedWidget_; }
-
-    int GetIntParam() { return intParam_; }
-    string GetStringParam() { return stringParam_; }
-    int GetCommandId() { return commandId_; }
-    bool GetShouldUseDisplayStyle() { return shouldUseDisplayStyle_; }
-    int GetDisplayStyle() { return displayStyle_; }
-    
-    MediaTrack* GetTrack();
-    
-    void DoRangeBoundAction(double value);
-    void DoSteppedValueAction(double value);
-    void DoAcceleratedSteppedValueAction(int accelerationIndex, double value);
-    void DoAcceleratedDeltaValueAction(int accelerationIndex, double value);
-    
-    Page* GetPage();
-    ControlSurface* GetSurface();
-    int GetParamIndex() { return paramIndex_; }
-    
-    bool GetSupportsRGB() { return supportsRGB_; }
-    
-    void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
-    void SetHoldDelayAmount(double holdDelayAmount) { holdDelayAmount_ = holdDelayAmount * 1000.0; } // holdDelayAmount is specified in seconds, holdDelayAmount_ is in milliseconds
-    
-    void DoAction(double value);
-    void DoRelativeAction(double value);
-    void DoRelativeAction(int accelerationIndex, double value);
-    
-    void RequestUpdate();
-    void RunDeferredActions();
-    void ClearWidget();
-    void UpdateWidgetValue(double value);
-    void UpdateWidgetValue(int param, double value);
-    void UpdateWidgetValue(string value);
-    void ForceWidgetValue(double value);
-    
-    void DoTouch(double value)
-    {
-        action_->Touch(this, value);
-    }
-    
-    string GetFxParamDisplayName()
-    {
-        if(fxParamDisplayName_ != "")
-            return fxParamDisplayName_;
-        else if(MediaTrack* track = GetTrack())
-        {
-            char fxParamName[BUFSZ];
-            DAW::TrackFX_GetParamName(track, GetSlotIndex(), paramIndex_, fxParamName, sizeof(fxParamName));
-            return fxParamName;
-        }
-        
-        return "";
-    }
-
-    void SetCurrentRGB(rgb_color newColor)
-    {
-        supportsRGB_ = true;
-        RGBValues_[currentRGBIndex_] = newColor;
-    }
-    
-    rgb_color GetCurrentRGB()
-    {
-        rgb_color blankColor;
-        
-        if(RGBValues_.size() > 0 && currentRGBIndex_ < RGBValues_.size())
-            return RGBValues_[currentRGBIndex_];
-        else return blankColor;
-    }
-    
-    void SetSteppedValueIndex(double value)
-    {
-        int index = 0;
-        double delta = 100000000.0;
-        
-        for(int i = 0; i < steppedValues_.size(); i++)
-            if(abs(steppedValues_[i] - value) < delta)
-            {
-                delta = abs(steppedValues_[i] - value);
-                index = i;
-            }
-        
-        steppedValuesIndex_ = index;
-    }
-
-    string GetPanValueString(double panVal)
-    {
-        bool left = false;
-        
-        if(panVal < 0)
-        {
-            left = true;
-            panVal = -panVal;
-        }
-        
-        int panIntVal = int(panVal * 100.0);
-        string trackPanValueString = "";
-        
-        if(left)
-        {
-            if(panIntVal == 100)
-                trackPanValueString += "<";
-            else if(panIntVal < 100 && panIntVal > 9)
-                trackPanValueString += "< ";
-            else
-                trackPanValueString += "<  ";
-            
-            trackPanValueString += to_string(panIntVal);
-        }
-        else
-        {
-            trackPanValueString += "   ";
-            
-            trackPanValueString += to_string(panIntVal);
-            
-            if(panIntVal == 100)
-                trackPanValueString += ">";
-            else if(panIntVal < 100 && panIntVal > 9)
-                trackPanValueString += " >";
-            else
-                trackPanValueString += "  >";
-        }
-        
-        if(panIntVal == 0)
-            trackPanValueString = "  <C>  ";
-
-        return trackPanValueString;
-    }
-    
-    string GetPanWidthValueString(double widthVal)
-    {
-        bool reversed = false;
-        
-        if(widthVal < 0)
-        {
-            reversed = true;
-            widthVal = -widthVal;
-        }
-        
-        int widthIntVal = int(widthVal * 100.0);
-        string trackPanWidthString = "";
-        
-        if(reversed)
-            trackPanWidthString += "Rev ";
-        
-        trackPanWidthString += to_string(widthIntVal);
-        
-        if(widthIntVal == 0)
-            trackPanWidthString = " <Mno> ";
-
-        return trackPanWidthString;
-    }
-};
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ActionContext
@@ -691,131 +464,6 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ZoneOld
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-private:
-    ControlSurface* const surface_ = nullptr;
-    Navigator* navigator_= nullptr;
-    string const name_ = "";
-    string const alias_ = "";
-    string const sourceFilePath_ = "";
-    
-    map<string, string> touchIds_;
-        
-    map<string, bool> activeTouchIds_;
-    
-    NavigationStyle const navigationStyle_ = Standard;
-    
-    int slotIndex_ = 0;
-
-    vector<Widget*> widgets_;
-    
-    vector<ZoneOld*> includedZones_;
-    vector<ZoneOld*> subZones_;
-
-    map<Widget*, map<string, vector<ActionContextOld>>> actionContextDictionary_;
-    vector<ActionContextOld> defaultContexts_;
-    
-public:
-    ZoneOld(ControlSurface* surface, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): surface_(surface), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
-    ZoneOld() {}
-    
-    void Activate();
-    void Activate(vector<ZoneOld*> *activeZones);
-    void Deactivate();
-    bool TryActivate(Widget* widget);
-    int GetSlotIndex();
-    vector<ActionContextOld> &GetActionContexts(Widget* widget);
-
-    Navigator* GetNavigator() { return navigator_; }
-    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
-    void AddIncludedZone(ZoneOld* &zone) { includedZones_.push_back(zone); }
-    void RequestUpdateWidget(Widget* widget);
-
-    void SetSlotIndex(int index)
-    {
-        slotIndex_ = index;
-        
-        for(auto subZone : subZones_)
-            subZone->SetSlotIndex(index);
-    }
-
-    void AddSubZone(ZoneOld* &subZone)
-    {
-        subZone->SetNavigator(GetNavigator());
-        subZones_.push_back(subZone);
-    }
-
-    string GetName()
-    {
-        return name_;
-    }
-    
-    string GetNameOrAlias()
-    {
-        if(alias_ != "")
-            return alias_;
-        else
-            return name_;
-    }
-    
-    void AddWidget(Widget* widget)
-    {
-        widgets_.push_back(widget);
-    }
-    
-    void AddActionContext(Widget* widget, string modifier, ActionContextOld actionContext)
-    {
-        actionContextDictionary_[widget][modifier].push_back(actionContext);
-    }
-    
-    void RequestUpdate(vector<Widget*> &usedWidgets)
-    {
-        for(auto widget : widgets_)
-        {
-            if(find(usedWidgets.begin(), usedWidgets.end(), widget) == usedWidgets.end())
-            {
-                usedWidgets.push_back(widget);
-
-                RequestUpdateWidget(widget);
-            }
-        }
-        
-        for(auto zone : includedZones_)
-            zone->RequestUpdate(usedWidgets);
-    }
-        
-    void DoAction(Widget* widget, double value)
-    {
-        for(auto &context : GetActionContexts(widget))
-            context.DoAction(value);
-    }
-    
-    void DoTouch(Widget* widget, string widgetName, double value)
-    {
-        activeTouchIds_[widgetName + "Touch"] = value;
-        activeTouchIds_[widgetName + "TouchPress"] = value;
-        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
-
-        for(auto &context : GetActionContexts(widget))
-            context.DoTouch(value);
-    }
-    
-    void DoRelativeAction(Widget* widget, double delta)
-    {
-        for(auto &context : GetActionContexts(widget))
-            context.DoRelativeAction(delta);
-    }
-    
-    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
-    {
-        for(auto &context : GetActionContexts(widget))
-            context.DoRelativeAction(accelerationIndex, delta);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Zone
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -944,20 +592,6 @@ public:
 class Widget
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
-    
-    /*
-    
-    struct QueuedAcceleratedRelativeAction
-    {
-        QueuedAcceleratedRelativeAction(int idx, double val) : index(idx), delta(val) {}
-        
-        double delta = 0.0;
-        int index = 0;
-    };
-    
-    */
-    
-    
 private:
     ControlSurface* const surface_;
     string const name_;
@@ -965,18 +599,6 @@ private:
     
     bool isModifier_ = false;
     bool isToggled_ = false;
-    
-    
-    /*
-    
-    vector<double> queuedActionValues_;
-    vector<double> queuedRelativeActionValues_;
-    vector<QueuedAcceleratedRelativeAction> queuedAcceleratedRelativeActionValues_;
-    vector<double> queuedTouchActionValues_;
-     
-    
-    */
-    
     
     void LogInput(double value);
    
@@ -1014,32 +636,6 @@ public:
     {
         feedbackProcessors_.push_back(feedbackProcessor);
     }
-    
-    
-    
-    
-   /*
-    
-    
-    void HandleQueuedActions(ZoneOld* zone);
-    void QueueAction(double value);
-    void QueueRelativeAction(double delta);
-    void QueueRelativeAction(int accelerationIndex, double delta);
-    void QueueTouch(double value);
-
-    
-    void ClearAllQueues()
-    {
-        queuedActionValues_.clear();
-        queuedRelativeActionValues_.clear();
-        queuedAcceleratedRelativeActionValues_.clear();
-        queuedTouchActionValues_.clear();
-    }
-    
-    */
-    
-    
-
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1176,6 +772,36 @@ class ZoneManager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
+    
+    /*
+    bool shouldBroadcastGoZone_ = false;
+    bool shouldReceiveGoZone_ = false;
+    bool shouldBroadcastGoFXSlot_ = false;
+    bool shouldReceiveGoFXSlot_ = false;
+    
+    bool shouldBroadcastMapSelectedTrackSends_ = false;
+    bool shouldReceiveMapSelectedTrackSends_ = false;
+    bool shouldBroadcastMapSelectedTrackReceives_ = false;
+    bool shouldReceiveMapSelectedTrackReceives_ = false;
+    bool shouldBroadcastMapSelectedTrackFX_ = false;
+    bool shouldReceiveMapSelectedTrackFX_ = false;
+    bool shouldBroadcastMapSelectedTrackFXMenu_ = false;
+    bool shouldReceiveMapSelectedTrackFXMenu_ = false;
+    
+    bool shouldBroadcastMapTrackSendsSlot_ = false;
+    bool shouldReceiveMapTrackSendsSlot_ = false;
+    bool shouldBroadcastMapTrackReceivesSlot_ = false;
+    bool shouldReceiveMapTrackReceivesSlot_ = false;
+    bool shouldBroadcastMapTrackFXMenusSlot_ = false;
+    bool shouldReceiveMapTrackFXMenusSlot_ = false;
+    */
+    
+    
+    
+    
+    
+    
+    
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
     
@@ -1216,15 +842,51 @@ private:
     map<string, Zone*> zonesByName_;
     vector<Zone*> zones_;
     
-    void MapFocusedFXToWidgets();
-    void UnmapFocusedFXFromWidgets();
-    
-    void UnmapSelectedTrackFXFromWidgets();
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
-    
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
         
 public:
+    
+    
+    
+    void MapSelectedTrackFXToWidgets();
+    void UnmapSelectedTrackFXFromWidgets();
+    
+    void MapFocusedFXToWidgets();
+    void UnmapFocusedFXFromWidgets();
+    
+    
+    
+    void MapSelectedTrackSendsToWidgets() {}
+    void MapSelectedTrackReceivesToWidgets() {}
+
+    void MapSelectedTrackFXToMenu() {}
+
+    void MapTrackSendsSlotToWidgets() {}
+    void MapTrackReceivesSlotToWidgets() {}
+    void MapTrackFXMenusSlotToWidgets() {}
+    
+    void MapSelectedTrackSendsSlotToWidgets() {}
+    void MapSelectedTrackReceivesSlotToWidgets() {}
+    
+    void UnmapSelectedTrackSendsFromWidgets() {}
+    void UnmapSelectedTrackReceivesFromWidgets() {}
+
+    void UnmapSelectedTrackFXFromMenu() {}
+    
+    void UnmapTrackSendsSlotFromWidgets() {}
+    void UnmapTrackReceivesSlotFromWidgets() {}
+    void UnmapTrackFXMenusSlotFromWidgets() {}
+    
+    void UnmapSelectedTrackSendsSlotFromWidgets() {}
+    void UnmapSelectedTrackReceivesSlotFromWidgets() {}
+    
+    void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    
+
+    
+    
+    
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
     virtual ~ZoneManager() {}
@@ -1232,8 +894,6 @@ public:
     void ForceClearAllWidgets() { } // GAW clear all widgets in contest
     
     void Initialize();
-    
-    void MapSelectedTrackFXToWidgets();
     
     
     Zone* GetDefaultZone() { return homeZone_; }
@@ -1452,59 +1112,12 @@ protected:
     }
     
     
-    
-    /*
-    bool shouldBroadcastGoZone_ = false;
-    bool shouldReceiveGoZone_ = false;
-    bool shouldBroadcastGoFXSlot_ = false;
-    bool shouldReceiveGoFXSlot_ = false;
-    
-    bool shouldBroadcastMapSelectedTrackSends_ = false;
-    bool shouldReceiveMapSelectedTrackSends_ = false;
-    bool shouldBroadcastMapSelectedTrackReceives_ = false;
-    bool shouldReceiveMapSelectedTrackReceives_ = false;
-    bool shouldBroadcastMapSelectedTrackFX_ = false;
-    bool shouldReceiveMapSelectedTrackFX_ = false;
-    bool shouldBroadcastMapSelectedTrackFXMenu_ = false;
-    bool shouldReceiveMapSelectedTrackFXMenu_ = false;
-    
-    bool shouldBroadcastMapTrackSendsSlot_ = false;
-    bool shouldReceiveMapTrackSendsSlot_ = false;
-    bool shouldBroadcastMapTrackReceivesSlot_ = false;
-    bool shouldReceiveMapTrackReceivesSlot_ = false;
-    bool shouldBroadcastMapTrackFXMenusSlot_ = false;
-    bool shouldReceiveMapTrackFXMenusSlot_ = false;
-    */
-
-    
-
-
-    
-    
-    
-
-    map<string, string> zoneFilenames_;
-    map<string, ZoneOld*> zonesByName_;
-    vector<ZoneOld*> zones_;
-    
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
 
-    void MapSelectedTrackFXSlotToWidgets(vector<ZoneOld*> *activeZones, int fxSlot);
-    void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<ZoneOld*> *activeZones);
-    
-    void GoZone(vector<ZoneOld*> *activeZones, string zoneName, double value);
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<Zone*> *activeZones);
+        
 public:
     virtual ~ControlSurface()
     {
@@ -1525,12 +1138,12 @@ public:
     void TrackFXListChanged();
     void OnTrackSelection();
     virtual void SetHasMCUMeters(int displayType) {}
+    virtual void LoadingZone(string zoneName) {}
     
     virtual void HandleExternalInput() {}
     virtual void UpdateTimeDisplay() {}
     virtual bool GetIsEuConFXAreaFocused() { return false; }
     virtual void ForceRefreshTimeDisplay() {}
-    
     
     ZoneManager* GetZoneManager() { return zoneManager_; }
     Page* GetPage() { return page_; }
@@ -1590,134 +1203,6 @@ public:
         if(widgetsByName_.count("OnInitialization") > 0)
             zoneManager_->DoAction(widgetsByName_["OnInitialization"], 1.0);
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    void MapSelectedTrackSendsToWidgets();
-    void MapSelectedTrackReceivesToWidgets();
-    void MapSelectedTrackFXToWidgets();
-    void MapSelectedTrackFXToMenu();
-
-    void MapTrackSendsSlotToWidgets();
-    void MapTrackReceivesSlotToWidgets();
-    void MapTrackFXMenusSlotToWidgets();
-    
-    void MapSelectedTrackSendsSlotToWidgets();
-    void MapSelectedTrackReceivesSlotToWidgets();
-    
-    void UnmapSelectedTrackSendsFromWidgets();
-    void UnmapSelectedTrackReceivesFromWidgets();
-    void UnmapSelectedTrackFXFromWidgets();
-    void UnmapSelectedTrackFXFromMenu();
-    
-    void UnmapTrackSendsSlotFromWidgets();
-    void UnmapTrackReceivesSlotFromWidgets();
-    void UnmapTrackFXMenusSlotFromWidgets();
-    
-    void UnmapSelectedTrackSendsSlotFromWidgets();
-    void UnmapSelectedTrackReceivesSlotFromWidgets();
-    
-    void MapSelectedTrackFXMenuSlotToWidgets(int slot);
-
-    
-    
-    
-    
-    
-    
-    
-    
-    void LoadZone(string zoneName);
-    ZoneOld* GetZone(string zoneName);
-    void GoZone(string zoneName, double value);
-    void GoSubZone(ZoneOld* enclosingZone, string zoneName, double value);
-    
-    
-    
-    virtual void LoadingZone(string zoneName) {}
-
-   
-    
-    
-    
-    
-    /*
-    
-    virtual void SetBroadcastGoZone() { shouldBroadcastGoZone_ = true; }
-    virtual bool GetBroadcastGoZone() { return shouldBroadcastGoZone_; }
-    
-    virtual void SetReceiveGoZone() { shouldReceiveGoZone_ = true; }
-    virtual bool GetReceiveGoZone() { return shouldReceiveGoZone_; }
-    
-    virtual void SetBroadcastGoFXSlot() { shouldBroadcastGoFXSlot_ = true; }  // GAW -- Unused as of Jun 7, 2021
-    virtual bool GetBroadcastGoFXSlot() { return shouldBroadcastGoFXSlot_; }
-    
-    virtual void SetReceiveGoFXSlot() { shouldReceiveGoFXSlot_ = true; }  // GAW -- Unused as of Jun 7, 2021
-    virtual bool GetReceiveGoFXSlot() { return shouldReceiveGoFXSlot_; }
-
-    virtual void SetBroadcastMapSelectedTrackSends() { shouldBroadcastMapSelectedTrackSends_ = true; }
-    virtual bool GetBroadcastMapSelectedTrackSends() { return shouldBroadcastMapSelectedTrackSends_; }
-    
-    virtual void SetReceiveMapSelectedTrackSends() { shouldReceiveMapSelectedTrackSends_ = true; }
-    virtual bool GetReceiveMapSelectedTrackSends() { return shouldReceiveMapSelectedTrackSends_; }
-    
-    virtual void SetBroadcastMapSelectedTrackReceives() { shouldBroadcastMapSelectedTrackReceives_ = true; }
-    virtual bool GetBroadcastMapSelectedTrackReceives() { return shouldBroadcastMapSelectedTrackReceives_; }
-    
-    virtual void SetReceiveMapSelectedTrackReceives() { shouldReceiveMapSelectedTrackReceives_ = true; }
-    virtual bool GetReceiveMapSelectedTrackReceives() { return shouldReceiveMapSelectedTrackReceives_; }
-    
-    virtual void SetBroadcastMapSelectedTrackFX() { shouldBroadcastMapSelectedTrackFX_ = true; }
-    virtual bool GetBroadcastMapSelectedTrackFX() { return shouldBroadcastMapSelectedTrackFX_; }
-    
-    virtual void SetReceiveMapSelectedTrackFX() { shouldReceiveMapSelectedTrackFX_ = true; }
-    virtual bool GetReceiveMapSelectedTrackFX() { return shouldReceiveMapSelectedTrackFX_; }
-    
-    virtual void SetBroadcastMapSelectedTrackFXMenu() { shouldBroadcastMapSelectedTrackFXMenu_ = true; }
-    virtual bool GetBroadcastMapSelectedTrackFXMenu() { return shouldBroadcastMapSelectedTrackFXMenu_; }
-    
-    virtual void SetReceiveMapSelectedTrackFXMenu() { shouldReceiveMapSelectedTrackFXMenu_ = true; }
-    virtual bool GetReceiveMapSelectedTrackFXMenu() { return shouldReceiveMapSelectedTrackFXMenu_; }
-
-    virtual void SetBroadcastMapTrackSendsSlot() { shouldBroadcastMapTrackSendsSlot_ = true; }
-    virtual bool GetBroadcastMapTrackSendsSlot() { return shouldBroadcastMapTrackSendsSlot_; }
-    
-    virtual void SetReceiveMapTrackSendsSlot() { shouldReceiveMapTrackSendsSlot_ = true; }
-    virtual bool GetReceiveMapTrackSendsSlot() { return shouldReceiveMapTrackSendsSlot_; }
-    
-    virtual void SetBroadcastMapTrackReceivesSlot() { shouldBroadcastMapTrackReceivesSlot_ = true; }
-    virtual bool GetBroadcastMapTrackReceivesSlot() { return shouldBroadcastMapTrackReceivesSlot_; }
-    
-    virtual void SetReceiveMapTrackReceivesSlot() { shouldReceiveMapTrackReceivesSlot_ = true; }
-    virtual bool GetReceiveMapTrackReceivesSlot() { return shouldReceiveMapTrackReceivesSlot_; }
-    
-    virtual void SetBroadcastMapTrackFXMenusSlot() { shouldBroadcastMapTrackFXMenusSlot_ = true; }
-    virtual bool GetBroadcastMapTrackFXMenusSlot() { return shouldBroadcastMapTrackFXMenusSlot_; }
-    
-    virtual void SetReceiveMapTrackFXMenusSlot() { shouldReceiveMapTrackFXMenusSlot_ = true; }
-    virtual bool GetReceiveMapTrackFXMenusSlot() { return shouldReceiveMapTrackFXMenusSlot_; }
-   
-*/
- 
-    
-    
-    
-    
-    
-
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2502,248 +1987,7 @@ public:
     bool GetControl() { return isControl_; }
     bool GetAlt() { return isAlt_; }
 
-    void GoZone(ControlSurface* originator, string zoneName, double value)
-    {
-        /*
-        originator->GoZone(zoneName, value);
-        
-        if(originator->GetBroadcastGoZone())
-           for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveGoZone())
-                    surface->GoZone(zoneName, value);
-         */
-    }
-    
-    void MapSelectedTrackFXMenuSlotToWidgets(ControlSurface* originator, int fxSlot)
-    {
-        /*
-        trackNavigationManager_->SetFXMenuSlot(fxSlot);
-        
-        originator->MapSelectedTrackFXMenuSlotToWidgets(fxSlot);
-        
-        if(originator->GetBroadcastGoFXSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveGoFXSlot())
-                    surface->MapSelectedTrackFXMenuSlotToWidgets(fxSlot);
-         */
-    }
-
-    void MapSelectedTrackSendsToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackSendsToWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackSends())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackSends())
-                    surface->MapSelectedTrackSendsToWidgets();
-         */
-    }
-    
-    void MapSelectedTrackReceivesToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackReceivesToWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackReceives())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackReceives())
-                    surface->MapSelectedTrackReceivesToWidgets();
-         */
-    }
-    
-    void MapSelectedTrackFXToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackFXToWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackFX())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackFX())
-                    surface->MapSelectedTrackFXToWidgets();
-         */
-    }
-    
-    void MapSelectedTrackFXToMenu(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackFXToMenu();
-        
-        if(originator->GetBroadcastMapSelectedTrackFXMenu())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackFXMenu())
-                    surface->MapSelectedTrackFXToMenu();
-         */
-    }
-    
-    void MapTrackSendsSlotToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapTrackSendsSlotToWidgets();
-        
-        if(originator->GetBroadcastMapTrackSendsSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackSendsSlot())
-                    surface->MapTrackSendsSlotToWidgets();
-         */
-    }
-    
-    void MapTrackReceivesSlotToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapTrackReceivesSlotToWidgets();
-        
-        if(originator->GetBroadcastMapTrackReceivesSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackReceivesSlot())
-                    surface->MapTrackReceivesSlotToWidgets();
-         */
-    }
-    
-    void MapTrackFXMenusSlotToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapTrackFXMenusSlotToWidgets();
-        
-        if(originator->GetBroadcastMapTrackFXMenusSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackFXMenusSlot())
-                    surface->MapTrackFXMenusSlotToWidgets();
-         */
-    }
-    
-    void MapSelectedTrackSendsSlotToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackSendsSlotToWidgets();
-        
-        if(originator->GetBroadcastMapTrackSendsSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackSendsSlot())
-                    surface->MapSelectedTrackSendsSlotToWidgets();
-         */
-    }
-    
-    void MapSelectedTrackReceivesSlotToWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->MapSelectedTrackReceivesSlotToWidgets();
-        
-        if(originator->GetBroadcastMapTrackReceivesSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackReceivesSlot())
-                    surface->MapSelectedTrackReceivesSlotToWidgets();
-         */
-    }
-        
-    void UnmapSelectedTrackSendsFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackSendsFromWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackSends())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackSends())
-                    surface->UnmapSelectedTrackSendsFromWidgets();
-         */
-    }
-    
-    void UnmapSelectedTrackReceivesFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackReceivesFromWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackReceives())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackReceives())
-                    surface->UnmapSelectedTrackReceivesFromWidgets();
-         */
-    }
-    
-    void UnmapSelectedTrackFXFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackFXFromWidgets();
-        
-        if(originator->GetBroadcastMapSelectedTrackFX())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackFX())
-                    surface->UnmapSelectedTrackFXFromWidgets();
-         */
-    }
-    
-    void UnmapSelectedTrackFXFromMenu(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackFXFromMenu();
-        
-        if(originator->GetBroadcastMapSelectedTrackFXMenu())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapSelectedTrackFXMenu())
-                    surface->UnmapSelectedTrackFXFromMenu();
-         */
-    }
-    
-    void UnmapTrackSendsSlotFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapTrackSendsSlotFromWidgets();
-        
-        if(originator->GetBroadcastMapTrackSendsSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackSendsSlot())
-                    surface->UnmapTrackSendsSlotFromWidgets();
-         */
-    }
-    
-    void UnmapTrackReceivesSlotFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapTrackReceivesSlotFromWidgets();
-        
-        if(originator->GetBroadcastMapTrackReceivesSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackReceivesSlot())
-                    surface->UnmapTrackReceivesSlotFromWidgets();
-         */
-    }
-    
-    void UnmapTrackFXMenusSlotFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapTrackFXMenusSlotFromWidgets();
-        
-        if(originator->GetBroadcastMapTrackFXMenusSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackFXMenusSlot())
-                    surface->UnmapTrackFXMenusSlotFromWidgets();
-         */
-    }
-    
-    void UnmapSelectedTrackSendsSlotFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackSendsSlotFromWidgets();
-        
-        if(originator->GetBroadcastMapTrackSendsSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackSendsSlot())
-                    surface->UnmapSelectedTrackSendsSlotFromWidgets();
-         */
-    }
-    
-    void UnmapSelectedTrackReceivesSlotFromWidgets(ControlSurface* originator)
-    {
-        /*
-        originator->UnmapSelectedTrackReceivesSlotFromWidgets();
-        
-        if(originator->GetBroadcastMapTrackReceivesSlot())
-            for(auto surface : surfaces_)
-                if(surface != originator && surface->GetReceiveMapTrackReceivesSlot())
-                    surface->UnmapSelectedTrackReceivesSlotFromWidgets();
-         */
-    }
-               
+                   
     /*
     int repeats = 0;
     
@@ -3100,14 +2344,6 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
-    ActionContextOld GetActionContext(string actionName, Widget* widget, ZoneOld* zone, vector<string> params, vector<vector<string>> properties)
-    {
-        if(actions_.count(actionName) > 0)
-            return ActionContextOld(actions_[actionName], widget, zone, params, properties);
-        else
-            return ActionContextOld(actions_["NoAction"], widget, zone, params, properties);
-    }
-
     ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)

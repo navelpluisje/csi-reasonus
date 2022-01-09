@@ -16,12 +16,12 @@ class TogglePin  : public Action
 public:
     virtual string GetName() override { return "TogglePin"; }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(context->GetZone()->GetNavigator()->GetIsChannelPinned());
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -37,11 +37,11 @@ class GoFXSlot  : public Action
 public:
     virtual string GetName() override { return "GoFXSlot"; }
 
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetPage()->MapSelectedTrackFXMenuSlotToWidgets(context->GetSurface(), context->GetSlotIndex());
+        context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetSlotIndex());
     }
 };
 
@@ -52,11 +52,11 @@ class GoCurrentFXSlot  : public Action
 public:
     virtual string GetName() override { return "GoFXSlot"; }
 
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetPage()->MapSelectedTrackFXMenuSlotToWidgets(context->GetSurface(), context->GetPage()->GetFXMenuSlot());
+        context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetPage()->GetFXMenuSlot());
     }
 };
 
@@ -67,17 +67,17 @@ class ToggleScrollLink : public Action
 public:
     virtual string GetName() override { return "ToggleScrollLink"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetScrollLink();
     }
     
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -92,7 +92,7 @@ class ForceScrollLink : public Action
 public:
     virtual string GetName() override { return "ForceScrollLink"; }
 
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -107,17 +107,17 @@ class ToggleVCAMode : public Action
 public:
     virtual string GetName() override { return "ToggleVCAMode"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetVCAMode();
     }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -132,7 +132,7 @@ class CycleTimeDisplayModes : public Action
 public:
     virtual string GetName() override { return "CycleTimeDisplayModes"; }
 
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -147,7 +147,7 @@ class GoNextPage : public Action
 public:
     virtual string GetName() override { return "GoNextPage"; }
 
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -162,7 +162,7 @@ class GoPage : public Action
 public:
     virtual string GetName() override { return "GoPage"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -177,7 +177,7 @@ class PageNameDisplay : public Action
 public:
     virtual string GetName() override { return "PageNameDisplay"; }
     
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(context->GetPage()->GetName());
     }
@@ -190,12 +190,12 @@ class GoZone : public Action
 public:
     virtual string GetName() override { return "GoZone"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->GoZone(context->GetSurface(), context->GetStringParam(), value);
+            context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
         else if(value)
-            context->GetPage()->GoZone(context->GetSurface(), context->GetStringParam(), value);
+            context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
     }
 };
 
@@ -206,12 +206,12 @@ class GoSubZone : public Action
 public:
     virtual string GetName() override { return "GoSubZone"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0)
             return; // ignore button releases
         
-        context->GetSurface()->GoSubZone(context->GetZone(), context->GetStringParam(), value);
+        context->GetSurface()->GetZoneManager()->GoSubZone(context->GetZone(), context->GetStringParam(), value);
     }
 };
 
@@ -222,17 +222,17 @@ class ClearAllSolo : public Action
 public:
     virtual string GetName() override { return "ClearAllSolo"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return DAW::AnyTrackSolo(nullptr);
     }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -247,7 +247,7 @@ class TrackBank : public Action
 public:
     virtual string GetName() override { return "TrackBank"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -262,7 +262,7 @@ class SelectedTrackBank : public Action
 public:
     virtual string GetName() override { return "SelectedTrackBank"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -296,7 +296,7 @@ class SendSlotBank : public Action
 public:
     virtual string GetName() override { return "SendSlotBank"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -311,7 +311,7 @@ class ReceiveSlotBank : public Action
 public:
     virtual string GetName() override { return "ReceiveSlotBank"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -326,7 +326,7 @@ class FXMenuSlotBank : public Action
 public:
     virtual string GetName() override { return "FXMenuSlotBank"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
@@ -341,17 +341,17 @@ class SetShift : public Action
 public:
     virtual string GetName() override { return "SetShift"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetShift();
     }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         context->GetPage()->SetShift(value);
     }
@@ -364,17 +364,17 @@ class SetOption : public Action
 public:
     virtual string GetName() override { return "SetOption"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetOption();
     }
     
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         context->GetPage()->SetOption(value);
     }
@@ -387,17 +387,17 @@ class SetControl : public Action
 public:
     virtual string GetName() override { return "SetControl"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetControl();
     }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         context->GetPage()->SetControl(value);
     }
@@ -410,17 +410,17 @@ class SetAlt : public Action
 public:
     virtual string GetName() override { return "SetAlt"; }
 
-    virtual double GetCurrentNormalizedValue(ActionContextOld* context) override
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
     {
         return context->GetPage()->GetAlt();
     }
 
-    void RequestUpdate(ActionContextOld* context) override
+    void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
     }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         context->GetPage()->SetAlt(value);
     }
@@ -433,12 +433,12 @@ class MapSelectedTrackSendsToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackSendsToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackSendsFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackSendsFromWidgets();
         else if(value)
-            context->GetPage()->MapSelectedTrackSendsToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackSendsToWidgets();
     }
 };
 
@@ -449,10 +449,10 @@ class UnmapSelectedTrackSendsFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackSendsFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackSendsFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackSendsFromWidgets();
     }
 };
 
@@ -463,12 +463,12 @@ class MapSelectedTrackReceivesToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackReceivesToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackReceivesFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackReceivesFromWidgets();
         else if(value)
-            context->GetPage()->MapSelectedTrackReceivesToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackReceivesToWidgets();
     }
 };
 
@@ -479,10 +479,10 @@ class UnmapSelectedTrackReceivesFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackReceivesFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackReceivesFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackReceivesFromWidgets();
     }
 };
 
@@ -493,12 +493,12 @@ class MapSelectedTrackFXToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackFXToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackFXFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackFXFromWidgets();
         else if(value)
-            context->GetPage()->MapSelectedTrackFXToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackFXToWidgets();
     }
 };
 
@@ -509,10 +509,10 @@ class UnmapSelectedTrackFXFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackFXFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackFXFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackFXFromWidgets();
     }
 };
 
@@ -523,12 +523,12 @@ class MapSelectedTrackFXToMenu  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackFXToMenu"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackFXFromMenu(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackFXFromMenu();
         else if(value)
-            context->GetPage()->MapSelectedTrackFXToMenu(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackFXToMenu();
     }
 };
 
@@ -539,10 +539,10 @@ class UnmapSelectedTrackFXFromMenu  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackFXFromMenu"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackFXFromMenu(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackFXFromMenu();
     }
 };
 
@@ -553,12 +553,12 @@ class MapTrackSendsSlotToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapTrackSendsSlotToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapTrackSendsSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackSendsSlotFromWidgets();
         else if(value)
-            context->GetPage()->MapTrackSendsSlotToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapTrackSendsSlotToWidgets();
     }
 };
 
@@ -569,10 +569,10 @@ class UnmapTrackSendsSlotFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapTrackSendsSlotFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapTrackSendsSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackSendsSlotFromWidgets();
     }
 };
 
@@ -583,12 +583,12 @@ class MapTrackReceivesSlotToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapTrackReceivesSlotToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapTrackReceivesSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackReceivesSlotFromWidgets();
         else if(value)
-            context->GetPage()->MapTrackReceivesSlotToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapTrackReceivesSlotToWidgets();
     }
 };
 
@@ -599,10 +599,10 @@ class UnmapTrackReceivesSlotFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapTrackReceivesSlotFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapTrackReceivesSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackReceivesSlotFromWidgets();
     }
 };
 
@@ -613,12 +613,12 @@ class MapTrackFXMenusSlotToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapTrackFXMenusSlotToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapTrackFXMenusSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackFXMenusSlotFromWidgets();
         else if(value)
-            context->GetPage()->MapTrackFXMenusSlotToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapTrackFXMenusSlotToWidgets();
     }
 };
 
@@ -629,10 +629,10 @@ class UnmapTrackFXMenusSlotFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapTrackFXMenusSlotFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapTrackFXMenusSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapTrackFXMenusSlotFromWidgets();
     }
 };
 
@@ -643,12 +643,12 @@ class MapSelectedTrackSendsSlotToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackSendsSlotToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackSendsSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackSendsSlotFromWidgets();
         else if(value)
-            context->GetPage()->MapSelectedTrackSendsSlotToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackSendsSlotToWidgets();
     }
 };
 
@@ -659,10 +659,10 @@ class UnmapSelectedTrackSendsSlotFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackSendsSlotFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackSendsSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackSendsSlotFromWidgets();
     }
 };
 
@@ -673,12 +673,12 @@ class MapSelectedTrackReceivesSlotToWidgets  : public Action
 public:
     virtual string GetName() override { return "MapSelectedTrackReceivesSlotToWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetPage()->UnmapSelectedTrackReceivesSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackReceivesSlotFromWidgets();
         else if(value)
-            context->GetPage()->MapSelectedTrackReceivesSlotToWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->MapSelectedTrackReceivesSlotToWidgets();
     }
 };
 
@@ -689,10 +689,10 @@ class UnmapSelectedTrackReceivesSlotFromWidgets  : public Action
 public:
     virtual string GetName() override { return "UnmapSelectedTrackReceivesSlotFromWidgets"; }
     
-    void Do(ActionContextOld* context, double value) override
+    void Do(ActionContext* context, double value) override
     {
         if(value)
-            context->GetPage()->UnmapSelectedTrackReceivesSlotFromWidgets(context->GetSurface());
+            context->GetSurface()->GetZoneManager()->UnmapSelectedTrackReceivesSlotFromWidgets();
     }
 };
 /*
