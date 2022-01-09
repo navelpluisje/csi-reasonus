@@ -341,7 +341,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                     
                     vector<Navigator*> navigators;
                     
-                    NavigationStyle navigationStyle = Standard;
+                    NavigationType navigationStyle = Standard;
                     
                     if(navigatorName == "")
                         navigators.push_back(zoneManager->GetDefaultNavigator());
@@ -1044,7 +1044,9 @@ void Manager::InitActionsDictionary()
     actions_["NextPage"] =                          new GoNextPage();
     actions_["GoPage"] =                            new GoPage();
     actions_["PageNameDisplay"] =                   new PageNameDisplay();
-    actions_["GoZone"] =                            new GoZone();
+    actions_["Broadcast"] =                         new Broadcast();
+    actions_["ReceiveBroadcast"] =                  new ReceiveBroadcast();
+    actions_["GoZone"] =                            new class GoZone();
     actions_["GoSubZone"] =                         new GoSubZone();
     actions_["MapSelectedTrackSendsToWidgets"] =        new MapSelectedTrackSendsToWidgets();
     actions_["MapSelectedTrackReceivesToWidgets"] =     new MapSelectedTrackReceivesToWidgets();
@@ -1074,7 +1076,7 @@ void Manager::InitActionsDictionary()
     actions_["Option"] =                                new SetOption();
     actions_["Control"] =                               new SetControl();
     actions_["Alt"] =                                   new SetAlt();
-    actions_["GoFXSlot"] =                          new GoFXSlot();
+    actions_["GoFXSlot"] =                          new class GoFXSlot();
     actions_["GoCurrentFXSlot"] =                   new GoCurrentFXSlot();
     actions_["CycleTrackAutoMode"] =                new CycleTrackAutoMode();
     actions_["FocusedFXParam"] =                    new FocusedFXParam();
@@ -1399,7 +1401,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
                 commandId_ = 65535; // no-op
         }
     }
-    
+        
     if(actionName == "FXParam" && params.size() > 1 && isdigit(params[1][0])) // C++ 11 says empty strings can be queried without catastrophe :)
     {
         paramIndex_ = atol(params[1].c_str());
@@ -1424,11 +1426,23 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
             fxParamDisplayName_ = params[2];
     }
     
-    if(actionName == "MCUTrackPanDisplay"&& params.size() > 1)
+    if(actionName == "MCUTrackPanDisplay" && params.size() > 1)
     {
         SetAssociatedWidget(GetSurface()->GetWidgetByName(params[1]));
     }
     
+    if((actionName == "Broadcast" || actionName == "ReceiveBroadcast") && params.size() > 1)
+    {
+        for(int i = 1; i < params.size(); i++)
+            broadcastTypes_.push_back(params[i]);
+    }
+
+    if((actionName == "Map" || actionName == "Unmap" || actionName == "ToggleMap") && params.size() > 1)
+    {
+        for(int i = 1; i < params.size(); i++)
+            mappingTypes_.push_back(params[i]);
+    }
+
     if(params.size() > 0)
     {
         SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);

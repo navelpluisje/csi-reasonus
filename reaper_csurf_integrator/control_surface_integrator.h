@@ -65,7 +65,7 @@ const string TabChars = "[\t]";
 
 const int TempDisplayTime = 1250;
 
-enum NavigationStyle
+enum NavigationType
 {
     Standard,
     SendSlot,
@@ -73,6 +73,35 @@ enum NavigationStyle
     FXMenuSlot,
     SelectedTrackSendSlot,
     SelectedTrackReceiveSlot,
+};
+
+enum MappingType
+{
+    TrackSendsSlot,
+    SelectedTrackSends,
+    SelectedTrackSendsSlot,
+    TrackReceivesSlot,
+    SelectedTrackReceives,
+    SelectedTrackReceivesSlot,
+    FocusedFX,
+    SelectedTrackFX,
+    SelectedTrackFXMenu,
+    SelectedTrackFXMenuSlot,
+    TrackFXMenu,
+    TrackFXMenusSlot
+};
+
+enum BroadcastType
+{
+    GoZone,
+    GoFXSlot,
+    MapSelectedTrackSends,
+    MapSelectedTrackReceives,
+    MapSelectedTrackFX,
+    MapSelectedTrackFXMenu,
+    MapTrackSendsSlot,
+    MapTrackReceivesSlot,
+    MapTrackFXMenusSlot
 };
 
 class Manager;
@@ -298,6 +327,9 @@ private:
     
     vector<vector<string>> properties_;
     
+    vector<string> broadcastTypes_;
+    vector<string> mappingTypes_;
+    
 public:
     ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
 
@@ -310,6 +342,9 @@ public:
 
     void SetAssociatedWidget(Widget* widget) { associatedWidget_ = widget; }
     Widget* GetAssociatedWidget() { return associatedWidget_; }
+
+    vector<string> &GetBroadcastTypes() { return  broadcastTypes_; }
+    vector<string> &GetMappingTypes() { return mappingTypes_; }
 
     int GetIntParam() { return intParam_; }
     string GetStringParam() { return stringParam_; }
@@ -478,7 +513,7 @@ private:
         
     map<string, bool> activeTouchIds_;
     
-    NavigationStyle const navigationStyle_ = Standard;
+    NavigationType const navigationStyle_ = Standard;
     
     int slotIndex_ = 0;
 
@@ -491,7 +526,7 @@ private:
     vector<ActionContext> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationStyle navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
     void Activate();
@@ -796,7 +831,9 @@ private:
     bool shouldReceiveMapTrackFXMenusSlot_ = false;
     */
     
-    
+    vector<BroadcastType> broadcast_;
+    vector<BroadcastType> receiveBroadcast_;
+
     
     
     
@@ -843,11 +880,44 @@ private:
     vector<Zone*> zones_;
     
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
-        
+   
+    void SetBroadcast(vector<BroadcastType> &broadcast, ActionContext* context)
+    {
+        for(string param : context->GetBroadcastTypes())
+        {
+            if(param == "GoZone")
+                broadcast.push_back(BroadcastType::GoZone);
+            else if(param == "GoFXSlot")
+                broadcast.push_back(BroadcastType::GoFXSlot);
+            else if(param == "MapSelectedTrackSends")
+                broadcast.push_back(BroadcastType::MapSelectedTrackSends);
+            else if(param == "MapSelectedTrackReceives")
+                broadcast.push_back(BroadcastType::MapSelectedTrackReceives);
+            else if(param == "MapSelectedTrackFX")
+                broadcast.push_back(BroadcastType::MapSelectedTrackFX);
+            else if(param == "MapSelectedTrackFXMenu")
+                broadcast.push_back(BroadcastType::MapSelectedTrackFXMenu);
+            else if(param == "MapTrackSendsSlot")
+                broadcast.push_back(BroadcastType::MapTrackSendsSlot);
+            else if(param == "MapTrackReceivesSlot")
+                broadcast.push_back(BroadcastType::MapTrackReceivesSlot);
+            else if(param == "MapTrackFXMenusSlot")
+                broadcast.push_back(BroadcastType::MapTrackFXMenusSlot);
+        }
+    }
+    
 public:
     
+    void SetBroadcast(ActionContext* context)
+    {
+        SetBroadcast(broadcast_, context);
+    }
     
-    
+    void SetReceiveBroadcast(ActionContext* context)
+    {
+        SetBroadcast(receiveBroadcast_, context);
+    }
+
     void MapSelectedTrackFXToWidgets();
     void UnmapSelectedTrackFXFromWidgets();
     
