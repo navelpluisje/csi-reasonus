@@ -509,6 +509,8 @@ private:
     string const alias_ = "";
     string const sourceFilePath_ = "";
     
+    bool isActive_ = false;
+    
     map<string, string> touchIds_;
         
     map<string, bool> activeTouchIds_;
@@ -821,16 +823,124 @@ private:
     int const numSends_ = 0;
     int const numFXSlots_ = 0;
     
-    Zone* homeZone_ = nullptr;
-       
-    vector<Zone*> activeFocusedFXZones_;
+    /*
+     
+     
+     FocusedFX
+    
+     
+     FXMenu
+     
+     SelectedTrackFXMenu
+     
+     
+     
+
+     SelectedTrackReceive
+     SelectedTrackReceiveSlot
+     TrackReceiveSlot
+     *SelectedTrackSend
+     *SelectedTrackSendSlot
+     *TrackSendSlot
+     Home
+     
+     
+
+     
+     
+    Home
+     
+     
+    */
+
+    
+    
+    Zone* activeFocusedFXZone_ = nullptr;
     vector<Zone*> activeSelectedTrackFXZones_;
-    vector<Zone*> activeSelectedTrackFXMenuFXZones_;
     vector<Zone*> activeSelectedTrackFXMenuZones_;
+    vector<Zone*> activeSelectedTrackFXMenuFXZones_;
+    
+    
+    
+    vector<Zone*> activeSelectedTrackReceivesZones_;
+    vector<Zone*> activeSelectedTrackReceivesSlotZones_;
+    vector<Zone*> activeTrackReceivesSlotZones_;
     
     vector<Zone*> activeSelectedTrackSendsZones_;
-    vector<Zone*> activeSelectedTrackReceivesZones_;
+    vector<Zone*> activeSelectedTrackSendsSlotZones_;
+    vector<Zone*> activeTrackSendsSlotZones_;
 
+    Zone* homeZone_ = nullptr;
+    
+
+
+    
+    void LoadZones(string baseName, int numberOfSlots, vector<Zone*> *activeZones)
+    {
+        for(int i = 0; i < numberOfSlots; i++)
+        {
+            string name = baseName;
+            
+            if(numberOfSlots > 1)
+                name += to_string(i + 1);
+            
+            if(Zone* zone = GetZone(name))
+            {
+                activeZones->push_back(zone);
+            }
+        }
+    }
+
+    
+    
+    
+    /*
+     FocusedFX - one
+     FocusedFXNavigator
+     
+     FXWidget
+     TrackNavigator
+     SelectedTrackNavigator
+     
+     
+     FXMenu
+     TrackFXMenuSlotNavigator
+     SelectedTrackFXMenuNavigator
+     
+     Receives
+     TrackReceiveSlotNavigator
+     SelectedTrackReceiveNavigator
+     SelectedTrackReceiveSlotNavigator
+     
+     Sends
+     TrackSendSlotNavigator
+     SelectedTrackSendNavigator
+     SelectedTrackSendSlotNavigator
+     
+     Home
+       */
+    
+    
+    
+    
+    /*
+     TrackNavigator
+     SelectedTrackNavigator
+
+
+
+
+
+
+
+     MasterTrackNavigator
+
+     
+     */
+    
+
+    
+    /*
     vector<Zone*> activeZones_;
 
     vector<vector<Zone*> *> allActiveZones_;
@@ -847,6 +957,10 @@ private:
         allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
         allActiveZones_.push_back(&activeZones_);
     }
+    */
+    
+    
+    
     
     map<int, Navigator*> navigators_;
  
@@ -990,7 +1104,8 @@ public:
     void ForceClearAllWidgets() { } // GAW clear all widgets in contest
     
     void Initialize();
-    
+   
+    virtual void RequestUpdate();
     
     Zone* GetDefaultZone() { return homeZone_; }
     
@@ -1015,29 +1130,6 @@ public:
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     ControlSurface* GetSurface() { return surface_; }
-    
-    void MakeHomeDefault()
-    {
-        homeZone_ = GetZone("Home");
-
-        if(homeZone_ != nullptr)
-            homeZone_->Activate();
-    }
-        
-    void MoveToFirst(vector<Zone*> *zones)
-    {
-        auto result = find(allActiveZones_.begin(), allActiveZones_.end(), zones);
-        
-        if(result == allActiveZones_.begin()) // already first
-            return;
-        
-        if(result != allActiveZones_.end())
-        {
-            auto resultValue = *result;
-            allActiveZones_.erase(result);
-            allActiveZones_.insert(allActiveZones_.begin(), resultValue);
-        }
-    }
     
     void AddZoneFilename(string name, string filename)
     {
@@ -1082,35 +1174,14 @@ public:
             }
         }
     }
-    
-    virtual void RequestUpdate()
-    {
-        CheckFocusedFXState();
-        
-        vector<Widget*> usedWidgets;
-
-        for(auto activeZones : allActiveZones_)
-            for(auto zone : *activeZones)
-                zone->RequestUpdate(usedWidgets);
-        
-        if(homeZone_ != nullptr)
-            homeZone_->RequestUpdate(usedWidgets);
-        /*
-        for(auto widget : widgets_)
-        {
-            auto it = find(usedWidgets.begin(), usedWidgets.end(), widget);
-            
-            if (it == usedWidgets.end() )
-                widget->Clear();
-        }*/
-    }
-   
+       
     void DoAction(Widget* widget, double value)
     {
+        /*
         for(auto activeZones : allActiveZones_)
             for(auto zone : *activeZones)
                 zone->DoAction(widget, value);
-
+         */
         
         
         
@@ -1250,7 +1321,7 @@ public:
     string GetName() { return name_; }
     
     virtual string GetSourceFileName() { return ""; }
-    vector<Widget*> &GetWidgets() { return widgets_; }
+    vector<Widget*> GetWidgets() { return widgets_; }
     
     int GetNumChannels() { return numChannels_; }
     int GetNumSendSlots() { return numSends_; }

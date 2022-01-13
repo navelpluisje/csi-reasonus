@@ -1728,6 +1728,8 @@ void ActionContext::DoAcceleratedDeltaValueAction(int accelerationIndex, double 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Zone::Activate()
 {
+    isActive_ = true;
+    
     zoneManager_->GetSurface()->LoadingZone(GetName());
     
     for(auto zone : includedZones_)
@@ -1744,12 +1746,12 @@ void Zone::Activate(vector<Zone*> *activeZones)
         activeZones->erase(it);
 
     activeZones->insert(activeZones->begin(), this);
-    
-    //surface_->MoveToFirst(activeZones);
 }
 
 void Zone::Deactivate()
 {
+    isActive_ = false;
+    
     for(auto widget : widgets_)
         widget->Clear();
 }
@@ -1792,8 +1794,6 @@ int Zone::GetSlotIndex()
 
 void Zone::RequestUpdateWidget(Widget* widget)
 {
-    //widget->HandleQueuedActions(this);
-    
     for(auto &context : GetActionContexts(widget))
         context.RunDeferredActions();
     
@@ -1982,8 +1982,6 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
 {
     for(int i = 0; i < numChannels; i++)
         navigators_[i] = surface->GetPage()->GetNavigatorForChannel(i + channelOffset);
-    
-    LoadDefaultZoneOrder();
 }
 
 
@@ -1991,8 +1989,181 @@ void ZoneManager::Initialize()
 {
     InitZones();
     
-    MakeHomeDefault();
+    homeZone_ = GetZone("Home");
+       
+    if(homeZone_ == nullptr)
+    {
+        MessageBox(g_hwnd, (surface_->GetName() + " needs a Home Zone to operate, please recheck your installation").c_str(), ("CSI cannot find Home Zone for " + surface_->GetName()).c_str(), MB_OK);
+        return;
+    }
+   
+    LoadZones("TrackReceiveSlot", numChannels_, &activeTrackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceiveSlot", numSends_, &activeSelectedTrackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceive", numSends_, &activeSelectedTrackReceivesZones_);
+
+    LoadZones("TrackSendSlot", numChannels_, &activeTrackSendsSlotZones_);
+    LoadZones("SelectedTrackSendSlot", numSends_, &activeSelectedTrackSendsSlotZones_);
+    LoadZones("SelectedTrackSend", numSends_, &activeSelectedTrackSendsZones_);
+
+    homeZone_->Activate();
 }
+
+void ZoneManager::RequestUpdate()
+{
+    CheckFocusedFXState();
+    
+    vector<Widget*> widgets = surface_->GetWidgets();
+    
+    // GAW Here do the new dance -- FocusedFX first, Home last, using up widgets as we go
+    /*
+    for(auto activeZones : allActiveZones_)
+        for(auto zone : *activeZones)
+            zone->RequestUpdate(usedWidgets);
+    */
+    
+    
+    //if(homeZone_ != nullptr)
+        //homeZone_->RequestUpdate(usedWidgets);
+
+}
+
+
+
+ 
+ 
+/*
+
+void ControlSurface::MapTrackFXMenusSlotToWidgets()
+{
+    for(int i = 0; i < numChannels_; i ++)
+    {
+        string trackNum = to_string(i + 1);
+        
+        GoZone(&activeSelectedTrackFXMenuZones_, "TrackFXMenuSlot" + trackNum, 1);
+    }
+}
+
+
+void ControlSurface::MapSelectedTrackFXToMenu()
+{
+    UnmapSelectedTrackFXFromMenu();
+    
+    
+    
+#ifdef _WIN32
+// GAW -- This hack is only needed for Mac OS
+#else
+    // GAW TOTAL Hack to prevent crash
+    for(int i = 0; i < 100; i++)
+    {
+        string numStr = to_string(i + 1);
+        
+        if(Widget* widget = GetWidgetByName("SubZone" + numStr))
+        {
+            for(int i = 0; i < 10; i++)
+                widget->QueueAction(1.0);
+        }
+    }
+#endif
+
+    
+    
+    if(MediaTrack* track = GetPage()->GetSelectedTrack())
+        MapSelectedTrackItemsToWidgets(track, "SelectedTrackFXMenu", GetNumFXSlots(), &activeSelectedTrackFXMenuZones_);
+}
+
+ 
+ 
+void ControlSurface::MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfSlots, vector<Zone*> *activeZones)
+{
+    for(int i = 0; i < numberOfSlots; i++)
+    {
+        string name = baseName;
+        
+        if(numberOfSlots > 1)
+            name += to_string(i + 1);
+        
+        if(Zone* zone = GetZone(name))
+            zone->Activate(activeZones);
+    }
+}
+
+
+void ControlSurface::MapSelectedTrackFXToWidgets()
+{
+    UnmapSelectedTrackFXFromWidgets();
+    
+    if(MediaTrack* selectedTrack = GetPage()->GetSelectedTrack())
+        for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
+            MapSelectedTrackFXSlotToWidgets(&activeSelectedTrackFXZones_, i);
+}
+
+void ControlSurface::MapSelectedTrackFXMenuSlotToWidgets(int fxSlot)
+{
+    for(auto zone : activeSelectedTrackFXMenuFXZones_)
+        zone->Deactivate();
+    activeSelectedTrackFXMenuFXZones_.clear();
+    
+    MapSelectedTrackFXSlotToWidgets(&activeSelectedTrackFXMenuFXZones_, fxSlot);
+}
+
+void ControlSurface::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
+{
+    MediaTrack* selectedTrack = GetPage()->GetSelectedTrack();
+    
+    if(selectedTrack == nullptr)
+        return;
+    
+    char FXName[BUFSZ];
+    
+    DAW::TrackFX_GetFXName(selectedTrack, fxSlot, FXName, sizeof(FXName));
+    
+    if(Zone* zone = GetZone(FXName))
+    {
+        if( ! zone->GetNavigator()->GetIsFocusedFXNavigator())
+        {
+            zone->SetSlotIndex(fxSlot);
+            zone->Activate(activeZones);
+        }
+    }
+}
+
+
+
+void ControlSurface::MapFocusedFXToWidgets()
+{
+    UnmapFocusedFXFromWidgets();
+    
+    int trackNumber = 0;
+    int itemNumber = 0;
+    int fxSlot = 0;
+    MediaTrack* focusedTrack = nullptr;
+    
+    if(DAW::GetFocusedFX2(&trackNumber, &itemNumber, &fxSlot) == 1)
+        if(trackNumber > 0)
+            focusedTrack = DAW::GetTrack(trackNumber);
+    
+    if(focusedTrack)
+    {
+        char FXName[BUFSZ];
+        DAW::TrackFX_GetFXName(focusedTrack, fxSlot, FXName, sizeof(FXName));
+        
+        if(Zone* zone = GetZone(FXName))
+        {
+            if(zone->GetNavigator()->GetIsFocusedFXNavigator())
+            {
+                zone->SetSlotIndex(fxSlot);
+                zone->Activate(&activeFocusedFXZones_);
+            }
+        }
+    }
+}
+
+
+*/
+
+
+
 
 
 
@@ -2002,10 +2173,10 @@ void ZoneManager::Initialize()
 
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
-    for(auto zone : activeFocusedFXZones_)
-        zone->Deactivate();
-
-    activeFocusedFXZones_.clear();
+    if(activeFocusedFXZone_ != nullptr)
+        activeFocusedFXZone_->Deactivate();
+    
+    activeFocusedFXZone_ = nullptr;
 }
 
 void ZoneManager::MapFocusedFXToWidgets()
@@ -2031,7 +2202,8 @@ void ZoneManager::MapFocusedFXToWidgets()
             if(zone->GetNavigator()->GetIsFocusedFXNavigator())
             {
                 zone->SetSlotIndex(fxSlot);
-                zone->Activate(&activeFocusedFXZones_);
+                zone->Activate();
+                activeFocusedFXZone_ = zone;
             }
         }
     }
@@ -2092,7 +2264,6 @@ void ZoneManager::InitZones()
     }
 }
 
-
 void ZoneManager::LoadZone(string zoneName)
 {
     if(zonesByName_.count(zoneName) == 0)
@@ -2135,6 +2306,7 @@ Zone* ZoneManager::GetZone(string zoneName)
 
 void ZoneManager::GoSubZone(Zone* enclosingZone, string zoneName, double value)
 {
+    /*
     for(auto activeZones : allActiveZones_)
     {
         for(auto zone : *activeZones)
@@ -2147,19 +2319,21 @@ void ZoneManager::GoSubZone(Zone* enclosingZone, string zoneName, double value)
             }
         }
     }
+     */
 }
 
 void ZoneManager::GoZone(string zoneName, double value)
 {
     // GAW TBD -- Use Zone name to determine in which activeZoneList to put this activated Zone
     
-    GoZone(&activeZones_, zoneName, value);
+    //GoZone(&activeZones_, zoneName, value);
 }
 
 void ZoneManager::GoZone(vector<Zone*> *activeZones, string zoneName, double value)
 {
     if(zoneName == "Home")
     {
+        /*
         activeZones_.clear();
         activeSelectedTrackSendsZones_.clear();
         activeSelectedTrackReceivesZones_.clear();
@@ -2167,9 +2341,8 @@ void ZoneManager::GoZone(vector<Zone*> *activeZones, string zoneName, double val
         activeSelectedTrackFXMenuZones_.clear();
         activeSelectedTrackFXMenuFXZones_.clear();
         activeFocusedFXZones_.clear();
-                
-        LoadDefaultZoneOrder();
-        
+         */
+                       
         if(homeZone_ != nullptr)
             homeZone_->Activate();
     }
