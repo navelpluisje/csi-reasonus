@@ -580,20 +580,24 @@ public:
         actionContextDictionary_[widget][modifier].push_back(actionContext);
     }
     
-    void RequestUpdate(vector<Widget*> &widgets)
+    void RequestUpdate(map<Widget*, bool> &usedWidgets)
     {
-        if(! isActive_ || widgets.size() == 0)
+        if(! isActive_)
             return;
-        
-        for(int i = widgets.size() - 1; i >= 0; i--)
-            widgets.erase(remove_if(begin(widgets),end(widgets), [&](auto x){return find(begin(widgets_),end(widgets_),x)!=end(widgets_);}), end(widgets));
       
         for(auto widget : widgets_)
-            RequestUpdateWidget(widget);
+        {
+            if(usedWidgets[widget] == false)
+            {
+                usedWidgets[widget] = true;
+                RequestUpdateWidget(widget);
+            }
+        }
 
         for(auto zone : includedZones_)
-            zone->RequestUpdate(widgets);
+            zone->RequestUpdate(usedWidgets);
     }
+
         
     void DoAction(Widget* widget, double value)
     {
@@ -815,6 +819,8 @@ private:
     vector<MappingType> unmap_;
     vector<MappingType> toggleMap_;
 
+    map<Widget*, bool> usedWidgets_;
+    
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
     
@@ -1028,6 +1034,11 @@ private:
     }
     
 public:
+    void AddWidget(Widget* widget)
+    {
+        usedWidgets_[widget] = false;
+    }
+    
     void SetBroadcast(ActionContext* context)
     {
         SetBroadcast(broadcast_, context);
@@ -1106,7 +1117,7 @@ public:
     
     void Initialize();
    
-    virtual void RequestUpdate();
+    void RequestUpdate();
     
     Zone* GetDefaultZone() { return homeZone_; }
     
@@ -1343,6 +1354,7 @@ public:
     {
         widgets_.push_back(widget);
         widgetsByName_[widget->GetName()] = widget;
+        zoneManager_->AddWidget(widget);
     }
     
     void AddCSIMessageGenerator(string message, CSIMessageGenerator* messageGenerator)

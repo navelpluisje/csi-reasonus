@@ -2012,9 +2012,10 @@ void ZoneManager::RequestUpdate()
 {
     CheckFocusedFXState();
     
-    vector<Widget*> widgets = surface_->GetWidgets();
+    for(auto &[key, value] : usedWidgets_)
+        value = false;
 
-    //homeZone_->RequestUpdate(widgets);
+    homeZone_->RequestUpdate(usedWidgets_);
     
     //for(Zone* zone : activeSelectedTrackSendsZones_)
         //zone->RequestUpdate(widgets);
