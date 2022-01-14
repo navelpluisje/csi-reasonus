@@ -580,20 +580,19 @@ public:
         actionContextDictionary_[widget][modifier].push_back(actionContext);
     }
     
-    void RequestUpdate(vector<Widget*> &usedWidgets)
+    void RequestUpdate(vector<Widget*> &widgets)
     {
-        for(auto widget : widgets_)
-        {
-            if(find(usedWidgets.begin(), usedWidgets.end(), widget) == usedWidgets.end())
-            {
-                usedWidgets.push_back(widget);
-
-                RequestUpdateWidget(widget);
-            }
-        }
+        if(! isActive_ || widgets.size() == 0)
+            return;
         
+        for(int i = widgets.size() - 1; i >= 0; i--)
+            widgets.erase(remove_if(begin(widgets),end(widgets), [&](auto x){return find(begin(widgets_),end(widgets_),x)!=end(widgets_);}), end(widgets));
+      
+        for(auto widget : widgets_)
+            RequestUpdateWidget(widget);
+
         for(auto zone : includedZones_)
-            zone->RequestUpdate(usedWidgets);
+            zone->RequestUpdate(widgets);
     }
         
     void DoAction(Widget* widget, double value)
@@ -872,26 +871,7 @@ private:
 
     Zone* homeZone_ = nullptr;
     
-
-
-    
-    void LoadZones(string baseName, int numberOfSlots, vector<Zone*> *activeZones)
-    {
-        for(int i = 0; i < numberOfSlots; i++)
-        {
-            string name = baseName;
-            
-            if(numberOfSlots > 1)
-                name += to_string(i + 1);
-            
-            if(Zone* zone = GetZone(name))
-            {
-                activeZones->push_back(zone);
-            }
-        }
-    }
-
-    
+   
     
     
     /*
@@ -1023,6 +1003,27 @@ private:
                 map.push_back(MappingType::TrackFXMenu);
             else if(param == "TrackFXMenusSlott")
                 map.push_back(MappingType::TrackFXMenusSlot);
+        }
+    }
+      
+    void LoadZone(string baseName, vector<Zone*> *activeZones)
+    {
+        LoadZones(baseName, 1, activeZones);
+    }
+    
+    void LoadZones(string baseName, int numberOfSlots, vector<Zone*> *activeZones)
+    {
+        for(int i = 0; i < numberOfSlots; i++)
+        {
+            string name = baseName;
+            
+            if(numberOfSlots > 1)
+                name += to_string(i + 1);
+            
+            if(Zone* zone = GetZone(name))
+            {
+                activeZones->push_back(zone);
+            }
         }
     }
     

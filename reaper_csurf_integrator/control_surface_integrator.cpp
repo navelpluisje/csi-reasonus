@@ -2013,6 +2013,13 @@ void ZoneManager::RequestUpdate()
     CheckFocusedFXState();
     
     vector<Widget*> widgets = surface_->GetWidgets();
+
+    //homeZone_->RequestUpdate(widgets);
+    
+    //for(Zone* zone : activeSelectedTrackSendsZones_)
+        //zone->RequestUpdate(widgets);
+    
+    
     
     // GAW Here do the new dance -- FocusedFX first, Home last, using up widgets as we go
     /*
