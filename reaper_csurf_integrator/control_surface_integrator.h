@@ -75,20 +75,11 @@ enum NavigationType
     SelectedTrackReceiveSlot,
 };
 
-enum MappingType
+enum MapType
 {
-    TrackSendsSlot,
-    SelectedTrackSends,
-    SelectedTrackSendsSlot,
-    TrackReceivesSlot,
-    SelectedTrackReceives,
-    SelectedTrackReceivesSlot,
-    FocusedFX,
-    SelectedTrackFX,
-    SelectedTrackFXMenu,
-    SelectedTrackFXMenuSlot,
-    TrackFXMenu,
-    TrackFXMenusSlot
+    Map,
+    Unmap,
+    ToggleMap,
 };
 
 enum BroadcastType
@@ -543,6 +534,11 @@ public:
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
     void RequestUpdateWidget(Widget* widget);
 
+    void Toggle()
+    {
+        isActive_ = ! isActive_;
+    }
+    
     void SetSlotIndex(int index)
     {
         slotIndex_ = index;
@@ -815,12 +811,6 @@ private:
     vector<BroadcastType> broadcast_;
     vector<BroadcastType> receiveBroadcast_;
 
-    vector<MappingType> map_;
-    vector<MappingType> unmap_;
-    vector<MappingType> toggleMap_;
-
-    map<Widget*, bool> usedWidgets_;
-    
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
     
@@ -828,125 +818,24 @@ private:
     int const numSends_ = 0;
     int const numFXSlots_ = 0;
     
-    /*
-     
-     
-     FocusedFX
-    
-     
-     FXMenu
-     
-     SelectedTrackFXMenu
-     
-     
-     
+    map<Widget*, bool> usedWidgets_;
 
-     SelectedTrackReceive
-     SelectedTrackReceiveSlot
-     TrackReceiveSlot
-     *SelectedTrackSend
-     *SelectedTrackSendSlot
-     *TrackSendSlot
-     Home
-     
-     
-
-     
-     
-    Home
-     
-     
-    */
-
+    vector<vector<Zone*>> fixedZones_;
+   
+    Zone* focusedFXZone_ = nullptr;
+    vector<Zone*> selectedTrackFXZones_;
+    vector<Zone*> selectedTrackFXMenuZones_;
+    vector<Zone*> selectedTrackFXMenuFXZones_;
     
+    vector<Zone*> selectedTrackReceivesZones_;
+    vector<Zone*> selectedTrackReceivesSlotZones_;
+    vector<Zone*> trackReceivesSlotZones_;
     
-    Zone* activeFocusedFXZone_ = nullptr;
-    vector<Zone*> activeSelectedTrackFXZones_;
-    vector<Zone*> activeSelectedTrackFXMenuZones_;
-    vector<Zone*> activeSelectedTrackFXMenuFXZones_;
-    
-    
-    
-    vector<Zone*> activeSelectedTrackReceivesZones_;
-    vector<Zone*> activeSelectedTrackReceivesSlotZones_;
-    vector<Zone*> activeTrackReceivesSlotZones_;
-    
-    vector<Zone*> activeSelectedTrackSendsZones_;
-    vector<Zone*> activeSelectedTrackSendsSlotZones_;
-    vector<Zone*> activeTrackSendsSlotZones_;
+    vector<Zone*> selectedTrackSendsZones_;
+    vector<Zone*> selectedTrackSendsSlotZones_;
+    vector<Zone*> trackSendsSlotZones_;
 
     Zone* homeZone_ = nullptr;
-    
-   
-    
-    
-    /*
-     FocusedFX - one
-     FocusedFXNavigator
-     
-     FXWidget
-     TrackNavigator
-     SelectedTrackNavigator
-     
-     
-     FXMenu
-     TrackFXMenuSlotNavigator
-     SelectedTrackFXMenuNavigator
-     
-     Receives
-     TrackReceiveSlotNavigator
-     SelectedTrackReceiveNavigator
-     SelectedTrackReceiveSlotNavigator
-     
-     Sends
-     TrackSendSlotNavigator
-     SelectedTrackSendNavigator
-     SelectedTrackSendSlotNavigator
-     
-     Home
-       */
-    
-    
-    
-    
-    /*
-     TrackNavigator
-     SelectedTrackNavigator
-
-
-
-
-
-
-
-     MasterTrackNavigator
-
-     
-     */
-    
-
-    
-    /*
-    vector<Zone*> activeZones_;
-
-    vector<vector<Zone*> *> allActiveZones_;
-    
-    void LoadDefaultZoneOrder()
-    {
-        allActiveZones_.clear();
-        
-        allActiveZones_.push_back(&activeFocusedFXZones_);
-        allActiveZones_.push_back(&activeSelectedTrackFXZones_);
-        allActiveZones_.push_back(&activeSelectedTrackFXMenuFXZones_);
-        allActiveZones_.push_back(&activeSelectedTrackFXMenuZones_);
-        allActiveZones_.push_back(&activeSelectedTrackSendsZones_);
-        allActiveZones_.push_back(&activeSelectedTrackReceivesZones_);
-        allActiveZones_.push_back(&activeZones_);
-    }
-    */
-    
-    
-    
     
     map<int, Navigator*> navigators_;
  
@@ -956,6 +845,80 @@ private:
     
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
    
+    
+    
+     void SetMap(MapType mapType, ActionContext* context)
+     {
+         for(string param : context->GetMappingTypes())
+         {
+             if(param == "FocusedFX")
+             {
+                 if(focusedFXZone_ != nullptr)
+                 {
+                     
+                     
+                 }
+             }
+             else if(param == "SelectedTrackFX")
+             {
+                 
+             }
+             else if(param == "SelectedTrackFXMenu")
+             {
+                 
+             }
+             else if(param == "SelectedTrackFXMenuSlot")
+             {
+                 
+             }
+             else if(param == "TrackFXMenu")
+             {
+                 
+             }
+             else if(param == "TrackFXMenusSlot")
+             {
+                 
+             }
+             
+             
+
+             else if(param == "SelectedTrackReceives")
+                 ConductMapping(mapType, selectedTrackReceivesZones_);
+             else if(param == "SelectedTrackReceivesSlot")
+                 ConductMapping(mapType, selectedTrackReceivesSlotZones_);
+             else if(param == "TrackReceivesSlot")
+                 ConductMapping(mapType, trackReceivesSlotZones_);
+             
+             else if(param == "SelectedTrackSends")
+                 ConductMapping(mapType, selectedTrackSendsZones_);
+             else if(param == "SelectedTrackSendsSlot")
+                 ConductMapping(mapType, selectedTrackSendsSlotZones_);
+             else if(param == "TrackSendsSlot")
+                 ConductMapping(mapType, trackSendsSlotZones_);
+         }
+     }
+        
+    void ConductMapping(MapType mapType, vector<Zone*> &zones)
+    {
+        for(Zone* zone : zones)
+        {
+            switch (mapType)
+            {
+                case  MapType::Map:
+                    zone->Activate();
+                    break;
+                
+                case  MapType::Unmap:
+                    zone->Deactivate();
+                    break;
+                
+                case  MapType::ToggleMap:
+                    zone->Toggle();
+                    break;
+            }
+        }
+    }
+    
     void SetBroadcast(vector<BroadcastType> &broadcast, ActionContext* context)
     {
         for(string param : context->GetBroadcastTypes())
@@ -978,37 +941,6 @@ private:
                 broadcast.push_back(BroadcastType::MapTrackReceivesSlot);
             else if(param == "MapTrackFXMenusSlot")
                 broadcast.push_back(BroadcastType::MapTrackFXMenusSlot);
-        }
-    }
-       
-    void SetMap(vector<MappingType> &map, ActionContext* context)
-    {
-        for(string param : context->GetMappingTypes())
-        {
-            if(param == "TrackSendsSlot")
-                map.push_back(MappingType::TrackSendsSlot);
-            else if(param == "SelectedTrackSends")
-                map.push_back(MappingType::SelectedTrackSends);
-            else if(param == "SelectedTrackSendsSlot")
-                map.push_back(MappingType::SelectedTrackSendsSlot);
-            else if(param == "TrackReceivesSlot")
-                map.push_back(MappingType::TrackReceivesSlot);
-            else if(param == "SelectedTrackReceives")
-                map.push_back(MappingType::SelectedTrackReceives);
-            else if(param == "SelectedTrackReceivesSlot")
-                map.push_back(MappingType::SelectedTrackReceivesSlot);
-            else if(param == "FocusedFX")
-                map.push_back(MappingType::FocusedFX);
-            else if(param == "SelectedTrackFX")
-                map.push_back(MappingType::SelectedTrackFX);
-            else if(param == "SelectedTrackFXMenu")
-                map.push_back(MappingType::SelectedTrackFXMenu);
-            else if(param == "SelectedTrackFXMenuSlot")
-                map.push_back(MappingType::SelectedTrackFXMenuSlot);
-            else if(param == "TrackFXMenu")
-                map.push_back(MappingType::TrackFXMenu);
-            else if(param == "TrackFXMenusSlott")
-                map.push_back(MappingType::TrackFXMenusSlot);
         }
     }
       
@@ -1051,7 +983,7 @@ public:
 
     void Map(ActionContext* context)
     {
-        SetMap(map_, context);
+        SetMap(MapType::Map, context);
         // GAW TBD - now map everything in the list
         
         
@@ -1060,13 +992,13 @@ public:
 
     void Unmap(ActionContext* context)
     {
-        SetMap(unmap_, context);
+        SetMap(MapType::Unmap, context);
         // GAW TBD - now unmap everything in the list
     }
 
     void ToggleMap(ActionContext* context)
     {
-        SetMap(toggleMap_, context);
+        SetMap(MapType::ToggleMap, context);
         // GAW TBD - now toggleMap everything in the list
     }
 

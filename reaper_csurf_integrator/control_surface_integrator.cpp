@@ -1048,9 +1048,9 @@ void Manager::InitActionsDictionary()
     actions_["ReceiveBroadcast"] =                  new ReceiveBroadcast();
     actions_["GoZone"] =                            new class GoZone();
     actions_["GoSubZone"] =                         new GoSubZone();
-    actions_["Map"] =                               new Map();
-    actions_["Unmap"] =                             new Unmap();
-    actions_["ToggleMap"] =                         new ToggleMap();
+    actions_["Map"] =                               new class Map();
+    actions_["Unmap"] =                             new class Unmap();
+    actions_["ToggleMap"] =                         new class ToggleMap();
     actions_["TrackBank"] =                         new TrackBank();
     actions_["SelectedTrackBank"] =                 new SelectedTrackBank();
     actions_["SendSlotBank"] =                      new SendSlotBank();
@@ -1997,15 +1997,30 @@ void ZoneManager::Initialize()
         return;
     }
    
-    LoadZones("TrackReceiveSlot", numChannels_, &activeTrackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceiveSlot", numSends_, &activeSelectedTrackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceive", numSends_, &activeSelectedTrackReceivesZones_);
+    LoadZones("TrackReceiveSlot", numChannels_, &trackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceiveSlot", numSends_, &selectedTrackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceive", numSends_, &selectedTrackReceivesZones_);
 
-    LoadZones("TrackSendSlot", numChannels_, &activeTrackSendsSlotZones_);
-    LoadZones("SelectedTrackSendSlot", numSends_, &activeSelectedTrackSendsSlotZones_);
-    LoadZones("SelectedTrackSend", numSends_, &activeSelectedTrackSendsZones_);
+    LoadZones("TrackSendSlot", numChannels_, &trackSendsSlotZones_);
+    LoadZones("SelectedTrackSendSlot", numSends_, &selectedTrackSendsSlotZones_);
+    LoadZones("SelectedTrackSend", numSends_, &selectedTrackSendsZones_);
 
     homeZone_->Activate();
+    
+
+    
+    fixedZones_.push_back(trackReceivesSlotZones_);
+    fixedZones_.push_back(selectedTrackReceivesSlotZones_);
+    fixedZones_.push_back(selectedTrackReceivesZones_);
+
+    fixedZones_.push_back(trackSendsSlotZones_);
+    fixedZones_.push_back(selectedTrackSendsSlotZones_);
+    fixedZones_.push_back(selectedTrackSendsZones_);
+
+
+
+    
+    
 }
 
 void ZoneManager::RequestUpdate()
@@ -2018,7 +2033,7 @@ void ZoneManager::RequestUpdate()
     homeZone_->RequestUpdate(usedWidgets_);
     
     //for(Zone* zone : activeSelectedTrackSendsZones_)
-        //zone->RequestUpdate(widgets);
+    //    zone->RequestUpdate(usedWidgets_);
     
     
     
@@ -2181,10 +2196,10 @@ void ControlSurface::MapFocusedFXToWidgets()
 
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
-    if(activeFocusedFXZone_ != nullptr)
-        activeFocusedFXZone_->Deactivate();
+    if(focusedFXZone_ != nullptr)
+        focusedFXZone_->Deactivate();
     
-    activeFocusedFXZone_ = nullptr;
+    focusedFXZone_ = nullptr;
 }
 
 void ZoneManager::MapFocusedFXToWidgets()
@@ -2211,7 +2226,7 @@ void ZoneManager::MapFocusedFXToWidgets()
             {
                 zone->SetSlotIndex(fxSlot);
                 zone->Activate();
-                activeFocusedFXZone_ = zone;
+                focusedFXZone_ = zone;
             }
         }
     }
@@ -2219,9 +2234,9 @@ void ZoneManager::MapFocusedFXToWidgets()
 
 void ZoneManager::UnmapSelectedTrackFXFromWidgets()
 {
-    for(auto zone : activeSelectedTrackFXZones_)
+    for(auto zone : selectedTrackFXZones_)
         zone->Deactivate();
-    activeSelectedTrackFXZones_.clear();
+    selectedTrackFXZones_.clear();
 }
 
 void ZoneManager::MapSelectedTrackFXToWidgets()
@@ -2230,7 +2245,7 @@ void ZoneManager::MapSelectedTrackFXToWidgets()
     
     if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
         for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
-            MapSelectedTrackFXSlotToWidgets(&activeSelectedTrackFXZones_, i);
+            MapSelectedTrackFXSlotToWidgets(&selectedTrackFXZones_, i);
 }
 
 void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
