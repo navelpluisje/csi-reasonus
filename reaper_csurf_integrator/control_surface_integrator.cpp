@@ -2030,24 +2030,29 @@ void ZoneManager::RequestUpdate()
     for(auto &[key, value] : usedWidgets_)
         value = false;
 
-    homeZone_->RequestUpdate(usedWidgets_);
+    if(focusedFXZone_ != nullptr)
+        focusedFXZone_->RequestUpdate(usedWidgets_);
     
-    //for(Zone* zone : activeSelectedTrackSendsZones_)
-    //    zone->RequestUpdate(usedWidgets_);
+    for(Zone* zone : selectedTrackFXZones_)
+        zone->RequestUpdate(usedWidgets_);
     
+    for(Zone* zone : selectedTrackFXMenuZones_)
+        zone->RequestUpdate(usedWidgets_);
     
+    for(Zone* zone : selectedTrackFXMenuFXZones_)
+        zone->RequestUpdate(usedWidgets_);
     
-    // GAW Here do the new dance -- FocusedFX first, Home last, using up widgets as we go
-    /*
-    for(auto activeZones : allActiveZones_)
-        for(auto zone : *activeZones)
-            zone->RequestUpdate(usedWidgets);
-    */
+    for(vector<Zone*> zones : fixedZones_)
+        for(Zone* zone : zones)
+            zone->RequestUpdate(usedWidgets_);
     
+    if(homeZone_ != nullptr)
+        homeZone_->RequestUpdate(usedWidgets_);
     
-    //if(homeZone_ != nullptr)
-        //homeZone_->RequestUpdate(usedWidgets);
-
+    // default is to zero unused Widgets -- e.g. you can overrise this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
+    for(auto &[key, value] : usedWidgets_)
+        if(value == false)
+            key->UpdateValue(0.0);
 }
 
 

@@ -845,56 +845,52 @@ private:
     
     void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
    
-    
-    
-     void SetMap(MapType mapType, ActionContext* context)
-     {
-         for(string param : context->GetMappingTypes())
-         {
-             if(param == "FocusedFX")
-             {
-                 if(focusedFXZone_ != nullptr)
-                 {
+    void Map(MapType mapType, ActionContext* context)
+    {
+        for(string param : context->GetMappingTypes())
+        {
+            if(param == "FocusedFX")
+            {
+                if(focusedFXZone_ != nullptr)
+                {
                      
                      
-                 }
-             }
-             else if(param == "SelectedTrackFX")
-             {
+                }
+            }
+            else if(param == "SelectedTrackFX")
+            {
+                MapSelectedTrackFXToWidgets(); 
+            }
+            else if(param == "SelectedTrackFXMenu")
+            {
                  
-             }
-             else if(param == "SelectedTrackFXMenu")
-             {
+            }
+            else if(param == "SelectedTrackFXMenuSlot")
+            {
                  
-             }
-             else if(param == "SelectedTrackFXMenuSlot")
-             {
+            }
+            else if(param == "TrackFXMenu")
+            {
                  
-             }
-             else if(param == "TrackFXMenu")
-             {
+            }
+            else if(param == "TrackFXMenusSlot")
+            {
                  
-             }
-             else if(param == "TrackFXMenusSlot")
-             {
-                 
-             }
+            }
              
+            else if(param == "SelectedTrackReceives")
+                ConductMapping(mapType, selectedTrackReceivesZones_);
+            else if(param == "SelectedTrackReceivesSlot")
+                ConductMapping(mapType, selectedTrackReceivesSlotZones_);
+            else if(param == "TrackReceivesSlot")
+                ConductMapping(mapType, trackReceivesSlotZones_);
              
-
-             else if(param == "SelectedTrackReceives")
-                 ConductMapping(mapType, selectedTrackReceivesZones_);
-             else if(param == "SelectedTrackReceivesSlot")
-                 ConductMapping(mapType, selectedTrackReceivesSlotZones_);
-             else if(param == "TrackReceivesSlot")
-                 ConductMapping(mapType, trackReceivesSlotZones_);
-             
-             else if(param == "SelectedTrackSends")
-                 ConductMapping(mapType, selectedTrackSendsZones_);
-             else if(param == "SelectedTrackSendsSlot")
-                 ConductMapping(mapType, selectedTrackSendsSlotZones_);
-             else if(param == "TrackSendsSlot")
-                 ConductMapping(mapType, trackSendsSlotZones_);
+            else if(param == "SelectedTrackSends")
+                ConductMapping(mapType, selectedTrackSendsZones_);
+            else if(param == "SelectedTrackSendsSlot")
+                ConductMapping(mapType, selectedTrackSendsSlotZones_);
+            else if(param == "TrackSendsSlot")
+                ConductMapping(mapType, trackSendsSlotZones_);
          }
      }
         
@@ -983,23 +979,17 @@ public:
 
     void Map(ActionContext* context)
     {
-        SetMap(MapType::Map, context);
-        // GAW TBD - now map everything in the list
-        
-        
-        MapSelectedTrackFXToWidgets(); // GAW HACK for now
+        Map(MapType::Map, context);
     }
 
     void Unmap(ActionContext* context)
     {
-        SetMap(MapType::Unmap, context);
-        // GAW TBD - now unmap everything in the list
+        Map(MapType::Unmap, context);
     }
 
     void ToggleMap(ActionContext* context)
     {
-        SetMap(MapType::ToggleMap, context);
-        // GAW TBD - now toggleMap everything in the list
+        Map(MapType::ToggleMap, context);
     }
 
     void MapSelectedTrackFXToWidgets();
