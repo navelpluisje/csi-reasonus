@@ -1137,8 +1137,21 @@ public:
     {
         bool isUsed = false;
      
+        if(focusedFXZone_ != nullptr)
+            focusedFXZone_->DoAction(widget, isUsed, value);
+        
         for(Zone* zone : selectedTrackFXZones_)
             zone->DoAction(widget, isUsed, value);
+        
+        for(Zone* zone : selectedTrackFXMenuZones_)
+            zone->DoAction(widget, isUsed, value);
+        
+        for(Zone* zone : selectedTrackFXMenuFXZones_)
+            zone->DoAction(widget, isUsed, value);
+        
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoAction(widget, isUsed, value);
         
         if(homeZone_ != nullptr)
             homeZone_->DoAction(widget, isUsed, value);
@@ -1146,17 +1159,74 @@ public:
     
     void DoRelativeAction(Widget* widget, double delta)
     {
-
+        bool isUsed = false;
+     
+        if(focusedFXZone_ != nullptr)
+            focusedFXZone_->DoRelativeAction(widget, isUsed, delta);
+        
+        for(Zone* zone : selectedTrackFXZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
+        
+        for(Zone* zone : selectedTrackFXMenuZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
+        
+        for(Zone* zone : selectedTrackFXMenuFXZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
+        
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoRelativeAction(widget, isUsed, delta);
+        
+        if(homeZone_ != nullptr)
+            homeZone_->DoRelativeAction(widget, isUsed, delta);
     }
     
     void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
     {
-
+        bool isUsed = false;
+     
+        if(focusedFXZone_ != nullptr)
+            focusedFXZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        
+        for(Zone* zone : selectedTrackFXZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        
+        for(Zone* zone : selectedTrackFXMenuZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        
+        for(Zone* zone : selectedTrackFXMenuFXZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        
+        if(homeZone_ != nullptr)
+            homeZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
     
     void DoTouch(Widget* widget, double value)
     {
-
+        bool isUsed = false;
+     
+        if(focusedFXZone_ != nullptr)
+            focusedFXZone_->DoAction(widget, isUsed, value);
+        
+        for(Zone* zone : selectedTrackFXZones_)
+            zone->DoAction(widget, isUsed, value);
+        
+        for(Zone* zone : selectedTrackFXMenuZones_)
+            zone->DoAction(widget, isUsed, value);
+        
+        for(Zone* zone : selectedTrackFXMenuFXZones_)
+            zone->DoAction(widget, isUsed, value);
+        
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoAction(widget, isUsed, value);
+        
+        if(homeZone_ != nullptr)
+            homeZone_->DoAction(widget, isUsed, value);
     }
 };
 
