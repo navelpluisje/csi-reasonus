@@ -2007,8 +2007,6 @@ void ZoneManager::Initialize()
 
     homeZone_->Activate();
     
-
-    
     fixedZones_.push_back(trackReceivesSlotZones_);
     fixedZones_.push_back(selectedTrackReceivesSlotZones_);
     fixedZones_.push_back(selectedTrackReceivesZones_);
@@ -2016,11 +2014,6 @@ void ZoneManager::Initialize()
     fixedZones_.push_back(trackSendsSlotZones_);
     fixedZones_.push_back(selectedTrackSendsSlotZones_);
     fixedZones_.push_back(selectedTrackSendsZones_);
-
-
-
-    
-    
 }
 
 void ZoneManager::RequestUpdate()

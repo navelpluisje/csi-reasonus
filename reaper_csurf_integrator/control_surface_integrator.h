@@ -595,14 +595,26 @@ public:
     }
 
         
-    void DoAction(Widget* widget, double value)
+    void DoAction(Widget* widget, bool &isUsed,  double value)
     {
+        if(! isActive_ || isUsed)
+            return;
+        
+        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            isUsed = true;
+        
         for(auto &context : GetActionContexts(widget))
             context.DoAction(value);
     }
     
-    void DoTouch(Widget* widget, string widgetName, double value)
+    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
     {
+        if(! isActive_ || isUsed)
+            return;
+
+        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            isUsed = true;
+
         activeTouchIds_[widgetName + "Touch"] = value;
         activeTouchIds_[widgetName + "TouchPress"] = value;
         activeTouchIds_[widgetName + "TouchRelease"] = ! value;
@@ -611,14 +623,26 @@ public:
             context.DoTouch(value);
     }
     
-    void DoRelativeAction(Widget* widget, double delta)
+    void DoRelativeAction(Widget* widget, bool &isUsed, double delta)
     {
+        if(! isActive_ || isUsed)
+            return;
+        
+        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            isUsed = true;
+
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(delta);
     }
     
-    void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
+    void DoRelativeAction(Widget* widget, bool &isUsed, int accelerationIndex, double delta)
     {
+        if(! isActive_ || isUsed)
+            return;
+
+        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            isUsed = true;
+
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(accelerationIndex, delta);
     }
@@ -1111,17 +1135,13 @@ public:
        
     void DoAction(Widget* widget, double value)
     {
-        /*
-        for(auto activeZones : allActiveZones_)
-            for(auto zone : *activeZones)
-                zone->DoAction(widget, value);
-         */
-        
-        
+        bool isUsed = false;
+     
+        for(Zone* zone : selectedTrackFXZones_)
+            zone->DoAction(widget, isUsed, value);
         
         if(homeZone_ != nullptr)
-            homeZone_->DoAction(widget, value);
-    
+            homeZone_->DoAction(widget, isUsed, value);
     }
     
     void DoRelativeAction(Widget* widget, double delta)
