@@ -1728,6 +1728,8 @@ void ActionContext::DoAcceleratedDeltaValueAction(int accelerationIndex, double 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Zone::Activate()
 {
+    zoneManager_->EnsureWidgetsNotUsed(this);
+    
     isActive_ = true;
     
     zoneManager_->GetSurface()->LoadingZone(GetName());
@@ -1736,24 +1738,9 @@ void Zone::Activate()
         zone->Activate();
 }
 
-void Zone::Activate(vector<Zone*> *activeZones)
-{
-    Activate();
-    
-    auto it = find(activeZones->begin(), activeZones->end(), this);
-    
-    if ( it != activeZones->end() )
-        activeZones->erase(it);
-
-    activeZones->insert(activeZones->begin(), this);
-}
-
 void Zone::Deactivate()
 {
     isActive_ = false;
-    
-    for(auto widget : widgets_)
-        widget->Clear();
 }
 
 vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
@@ -2230,16 +2217,9 @@ void ZoneManager::MapFocusedFXToWidgets()
     }
 }
 
-void ZoneManager::UnmapSelectedTrackFXFromWidgets()
-{
-    for(auto zone : selectedTrackFXZones_)
-        zone->Deactivate();
-    selectedTrackFXZones_.clear();
-}
-
 void ZoneManager::MapSelectedTrackFXToWidgets()
 {
-    UnmapSelectedTrackFXFromWidgets();
+    UnmapZones(selectedTrackFXZones_);
     
     if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
         for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
@@ -2262,10 +2242,17 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, in
         if( ! zone->GetNavigator()->GetIsFocusedFXNavigator())
         {
             zone->SetSlotIndex(fxSlot);
-            zone->Activate(activeZones);
+            zone->Activate();
         }
     }
 }
+
+
+
+
+
+
+
 
 void ZoneManager::InitZones()
 {
@@ -2343,34 +2330,40 @@ void ZoneManager::GoSubZone(Zone* enclosingZone, string zoneName, double value)
      */
 }
 
-void ZoneManager::GoZone(string zoneName, double value)
-{
-    // GAW TBD -- Use Zone name to determine in which activeZoneList to put this activated Zone
-    
-    //GoZone(&activeZones_, zoneName, value);
-}
-
-void ZoneManager::GoZone(vector<Zone*> *activeZones, string zoneName, double value)
+void ZoneManager::GoZone(string zoneName)
 {
     if(zoneName == "Home")
     {
-        /*
-        activeZones_.clear();
-        activeSelectedTrackSendsZones_.clear();
-        activeSelectedTrackReceivesZones_.clear();
-        activeSelectedTrackFXMenuZones_.clear();
-        activeSelectedTrackFXMenuZones_.clear();
-        activeSelectedTrackFXMenuFXZones_.clear();
-        activeFocusedFXZones_.clear();
-         */
-                       
-        if(homeZone_ != nullptr)
-            homeZone_->Activate();
+        if(focusedFXZone_ != nullptr)
+        {
+            UnmapFocusedFXFromWidgets();
+            focusedFXZone_->Deactivate();
+            focusedFXZone_ = nullptr;
+        }
+        
+        UnmapZones(goZones_);
+        
+        UnmapZones(selectedTrackFXZones_);
+        UnmapZones(selectedTrackFXMenuZones_);
+        UnmapZones(selectedTrackFXMenuFXZones_);
+        
+        DeactivateZones(selectedTrackReceivesZones_);
+        DeactivateZones(selectedTrackReceivesSlotZones_);
+        DeactivateZones(trackReceivesSlotZones_);
+        
+        DeactivateZones(selectedTrackSendsZones_);
+        DeactivateZones(selectedTrackSendsSlotZones_);
+        DeactivateZones(trackSendsSlotZones_);
     }
+    else if(zoneName == "SelectedTrackFXZones")
+    {
+        
+    }
+    
     else
     {
         GetZone(zoneName);
-
+/*
         if(zonesByName_.count(zoneName) > 0)
         {
             Zone* zone = zonesByName_[zoneName];
@@ -2389,6 +2382,7 @@ void ZoneManager::GoZone(vector<Zone*> *activeZones, string zoneName, double val
                     activeZones->erase(it);
             }
         }
+ */
     }
 }
 

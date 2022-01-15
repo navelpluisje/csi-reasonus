@@ -41,7 +41,7 @@ public:
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetSlotIndex());
+        //context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetSlotIndex());
     }
 };
 
@@ -56,7 +56,7 @@ public:
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetPage()->GetFXMenuSlot());
+        //context->GetSurface()->GetZoneManager()->MapSelectedTrackFXMenuSlotToWidgets(context->GetPage()->GetFXMenuSlot());
     }
 };
 
@@ -192,10 +192,12 @@ public:
     
     void Do(ActionContext* context, double value) override
     {
+        /*
         if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
             context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
         else if(value)
             context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
+         */
     }
 };
 

@@ -522,6 +522,7 @@ public:
     Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
+    void RequestUpdateWidget(Widget* widget);
     void Activate();
     void Activate(vector<Zone*> *activeZones);
     void Deactivate();
@@ -532,11 +533,14 @@ public:
     Navigator* GetNavigator() { return navigator_; }
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
-    void RequestUpdateWidget(Widget* widget);
+    vector<Widget*> &Getwidgets() { return widgets_; }
 
     void Toggle()
     {
-        isActive_ = ! isActive_;
+        if(isActive_)
+            Deactivate();
+        else
+            Activate();
     }
     
     void SetSlotIndex(int index)
@@ -594,7 +598,18 @@ public:
             zone->RequestUpdate(usedWidgets);
     }
 
-        
+    void EnsureWidgetsNotUsed(vector<Widget*> &widgets)
+    {
+        for(auto widget : widgets)
+        {
+            if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            {
+                Deactivate();
+                return;
+            }
+        }
+    }
+    
     void DoAction(Widget* widget, bool &isUsed,  double value)
     {
         if(! isActive_ || isUsed)
@@ -844,12 +859,17 @@ private:
     
     map<Widget*, bool> usedWidgets_;
 
-    vector<vector<Zone*>> fixedZones_;
+
    
     Zone* focusedFXZone_ = nullptr;
+    
+    vector<Zone*> goZones_;
+    
     vector<Zone*> selectedTrackFXZones_;
     vector<Zone*> selectedTrackFXMenuZones_;
     vector<Zone*> selectedTrackFXMenuFXZones_;
+    
+    
     
     vector<Zone*> selectedTrackReceivesZones_;
     vector<Zone*> selectedTrackReceivesSlotZones_;
@@ -859,7 +879,72 @@ private:
     vector<Zone*> selectedTrackSendsSlotZones_;
     vector<Zone*> trackSendsSlotZones_;
 
+    vector<vector<Zone*>> fixedZones_;
+    
+    
+    
+    
     Zone* homeZone_ = nullptr;
+    
+    void DeactivateZones(vector<Zone*> &zones)
+    {
+        for(auto zone : zones)
+            zone->Deactivate();
+    }
+
+    void UnmapZones(vector<Zone*> &zones)
+    {
+        DeactivateZones(zones);
+        zones.clear();
+    }
+
+    void MapFocusedFXToWidgets();
+    void UnmapFocusedFXFromWidgets();
+    
+    void MapSelectedTrackFXToWidgets();
+
+    
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    
+    
+    
+    
+    
+    
+    
+    
+    void MapSelectedTrackSendsToWidgets() {}
+    void MapSelectedTrackReceivesToWidgets() {}
+
+    void MapSelectedTrackFXToMenu() {}
+
+    void MapTrackSendsSlotToWidgets() {}
+    void MapTrackReceivesSlotToWidgets() {}
+    void MapTrackFXMenusSlotToWidgets() {}
+    
+    void MapSelectedTrackSendsSlotToWidgets() {}
+    void MapSelectedTrackReceivesSlotToWidgets() {}
+    
+    void UnmapSelectedTrackSendsFromWidgets() {}
+    void UnmapSelectedTrackReceivesFromWidgets() {}
+
+    void UnmapSelectedTrackFXFromMenu() {}
+    
+    void UnmapTrackSendsSlotFromWidgets() {}
+    void UnmapTrackReceivesSlotFromWidgets() {}
+    void UnmapTrackFXMenusSlotFromWidgets() {}
+    
+    void UnmapSelectedTrackSendsSlotFromWidgets() {}
+    void UnmapSelectedTrackReceivesSlotFromWidgets() {}
+    
+    void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
+
+    
+    
+    
+    
+    
+    
     
     map<int, Navigator*> navigators_;
  
@@ -867,7 +952,7 @@ private:
     map<string, Zone*> zonesByName_;
     vector<Zone*> zones_;
     
-    void GoZone(vector<Zone*> *activeZones, string zoneName, double value);
+    void GoZone(string zoneName);
    
     void Map(MapType mapType, ActionContext* context)
     {
@@ -990,12 +1075,12 @@ public:
     {
         usedWidgets_[widget] = false;
     }
-    
+
     void SetBroadcast(ActionContext* context)
     {
         SetBroadcast(broadcast_, context);
     }
-    
+
     void SetReceiveBroadcast(ActionContext* context)
     {
         SetBroadcast(receiveBroadcast_, context);
@@ -1016,44 +1101,40 @@ public:
         Map(MapType::ToggleMap, context);
     }
 
-    void MapSelectedTrackFXToWidgets();
-    void UnmapSelectedTrackFXFromWidgets();
+    void EnsureWidgetsNotUsed(Zone* zone)
+    {
+        if(zone == focusedFXZone_)
+            return;
+        
+        if(IsZoneHereAndClear(zone, goZones_))
+            return;
+        
+        if(IsZoneHereAndClear(zone, selectedTrackFXZones_))
+            return;
+        
+        if(IsZoneHereAndClear(zone, selectedTrackFXMenuZones_))
+            return;
+        
+        if(IsZoneHereAndClear(zone, selectedTrackFXMenuFXZones_))
+            return;
+        
+        for(auto zones : fixedZones_)
+            if(IsZoneHereAndClear(zone, zones))
+                return;
+    }
     
-    void MapFocusedFXToWidgets();
-    void UnmapFocusedFXFromWidgets();
-    
-    
-    
-    void MapSelectedTrackSendsToWidgets() {}
-    void MapSelectedTrackReceivesToWidgets() {}
-
-    void MapSelectedTrackFXToMenu() {}
-
-    void MapTrackSendsSlotToWidgets() {}
-    void MapTrackReceivesSlotToWidgets() {}
-    void MapTrackFXMenusSlotToWidgets() {}
-    
-    void MapSelectedTrackSendsSlotToWidgets() {}
-    void MapSelectedTrackReceivesSlotToWidgets() {}
-    
-    void UnmapSelectedTrackSendsFromWidgets() {}
-    void UnmapSelectedTrackReceivesFromWidgets() {}
-
-    void UnmapSelectedTrackFXFromMenu() {}
-    
-    void UnmapTrackSendsSlotFromWidgets() {}
-    void UnmapTrackReceivesSlotFromWidgets() {}
-    void UnmapTrackFXMenusSlotFromWidgets() {}
-    
-    void UnmapSelectedTrackSendsSlotFromWidgets() {}
-    void UnmapSelectedTrackReceivesSlotFromWidgets() {}
-    
-    void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
-    
-
-    
-    
+    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone*> zones)
+    {
+        for(auto zone : zones)
+        {
+            if(zone == originatingZone)
+                return true;
+            else
+                zone->EnsureWidgetsNotUsed(originatingZone->Getwidgets());
+        }
+        
+        return false;
+    }
     
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
@@ -1064,8 +1145,6 @@ public:
     void Initialize();
    
     void RequestUpdate();
-    
-    Zone* GetDefaultZone() { return homeZone_; }
     
     void InitZones();
     
@@ -1084,7 +1163,6 @@ public:
     
     void LoadZone(string zoneName);
     Zone* GetZone(string zoneName);
-    void GoZone(string zoneName, double value);
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     ControlSurface* GetSurface() { return surface_; }
