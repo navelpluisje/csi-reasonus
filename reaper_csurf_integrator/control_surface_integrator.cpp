@@ -1743,6 +1743,24 @@ void Zone::Deactivate()
     isActive_ = false;
 }
 
+void Zone::RequestUpdateWidget(Widget* widget)
+{
+    for(auto &context : GetActionContexts(widget))
+        context.RunDeferredActions();
+    
+    if(GetActionContexts(widget).size() > 0)
+    {
+        ActionContext& context = GetActionContexts(widget)[0];
+        context.RequestUpdate();
+    }
+}
+
+
+
+
+
+
+
 vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
 {
     string widgetName = widget->GetName();
@@ -1779,17 +1797,6 @@ int Zone::GetSlotIndex()
         return 0;
 }
 
-void Zone::RequestUpdateWidget(Widget* widget)
-{
-    for(auto &context : GetActionContexts(widget))
-        context.RunDeferredActions();
-    
-    if(GetActionContexts(widget).size() > 0)
-    {
-        ActionContext& context = GetActionContexts(widget)[0];
-        context.RequestUpdate();
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Widget

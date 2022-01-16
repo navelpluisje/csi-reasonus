@@ -500,15 +500,16 @@ private:
     string const alias_ = "";
     string const sourceFilePath_ = "";
     
-    bool isActive_ = false;
-    
-    map<string, string> touchIds_;
-        
-    map<string, bool> activeTouchIds_;
-    
     NavigationType const navigationStyle_ = Standard;
     
+    
+    
+    bool isActive_ = false;
+    map<string, string> touchIds_;
+    map<string, bool> activeTouchIds_;
     int slotIndex_ = 0;
+    
+    
 
     vector<Widget*> widgets_;
     
@@ -522,13 +523,42 @@ public:
     Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
+    
+    
+    int GetSlotIndex();
+    
+    void SetSlotIndex(int index)
+    {
+        slotIndex_ = index;
+        
+        for(auto subZone : subZones_)
+            subZone->SetSlotIndex(index);
+    }
+
+    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
+    {
+        if(! isActive_ || isUsed)
+            return;
+
+        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            isUsed = true;
+
+        activeTouchIds_[widgetName + "Touch"] = value;
+        activeTouchIds_[widgetName + "TouchPress"] = value;
+        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
+
+        for(auto &context : GetActionContexts(widget))
+            context.DoTouch(value);
+    }
+    
+    vector<ActionContext> &GetActionContexts(Widget* widget);
+    
+    
     void RequestUpdateWidget(Widget* widget);
     void Activate();
     void Activate(vector<Zone*> *activeZones);
     void Deactivate();
     bool TryActivate(Widget* widget);
-    int GetSlotIndex();
-    vector<ActionContext> &GetActionContexts(Widget* widget);
 
     Navigator* GetNavigator() { return navigator_; }
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
@@ -543,13 +573,6 @@ public:
             Activate();
     }
     
-    void SetSlotIndex(int index)
-    {
-        slotIndex_ = index;
-        
-        for(auto subZone : subZones_)
-            subZone->SetSlotIndex(index);
-    }
 
     void AddSubZone(Zone* &subZone)
     {
@@ -621,23 +644,7 @@ public:
         for(auto &context : GetActionContexts(widget))
             context.DoAction(value);
     }
-    
-    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
-    {
-        if(! isActive_ || isUsed)
-            return;
-
-        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
-            isUsed = true;
-
-        activeTouchIds_[widgetName + "Touch"] = value;
-        activeTouchIds_[widgetName + "TouchPress"] = value;
-        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
-
-        for(auto &context : GetActionContexts(widget))
-            context.DoTouch(value);
-    }
-    
+       
     void DoRelativeAction(Widget* widget, bool &isUsed, double delta)
     {
         if(! isActive_ || isUsed)
@@ -1109,7 +1116,6 @@ public:
         // GAW -- think I'll put in a clear focusedFX for now, not sure if this will be right for all use cases
         if(focusedFXZone_ != nullptr)
             UnmapFocusedFXFromWidgets();
-        
         
         if(IsZoneHereAndClear(zone, goZones_))
             return;
