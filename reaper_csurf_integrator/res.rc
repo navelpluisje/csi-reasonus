@@ -111,6 +111,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,107,200,50,14
     LTEXT           "Channel Start Postion",IDC_STATIC,39,49,69,8
     EDITTEXT        IDC_EDIT_ChannelOffset,13,47,19,12,ES_AUTOHSCROLL
+    CONTROL         "Banks with others",IDC_CHECK_BanksWithOthers,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,33,72,10
 END
 
 IDD_DIALOG_MidiSurface1 DIALOGEX 0, 0, 219, 225
@@ -141,6 +142,7 @@ BEGIN
     EDITTEXT        IDC_EDIT_NumFX,14,73,19,12,ES_AUTOHSCROLL
     LTEXT           "Channel Start Postion",IDC_STATIC,40,44,72,8
     EDITTEXT        IDC_EDIT_ChannelOffset,14,43,19,12,ES_AUTOHSCROLL
+    CONTROL         "Banks with others",IDC_CHECK_BanksWithOthers,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,30,72,10
 END
 
 
