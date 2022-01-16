@@ -533,7 +533,7 @@ public:
     Navigator* GetNavigator() { return navigator_; }
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
-    vector<Widget*> &Getwidgets() { return widgets_; }
+    vector<Widget*> &GetWidgets() { return widgets_; }
 
     void Toggle()
     {
@@ -1106,6 +1106,11 @@ public:
         if(zone == focusedFXZone_)
             return;
         
+        // GAW -- think I'll put in a clear focusedFX for now, not sure if this will be right for all use cases
+        if(focusedFXZone_ != nullptr)
+            UnmapFocusedFXFromWidgets();
+        
+        
         if(IsZoneHereAndClear(zone, goZones_))
             return;
         
@@ -1130,7 +1135,7 @@ public:
             if(zone == originatingZone)
                 return true;
             else
-                zone->EnsureWidgetsNotUsed(originatingZone->Getwidgets());
+                zone->EnsureWidgetsNotUsed(originatingZone->GetWidgets());
         }
         
         return false;
@@ -1383,14 +1388,7 @@ protected:
         AddWidget(new Widget(this, "OnPageLeave"));
         AddWidget(new Widget(this, "OnInitialization"));
     }
-    
-    
-    void MapFocusedFXToWidgets();
-    void UnmapFocusedFXFromWidgets();
-
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
-    void MapSelectedTrackItemsToWidgets(MediaTrack* track, string baseName, int numberOfZones, vector<Zone*> *activeZones);
-        
+            
 public:
     virtual ~ControlSurface()
     {

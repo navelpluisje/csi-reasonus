@@ -2182,9 +2182,10 @@ void ControlSurface::MapFocusedFXToWidgets()
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
     if(focusedFXZone_ != nullptr)
+    {
         focusedFXZone_->Deactivate();
-    
-    focusedFXZone_ = nullptr;
+        focusedFXZone_ = nullptr;
+    }
 }
 
 void ZoneManager::MapFocusedFXToWidgets()
@@ -2335,11 +2336,7 @@ void ZoneManager::GoZone(string zoneName)
     if(zoneName == "Home")
     {
         if(focusedFXZone_ != nullptr)
-        {
             UnmapFocusedFXFromWidgets();
-            focusedFXZone_->Deactivate();
-            focusedFXZone_ = nullptr;
-        }
         
         UnmapZones(goZones_);
         
