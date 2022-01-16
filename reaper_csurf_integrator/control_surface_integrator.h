@@ -540,7 +540,7 @@ public:
         if(! isActive_ || isUsed)
             return;
 
-        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
 
         activeTouchIds_[widgetName + "Touch"] = value;
@@ -554,14 +554,16 @@ public:
     vector<ActionContext> &GetActionContexts(Widget* widget);
     
     
+    
+    
+    
     void RequestUpdateWidget(Widget* widget);
     void Activate();
-    void Activate(vector<Zone*> *activeZones);
     void Deactivate();
-    bool TryActivate(Widget* widget);
+
 
     Navigator* GetNavigator() { return navigator_; }
-    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
+
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
     vector<Widget*> &GetWidgets() { return widgets_; }
 
@@ -573,13 +575,16 @@ public:
             Activate();
     }
     
-
+/*
+ 
+    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
+ 
     void AddSubZone(Zone* &subZone)
     {
         subZone->SetNavigator(GetNavigator());
         subZones_.push_back(subZone);
     }
-
+*/
     string GetName()
     {
         return name_;
@@ -595,7 +600,7 @@ public:
     
     void AddWidget(Widget* widget)
     {
-        widgets_.push_back(widget);
+        GetWidgets().push_back(widget);
     }
     
     void AddActionContext(Widget* widget, string modifier, ActionContext actionContext)
@@ -608,7 +613,7 @@ public:
         if(! isActive_)
             return;
       
-        for(auto widget : widgets_)
+        for(auto widget : GetWidgets())
         {
             if(usedWidgets[widget] == false)
             {
@@ -625,7 +630,7 @@ public:
     {
         for(auto widget : widgets)
         {
-            if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+            if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             {
                 Deactivate();
                 return;
@@ -638,7 +643,7 @@ public:
         if(! isActive_ || isUsed)
             return;
         
-        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
         
         for(auto &context : GetActionContexts(widget))
@@ -650,7 +655,7 @@ public:
         if(! isActive_ || isUsed)
             return;
         
-        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
 
         for(auto &context : GetActionContexts(widget))
@@ -662,7 +667,7 @@ public:
         if(! isActive_ || isUsed)
             return;
 
-        if(find(widgets_.begin(), widgets_.end(), widget) != widgets_.end())
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
 
         for(auto &context : GetActionContexts(widget))

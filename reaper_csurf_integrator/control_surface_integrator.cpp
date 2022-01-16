@@ -465,7 +465,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                     zone->AddIncludedZone(includedZone);
                             }
                         }
-                        
+                        /*
                         for(auto subZoneName : subZones)
                         {
                             Zone* subZone = zoneManager->GetZone(subZoneName);
@@ -473,7 +473,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             if(subZone)
                                 zone->AddSubZone(subZone);
                         }
-                        
+                        */
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
                             string surfaceWidgetName = widgetName;
