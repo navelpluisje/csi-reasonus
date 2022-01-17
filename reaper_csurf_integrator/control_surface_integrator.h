@@ -1373,7 +1373,7 @@ class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
+    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), banksWithOthers_(banksWithOthers),  zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
     
     CSurfIntegrator* const CSurfIntegrator_ ;
     Page* const page_;
@@ -1383,6 +1383,7 @@ protected:
     int const numChannels_ = 0;
     int const numSends_ = 0;
     int const numFXSlots_ = 0;
+    bool const banksWithOthers_ = true;
     
     vector<Widget*> widgets_;
     map<string, Widget*> widgetsByName_;
@@ -1521,8 +1522,8 @@ private:
     }
 
 public:
-    Midi_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, midi_Input* midiInput, midi_Output* midiOutput)
-    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), midiInput_(midiInput), midiOutput_(midiOutput)
+    Midi_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers, midi_Input* midiInput, midi_Output* midiOutput)
+    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset, banksWithOthers), templateFilename_(templateFilename), midiInput_(midiInput), midiOutput_(midiOutput)
     {
         Initialize(templateFilename, zoneFolder);
     }
@@ -1574,8 +1575,8 @@ private:
     void ProcessOSCMessage(string message, double value);
 
 public:
-    OSC_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, oscpkt::UdpSocket* inSocket, oscpkt::UdpSocket* outSocket)
-    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), inSocket_(inSocket), outSocket_(outSocket)
+    OSC_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers, oscpkt::UdpSocket* inSocket, oscpkt::UdpSocket* outSocket)
+    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset, banksWithOthers), templateFilename_(templateFilename), inSocket_(inSocket), outSocket_(outSocket)
     {
         Initialize(templateFilename, zoneFolder);
     }

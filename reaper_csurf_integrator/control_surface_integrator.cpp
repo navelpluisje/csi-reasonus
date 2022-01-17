@@ -1197,14 +1197,19 @@ void Manager::Init()
                     inPort = atoi(tokens[2].c_str());
                     outPort = atoi(tokens[3].c_str());
                     
+                    bool banksWithOthers = false;
+                    
+                    if(tokens.size() > 10 && tokens[10] == "BanksWithOthers")
+                        banksWithOthers = true;
+
                     if(currentPage)
                     {
                         ControlSurface* surface = nullptr;
                         
-                        if(tokens[0] == MidiSurfaceToken && tokens.size() == 10)
-                            surface = new Midi_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), GetMidiInputForPort(inPort), GetMidiOutputForPort(outPort));
-                        else if(tokens[0] == OSCSurfaceToken && tokens.size() == 11)
-                            surface = new OSC_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), GetInputSocketForPort(tokens[1], inPort), GetOutputSocketForAddressAndPort(tokens[1], tokens[10], outPort));
+                        if(tokens[0] == MidiSurfaceToken && tokens.size() == 11)
+                            surface = new Midi_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), banksWithOthers, GetMidiInputForPort(inPort), GetMidiOutputForPort(outPort));
+                        else if(tokens[0] == OSCSurfaceToken && tokens.size() == 12)
+                            surface = new OSC_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), banksWithOthers, GetInputSocketForPort(tokens[1], inPort), GetOutputSocketForAddressAndPort(tokens[1], tokens[11], outPort));
 
                         currentPage->AddSurface(surface);
                     }
