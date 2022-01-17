@@ -288,6 +288,202 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
+{
+    vector<string> subZones;
+    bool isInSubZonesSection = false;
+
+    map<string, string> touchIds;
+    
+    map<string, map<string, vector<ActionTemplate*>>> widgetActions;
+    
+    string zoneName = "";
+    string zoneAlias = "";
+    string navigatorName = "";
+    string actionName = "";
+    int lineNumber = 0;
+    
+    ActionTemplate* currentActionTemplate = nullptr;
+    
+    try
+    {
+        ifstream file(filePath);
+        
+        for (string line; getline(file, line) ; )
+        {
+            line = regex_replace(line, regex(TabChars), " ");
+            line = regex_replace(line, regex(CRLFChars), "");
+            
+            line = line.substr(0, line.find("//")); // remove trailing commewnts
+            
+            lineNumber++;
+            
+            // Trim leading and trailing spaces
+            line = regex_replace(line, regex("^\\s+|\\s+$"), "", regex_constants::format_default);
+            
+            if(line == "" || (line.size() > 0 && line[0] == '/')) // ignore blank lines and comment lines
+                continue;
+            
+            vector<string> tokens(GetTokens(line));
+            
+            if(tokens.size() > 0)
+            {
+                if(tokens[0] == "Zone")
+                {
+                    zoneName = tokens.size() > 1 ? tokens[1] : "";
+                    zoneAlias = tokens.size() > 2 ? tokens[2] : "";
+                }
+                else if(tokens[0] == "ZoneEnd" && zoneName != "")
+                {
+                    currentActionTemplate = nullptr;
+                    
+                    vector<Navigator*> navigators;
+                    
+                    NavigationType navigationStyle = Standard;
+                    
+                    if(navigatorName == "")
+                        navigators.push_back(zoneManager->GetDefaultNavigator());
+                    if(navigatorName == "SelectedTrackNavigator")
+                        navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                    else if(navigatorName == "FocusedFXNavigator")
+                        navigators.push_back(zoneManager->GetFocusedFXNavigator());
+                    else if(navigatorName == "MasterTrackNavigator")
+                        navigators.push_back(zoneManager->GetMasterTrackNavigator());
+                    
+                    string numStr = "";
+                    
+                    Zone* zone = new Zone(zoneManager, navigators[0], navigationStyle, 0, touchIds, zoneName, zoneAlias, filePath);
+                    
+                    
+                    for(auto [widgetName, modifierActions] : widgetActions)
+                    {
+                        Widget* widget = zoneManager->GetSurface()->GetWidgetByName(widgetName);
+                        
+                        if(widget == nullptr)
+                            continue;
+                        
+                        if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
+                            widget->SetIsModifier();
+                        
+                        zone->AddWidget(widget);
+                        
+                        for(auto [modifier, actions] : modifierActions)
+                        {
+                            for(auto action : actions)
+                            {
+                                string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
+                                vector<string> memberParams;
+                                for(int j = 0; j < action->params.size(); j++)
+                                    memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
+                                
+                                
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                                                    
+                                if(action->isFeedbackInverted)
+                                    context.SetIsFeedbackInverted();
+                                
+                                if(action->holdDelayAmount != 0.0)
+                                    context.SetHoldDelayAmount(action->holdDelayAmount);
+                                
+                                string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
+                                
+                                zone->AddActionContext(widget, expandedModifier, context);
+                                
+                            }
+                        }
+                    }
+                    
+                    zoneManager->AddSingleZone(zone);
+                        
+                    subZones.clear();
+                    widgetActions.clear();
+                    touchIds.clear();
+                    
+                    break;
+                }
+                
+                else if( tokens[0] == "MasterTrackNavigator"
+                        || tokens[0] == "FocusedFXNavigator"
+                        || tokens[0] == "SelectedTrackNavigator")
+                    navigatorName = tokens[0];
+                               
+                else if(tokens[0] == "SubZones")
+                    isInSubZonesSection = true;
+                
+                else if(tokens[0] == "SubZonesEnd")
+                    isInSubZonesSection = false;
+                
+                else if(tokens.size() == 1 && isInSubZonesSection)
+                    subZones.push_back(tokens[0]);
+                
+                else if(tokens.size() > 1)
+                {
+                    actionName = tokens[1];
+                    
+                    string widgetName = "";
+                    string modifier = "";
+                    string touchId = "";
+                    bool isFeedbackInverted = false;
+                    double holdDelayAmount = 0.0;
+                    bool isProperty = false;
+                    
+                    GetWidgetNameAndProperties(tokens[0], widgetName, modifier, touchId, isFeedbackInverted, holdDelayAmount, isProperty);
+                    
+                    if(touchId != "")
+                        touchIds[widgetName] = touchId;
+                    
+                    vector<string> params;
+                    for(int i = 1; i < tokens.size(); i++)
+                        params.push_back(tokens[i]);
+                    
+                    if(isProperty)
+                    {
+                        if(currentActionTemplate != nullptr)
+                            currentActionTemplate->properties.push_back(params);
+                    }
+                    else
+                    {
+                        currentActionTemplate = new ActionTemplate(actionName, params, isFeedbackInverted, holdDelayAmount);
+                        widgetActions[widgetName][modifier].push_back(currentActionTemplate);
+                    }
+                }
+            }
+        }
+    }
+    catch (exception &e)
+    {
+        char buffer[250];
+        snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", filePath.c_str(), lineNumber);
+        DAW::ShowConsoleMsg(buffer);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
 {
     vector<string> includedZones;
@@ -408,7 +604,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             navigationStyle = SelectedTrackReceiveSlot;
                         }
                     }
-
+                   
                     for(int i = 0; i < navigators.size(); i++)
                     {
                         string numStr = to_string(i + 1);
@@ -434,6 +630,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             expandedTouchIds = touchIds;
                         }
                         
+                                                
                         Zone* zone = new Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
                         
                         for(auto includedZoneName : includedZones)
@@ -465,6 +662,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                     zone->AddIncludedZone(includedZone);
                             }
                         }
+                        
                         /*
                         for(auto subZoneName : subZones)
                         {
@@ -474,6 +672,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                                 zone->AddSubZone(subZone);
                         }
                         */
+                        
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
                             string surfaceWidgetName = widgetName;
@@ -495,9 +694,6 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             {
                                 for(auto action : actions)
                                 {
-                                    
-
-                                    
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
                                     vector<string> memberParams;
                                     for(int j = 0; j < action->params.size(); j++)
@@ -522,7 +718,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                         
                         zoneManager->AddZone(zone);
                     }
-                    
+                                    
                     includedZones.clear();
                     subZones.clear();
                     widgetActions.clear();
@@ -2341,16 +2537,9 @@ void ZoneManager::GoZone(string zoneName)
             UnmapFocusedFXFromWidgets();
                
         UnmapZones(tempZones_);
-        UnmapZones(selectedTrackFXMenuZones_);
-        UnmapZones(trackFXMenuZones_);
         
-        DeactivateZones(selectedTrackReceivesZones_);
-        DeactivateZones(selectedTrackReceivesSlotZones_);
-        DeactivateZones(trackReceivesSlotZones_);
-        
-        DeactivateZones(selectedTrackSendsZones_);
-        DeactivateZones(selectedTrackSendsSlotZones_);
-        DeactivateZones(trackSendsSlotZones_);
+        for(auto zones : fixedZones_)
+            DeactivateZones(zones);
     }
     else if(zoneName == "SelectedTrackFXZones")
     {

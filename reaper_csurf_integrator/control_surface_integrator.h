@@ -1176,7 +1176,13 @@ public:
     {
         zonesByName_[zone->GetName()] = zone;
     }
-       
+    
+    void AddSingleZone(Zone* zone)
+    {
+        tempZones_.push_back(zone);
+        zone->Activate();
+    }
+    
     map<int, map<int, int>> focusedFXDictionary;
     
     void CheckFocusedFXState()
@@ -1217,8 +1223,9 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
         
+        for(Zone* zone : tempZones_)
+            zone->DoAction(widget, isUsed, value);
 
-        
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoAction(widget, isUsed, value);
@@ -1234,6 +1241,9 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, delta);
         
+        for(Zone* zone : tempZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
+
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, delta);
@@ -1249,6 +1259,9 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
         
+        for(Zone* zone : tempZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
@@ -1263,7 +1276,10 @@ public:
      
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
-               
+        
+        for(Zone* zone : tempZones_)
+            zone->DoAction(widget, isUsed, value);
+
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoAction(widget, isUsed, value);
