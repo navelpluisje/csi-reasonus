@@ -1196,20 +1196,15 @@ void Manager::Init()
                     
                     inPort = atoi(tokens[2].c_str());
                     outPort = atoi(tokens[3].c_str());
-                    
-                    bool banksWithOthers = false;
-                    
-                    if(tokens.size() > 10 && tokens[10] == "BanksWithOthers")
-                        banksWithOthers = true;
 
                     if(currentPage)
                     {
                         ControlSurface* surface = nullptr;
                         
-                        if(tokens[0] == MidiSurfaceToken && tokens.size() == 11)
-                            surface = new Midi_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), banksWithOthers, GetMidiInputForPort(inPort), GetMidiOutputForPort(outPort));
-                        else if(tokens[0] == OSCSurfaceToken && tokens.size() == 12)
-                            surface = new OSC_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), banksWithOthers, GetInputSocketForPort(tokens[1], inPort), GetOutputSocketForAddressAndPort(tokens[1], tokens[11], outPort));
+                        if(tokens[0] == MidiSurfaceToken && tokens.size() == 10)
+                            surface = new Midi_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), GetMidiInputForPort(inPort), GetMidiOutputForPort(outPort));
+                        else if(tokens[0] == OSCSurfaceToken && tokens.size() == 11)
+                            surface = new OSC_ControlSurface(CSurfIntegrator_, currentPage, tokens[1], tokens[4], tokens[5], atoi(tokens[6].c_str()), atoi(tokens[7].c_str()), atoi(tokens[8].c_str()), atoi(tokens[9].c_str()), GetInputSocketForPort(tokens[1], inPort), GetOutputSocketForAddressAndPort(tokens[1], tokens[10], outPort));
 
                         currentPage->AddSurface(surface);
                     }
@@ -1996,15 +1991,21 @@ void ZoneManager::Initialize()
         return;
     }
    
-    LoadZones("TrackReceiveSlot", numChannels_, &trackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceiveSlot", numSends_, &selectedTrackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceive", numSends_, &selectedTrackReceivesZones_);
+    LoadZones("TrackFXMenuSlot", GetNumChannels(), &selectedTrackFXMenuZones_);
+    LoadZones("SelectedTrackFXMenuSlot", GetNumSendSlots(), &trackFXMenuZones_);
 
-    LoadZones("TrackSendSlot", numChannels_, &trackSendsSlotZones_);
-    LoadZones("SelectedTrackSendSlot", numSends_, &selectedTrackSendsSlotZones_);
-    LoadZones("SelectedTrackSend", numSends_, &selectedTrackSendsZones_);
+    LoadZones("TrackReceiveSlot", GetNumChannels(), &trackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceiveSlot", GetNumSendSlots(), &selectedTrackReceivesSlotZones_);
+    LoadZones("SelectedTrackReceive", GetNumSendSlots(), &selectedTrackReceivesZones_);
+
+    LoadZones("TrackSendSlot", GetNumChannels(), &trackSendsSlotZones_);
+    LoadZones("SelectedTrackSendSlot", GetNumSendSlots(), &selectedTrackSendsSlotZones_);
+    LoadZones("SelectedTrackSend", GetNumSendSlots(), &selectedTrackSendsZones_);
 
     homeZone_->Activate();
+    
+    fixedZones_.push_back(selectedTrackFXMenuZones_);
+    fixedZones_.push_back(trackFXMenuZones_);
     
     fixedZones_.push_back(trackReceivesSlotZones_);
     fixedZones_.push_back(selectedTrackReceivesSlotZones_);
@@ -2024,15 +2025,7 @@ void ZoneManager::RequestUpdate()
 
     if(focusedFXZone_ != nullptr)
         focusedFXZone_->RequestUpdate(usedWidgets_);
-    
-    for(Zone* zone : selectedTrackFXZones_)
-        zone->RequestUpdate(usedWidgets_);
-    
-    for(Zone* zone : selectedTrackFXMenuZones_)
-        zone->RequestUpdate(usedWidgets_);
-    
-    for(Zone* zone : selectedTrackFXMenuFXZones_)
-        zone->RequestUpdate(usedWidgets_);
+
     
     for(vector<Zone*> zones : fixedZones_)
         for(Zone* zone : zones)
@@ -2047,9 +2040,6 @@ void ZoneManager::RequestUpdate()
             key->UpdateValue(0.0);
 }
 
-
-
- 
  
 /*
 
@@ -2232,11 +2222,11 @@ void ZoneManager::MapFocusedFXToWidgets()
 
 void ZoneManager::MapSelectedTrackFXToWidgets()
 {
-    UnmapZones(selectedTrackFXZones_);
+    UnmapZones(tempZones_);
     
     if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
         for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
-            MapSelectedTrackFXSlotToWidgets(&selectedTrackFXZones_, i);
+            MapSelectedTrackFXSlotToWidgets(&tempZones_, i);
 }
 
 void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
@@ -2349,12 +2339,10 @@ void ZoneManager::GoZone(string zoneName)
     {
         if(focusedFXZone_ != nullptr)
             UnmapFocusedFXFromWidgets();
-        
-        UnmapZones(goZones_);
-        
-        UnmapZones(selectedTrackFXZones_);
+               
+        UnmapZones(tempZones_);
         UnmapZones(selectedTrackFXMenuZones_);
-        UnmapZones(selectedTrackFXMenuFXZones_);
+        UnmapZones(trackFXMenuZones_);
         
         DeactivateZones(selectedTrackReceivesZones_);
         DeactivateZones(selectedTrackReceivesSlotZones_);

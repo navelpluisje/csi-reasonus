@@ -871,17 +871,12 @@ private:
     
     map<Widget*, bool> usedWidgets_;
 
-
-   
     Zone* focusedFXZone_ = nullptr;
     
-    vector<Zone*> goZones_;
+    vector<Zone*> tempZones_;
     
-    vector<Zone*> selectedTrackFXZones_;
     vector<Zone*> selectedTrackFXMenuZones_;
-    vector<Zone*> selectedTrackFXMenuFXZones_;
-    
-    
+    vector<Zone*> trackFXMenuZones_;
     
     vector<Zone*> selectedTrackReceivesZones_;
     vector<Zone*> selectedTrackReceivesSlotZones_;
@@ -892,9 +887,6 @@ private:
     vector<Zone*> trackSendsSlotZones_;
 
     vector<vector<Zone*>> fixedZones_;
-    
-    
-    
     
     Zone* homeZone_ = nullptr;
     
@@ -962,7 +954,6 @@ private:
  
     map<string, string> zoneFilenames_;
     map<string, Zone*> zonesByName_;
-    vector<Zone*> zones_;
     
     void GoZone(string zoneName);
    
@@ -1077,6 +1068,8 @@ private:
             
             if(Zone* zone = GetZone(name))
             {
+                
+                
                 activeZones->push_back(zone);
             }
         }
@@ -1122,16 +1115,7 @@ public:
         if(focusedFXZone_ != nullptr)
             UnmapFocusedFXFromWidgets();
         
-        if(IsZoneHereAndClear(zone, goZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackFXZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackFXMenuZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackFXMenuFXZones_))
+        if(IsZoneHereAndClear(zone, tempZones_))
             return;
         
         for(auto zones : fixedZones_)
@@ -1191,7 +1175,6 @@ public:
     void AddZone(Zone* zone)
     {
         zonesByName_[zone->GetName()] = zone;
-        zones_.push_back(zone);
     }
        
     map<int, map<int, int>> focusedFXDictionary;
@@ -1234,14 +1217,7 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
         
-        for(Zone* zone : selectedTrackFXZones_)
-            zone->DoAction(widget, isUsed, value);
-        
-        for(Zone* zone : selectedTrackFXMenuZones_)
-            zone->DoAction(widget, isUsed, value);
-        
-        for(Zone* zone : selectedTrackFXMenuFXZones_)
-            zone->DoAction(widget, isUsed, value);
+
         
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
@@ -1258,15 +1234,6 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, delta);
         
-        for(Zone* zone : selectedTrackFXZones_)
-            zone->DoRelativeAction(widget, isUsed, delta);
-        
-        for(Zone* zone : selectedTrackFXMenuZones_)
-            zone->DoRelativeAction(widget, isUsed, delta);
-        
-        for(Zone* zone : selectedTrackFXMenuFXZones_)
-            zone->DoRelativeAction(widget, isUsed, delta);
-        
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, delta);
@@ -1282,15 +1249,6 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
         
-        for(Zone* zone : selectedTrackFXZones_)
-            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-        
-        for(Zone* zone : selectedTrackFXMenuZones_)
-            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-        
-        for(Zone* zone : selectedTrackFXMenuFXZones_)
-            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-        
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
@@ -1305,16 +1263,7 @@ public:
      
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
-        
-        for(Zone* zone : selectedTrackFXZones_)
-            zone->DoAction(widget, isUsed, value);
-        
-        for(Zone* zone : selectedTrackFXMenuZones_)
-            zone->DoAction(widget, isUsed, value);
-        
-        for(Zone* zone : selectedTrackFXMenuFXZones_)
-            zone->DoAction(widget, isUsed, value);
-        
+               
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoAction(widget, isUsed, value);
@@ -1373,7 +1322,7 @@ class ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), banksWithOthers_(banksWithOthers),  zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
+    ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset) :  CSurfIntegrator_(CSurfIntegrator), page_(page), name_(name), numChannels_(numChannels), numSends_(numSends), numFXSlots_(numFX), zoneManager_(new ZoneManager(this, zoneFolder, numChannels, numSends, numFX, channelOffset)) { }
     
     CSurfIntegrator* const CSurfIntegrator_ ;
     Page* const page_;
@@ -1522,8 +1471,8 @@ private:
     }
 
 public:
-    Midi_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers, midi_Input* midiInput, midi_Output* midiOutput)
-    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset, banksWithOthers), templateFilename_(templateFilename), midiInput_(midiInput), midiOutput_(midiOutput)
+    Midi_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, midi_Input* midiInput, midi_Output* midiOutput)
+    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), midiInput_(midiInput), midiOutput_(midiOutput)
     {
         Initialize(templateFilename, zoneFolder);
     }
@@ -1575,8 +1524,8 @@ private:
     void ProcessOSCMessage(string message, double value);
 
 public:
-    OSC_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, bool banksWithOthers, oscpkt::UdpSocket* inSocket, oscpkt::UdpSocket* outSocket)
-    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset, banksWithOthers), templateFilename_(templateFilename), inSocket_(inSocket), outSocket_(outSocket)
+    OSC_ControlSurface(CSurfIntegrator* CSurfIntegrator, Page* page, const string name, string templateFilename, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset, oscpkt::UdpSocket* inSocket, oscpkt::UdpSocket* outSocket)
+    : ControlSurface(CSurfIntegrator, page, name, zoneFolder, numChannels, numSends, numFX, channelOffset), templateFilename_(templateFilename), inSocket_(inSocket), outSocket_(outSocket)
     {
         Initialize(templateFilename, zoneFolder);
     }

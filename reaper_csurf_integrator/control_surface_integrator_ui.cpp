@@ -190,7 +190,6 @@ struct SurfaceLine
     int channelOffset = 0;
     int numSends = 0;
     int numFX = 0;
-    bool banksWithOthers = true;
     
     // for OSC
     string remoteDeviceIP = "";
@@ -227,7 +226,6 @@ int numChannels = 0;
 int channelOffset = 0;
 int numSends = 0;
 int numFX = 0;
-bool banksWithOthers = true;
 
 static bool followMCP = true;
 static bool synchPages = false;
@@ -394,11 +392,6 @@ static WDL_DLGRET dlgProcMidiSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                 index = SendMessage(GetDlgItem(hwndDlg, IDC_COMBO_ZoneTemplates), CB_FINDSTRINGEXACT, -1, (LPARAM)zoneTemplateFolder);
                 if(index >= 0)
                     SendMessage(GetDlgItem(hwndDlg, IDC_COMBO_ZoneTemplates), CB_SETCURSEL, index, 0);
-                
-                if(banksWithOthers)
-                    CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_CHECKED);
-                else
-                    CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_UNCHECKED);
             }
             else
             {
@@ -411,7 +404,6 @@ static WDL_DLGRET dlgProcMidiSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                 SetDlgItemText(hwndDlg, IDC_EDIT_ChannelOffset, "0");
                 SetDlgItemText(hwndDlg, IDC_EDIT_NumSends, "0");
                 SetDlgItemText(hwndDlg, IDC_EDIT_NumFX, "0");
-                CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_CHECKED);
             }
         }
             break;
@@ -468,11 +460,6 @@ static WDL_DLGRET dlgProcMidiSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                         
                         GetDlgItemText(hwndDlg, IDC_EDIT_NumFX, buf, sizeof(buf));
                         numFX = atoi(buf);
-                        
-                        if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_BanksWithOthers))
-                            banksWithOthers = true;
-                        else
-                            banksWithOthers = false;
 
                         GetDlgItemText(hwndDlg, IDC_EDIT_MidiSurfaceName, name, sizeof(name));
                         
@@ -549,11 +536,6 @@ static WDL_DLGRET dlgProcOSCSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                 index = SendMessage(GetDlgItem(hwndDlg, IDC_COMBO_ZoneTemplates), CB_FINDSTRINGEXACT, -1, (LPARAM)zoneTemplateFolder);
                 if(index >= 0)
                     SendMessage(GetDlgItem(hwndDlg, IDC_COMBO_ZoneTemplates), CB_SETCURSEL, index, 0);
-                
-                if(banksWithOthers)
-                    CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_CHECKED);
-                else
-                    CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_UNCHECKED);
             }
             else
             {
@@ -567,7 +549,6 @@ static WDL_DLGRET dlgProcOSCSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                 SetDlgItemText(hwndDlg, IDC_EDIT_ChannelOffset, "0");
                 SetDlgItemText(hwndDlg, IDC_EDIT_NumSends, "0");
                 SetDlgItemText(hwndDlg, IDC_EDIT_NumFX, "0");
-                CheckDlgButton(hwndDlg, IDC_CHECK_BanksWithOthers, BST_CHECKED);
             }
         }
             break;
@@ -624,11 +605,6 @@ static WDL_DLGRET dlgProcOSCSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                         
                         GetDlgItemText(hwndDlg, IDC_EDIT_NumFX, buf, sizeof(buf));
                         numFX = atoi(buf);
-                        
-                        if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_BanksWithOthers))
-                            banksWithOthers = true;
-                        else
-                            banksWithOthers = false;
                         
                         GetDlgItemText(hwndDlg, IDC_EDIT_OSCSurfaceName, name, sizeof(name));
                         GetDlgItemText(hwndDlg, IDC_EDIT_OSCRemoteDeviceIP, remoteDeviceIP, sizeof(remoteDeviceIP));
@@ -754,7 +730,6 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                                     surface->channelOffset = channelOffset;
                                     surface->numSends = numSends;
                                     surface->numFX = numFX;
-                                    surface->banksWithOthers = banksWithOthers;
 
                                     pages[pageIndex]->surfaces.push_back(surface);
                                     
@@ -787,7 +762,6 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                                     surface->channelOffset = channelOffset;
                                     surface->numSends = numSends;
                                     surface->numFX = numFX;
-                                    surface->banksWithOthers = banksWithOthers;
 
                                     pages[pageIndex]->surfaces.push_back(surface);
                                     
@@ -846,7 +820,6 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                                 channelOffset = pages[pageIndex]->surfaces[index]->channelOffset;
                                 numSends = pages[pageIndex]->surfaces[index]->numSends;
                                 numFX = pages[pageIndex]->surfaces[index]->numFX;
-                                banksWithOthers = pages[pageIndex]->surfaces[index]->banksWithOthers;
 
                                 dlgResult = false;
                                 editMode = true;
@@ -868,7 +841,6 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                                     pages[pageIndex]->surfaces[index]->channelOffset = channelOffset;
                                     pages[pageIndex]->surfaces[index]->numSends = numSends;
                                     pages[pageIndex]->surfaces[index]->numFX = numFX;
-                                    pages[pageIndex]->surfaces[index]->banksWithOthers = banksWithOthers;
                                 }
                                 
                                 editMode = false;
@@ -993,7 +965,7 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                         surface->type = tokens[0];
                         surface->name = tokens[1];
                         
-                        if((surface->type == MidiSurfaceToken || surface->type == OSCSurfaceToken) && (tokens.size() == 11 || tokens.size() == 12))
+                        if((surface->type == MidiSurfaceToken || surface->type == OSCSurfaceToken) && (tokens.size() == 10 || tokens.size() == 11))
                         {
                             surface->inPort = atoi(tokens[2].c_str());
                             surface->outPort = atoi(tokens[3].c_str());
@@ -1004,12 +976,7 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                             surface->numFX = atoi(tokens[8].c_str());
                             surface->channelOffset = atoi(tokens[9].c_str());
 
-                            if(tokens[10] == "BanksWithOthers")
-                                surface->banksWithOthers = true;
-                            else
-                                surface->banksWithOthers = false;
-
-                            if(tokens[0] == OSCSurfaceToken && tokens.size() == 12)
+                            if(tokens[0] == OSCSurfaceToken && tokens.size() == 11)
                                 surface->remoteDeviceIP = tokens[10];
                         }
                         
@@ -1074,11 +1041,6 @@ static WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
                             line += to_string(surface->numSends) + " " ;
                             line += to_string(surface->numFX) + " " ;
                             line += to_string(surface->channelOffset) + " " ;
-
-                            if(banksWithOthers)
-                                line += "BanksWithOthers ";
-                            else
-                                line += "DoesNotBanksWithOthers ";
                             
                             if(surface->type == OSCSurfaceToken)
                                 line += " " + surface->remoteDeviceIP + " ";
