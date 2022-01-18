@@ -303,11 +303,8 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 
 
 
-static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex)
+static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex)
 {
-    vector<string> subZones;
-    bool isInSubZonesSection = false;
-
     map<string, string> touchIds;
     
     map<string, map<string, vector<ActionTemplate*>>> widgetActions;
@@ -367,7 +364,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int
                     
                     string numStr = "";
                     
-                    zoneManager->AddSingleZone(Zone(zoneManager, navigators[0], navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
+                    zoneManager->AddFXZone(Zone(zoneManager, navigators[0], navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -379,7 +376,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int
                         if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
                             widget->SetIsModifier();
                         
-                        zoneManager->GetLastZone()->AddWidget(widget);
+                        zoneManager->GetLastFXZone()->AddWidget(widget);
                         
                         for(auto [modifier, actions] : modifierActions)
                         {
@@ -391,7 +388,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, zoneManager->GetLastZone(), memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zoneManager->GetLastFXZone(), memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -401,33 +398,21 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int
                                 
                                 string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                 
-                                zoneManager->GetLastZone()->AddActionContext(widget, expandedModifier, context);
+                                zoneManager->GetLastFXZone()->AddActionContext(widget, expandedModifier, context);
                                 
                             }
                         }
                     }
                                             
-                    subZones.clear();
                     widgetActions.clear();
                     touchIds.clear();
                     
                     break;
                 }
                 
-                else if( tokens[0] == "MasterTrackNavigator"
-                        || tokens[0] == "FocusedFXNavigator"
-                        || tokens[0] == "SelectedTrackNavigator")
+                else if(tokens[0] == "FocusedFXNavigator" || tokens[0] == "SelectedTrackNavigator")
                     navigatorName = tokens[0];
-                               
-                else if(tokens[0] == "SubZones")
-                    isInSubZonesSection = true;
-                
-                else if(tokens[0] == "SubZonesEnd")
-                    isInSubZonesSection = false;
-                
-                else if(tokens.size() == 1 && isInSubZonesSection)
-                    subZones.push_back(tokens[0]);
-                
+                                              
                 else if(tokens.size() > 1)
                 {
                     actionName = tokens[1];
@@ -485,9 +470,6 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
 {
     vector<string> includedZones;
     bool isInIncludedZonesSection = false;
-    vector<string> subZones;
-    bool isInSubZonesSection = false;
-
     map<string, string> touchIds;
     
     map<string, map<string, vector<ActionTemplate*>>> widgetActions;
@@ -660,16 +642,6 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                             }
                         }
                         
-                        /*
-                        for(auto subZoneName : subZones)
-                        {
-                            Zone* subZone = zoneManager->GetZone(subZoneName);
-                            
-                            if(subZone)
-                                zone->AddSubZone(subZone);
-                        }
-                        */
-                        
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
                             string surfaceWidgetName = widgetName;
@@ -717,7 +689,6 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                     }
                                     
                     includedZones.clear();
-                    subZones.clear();
                     widgetActions.clear();
                     touchIds.clear();
                     
@@ -746,16 +717,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
                 
                 else if(tokens.size() == 1 && isInIncludedZonesSection)
                     includedZones.push_back(tokens[0]);
-                
-                else if(tokens[0] == "SubZones")
-                    isInSubZonesSection = true;
-                
-                else if(tokens[0] == "SubZonesEnd")
-                    isInSubZonesSection = false;
-                
-                else if(tokens.size() == 1 && isInSubZonesSection)
-                    subZones.push_back(tokens[0]);
-                
+                               
                 else if(tokens.size() > 1)
                 {
                     actionName = tokens[1];
@@ -1239,7 +1201,7 @@ void Manager::InitActionsDictionary()
     actions_["PageNameDisplay"] =                   new PageNameDisplay();
     actions_["Broadcast"] =                         new Broadcast();
     actions_["ReceiveBroadcast"] =                  new ReceiveBroadcast();
-    actions_["GoZone"] =                            new class GoZone();
+    actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
     actions_["Map"] =                               new class Map();
     actions_["Unmap"] =                             new class Unmap();
@@ -2508,7 +2470,7 @@ Zone* ZoneManager::GetZone(string zoneName)
     return nullptr;
 }
 
-void ZoneManager::GoSubZone(Zone* enclosingZone, string zoneName, double value)
+void ZoneManager::GoSubZone(Zone* enclosingZone, string subZoneName, double value)
 {
     /*
     for(auto activeZones : allActiveZones_)
@@ -2526,47 +2488,15 @@ void ZoneManager::GoSubZone(Zone* enclosingZone, string zoneName, double value)
      */
 }
 
-void ZoneManager::GoZone(string zoneName)
+void ZoneManager::GoHome()
 {
-    if(zoneName == "Home")
-    {
-        if(focusedFXZone_ != nullptr)
-            UnmapFocusedFXFromWidgets();
-               
-        //UnmapZones(tempZones_);
-        
-        for(auto zones : fixedZones_)
-            DeactivateZones(zones);
-    }
-    else if(zoneName == "SelectedTrackFXZones")
-    {
-        
-    }
+    if(focusedFXZone_ != nullptr)
+        UnmapFocusedFXFromWidgets();
+           
+    fxZones_.clear();
     
-    else
-    {
-        GetZone(zoneName);
-/*
-        if(zonesByName_.count(zoneName) > 0)
-        {
-            Zone* zone = zonesByName_[zoneName];
-            
-            if(value == 1) // adding
-            {
-                zone->Activate(activeZones);
-            }
-            else // removing
-            {
-                zone->Deactivate();
-                
-                auto it = find(activeZones->begin(),activeZones->end(), zone);
-                
-                if ( it != activeZones->end() )
-                    activeZones->erase(it);
-            }
-        }
- */
-    }
+    for(auto zones : fixedZones_)
+        DeactivateZones(zones);
 }
 
 Navigator* ZoneManager::GetNavigatorForChannel(int channelNum)

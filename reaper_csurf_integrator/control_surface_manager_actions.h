@@ -184,7 +184,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class GoZone : public Action
+class GoHome : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
@@ -192,12 +192,7 @@ public:
     
     void Do(ActionContext* context, double value) override
     {
-        /*
-        if(value == 0 && context->GetWidget()->GetName() == "OnTrackSelection")
-            context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
-        else if(value)
-            context->GetSurface()->GetZoneManager()->GoZone(context->GetStringParam(), value);
-         */
+        context->GetSurface()->GetZoneManager()->GoHome();
     }
 };
 
