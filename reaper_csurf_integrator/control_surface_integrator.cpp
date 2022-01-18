@@ -303,7 +303,7 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 
 
 
-static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
+static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex)
 {
     vector<string> subZones;
     bool isInSubZonesSection = false;
@@ -367,8 +367,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
                     
                     string numStr = "";
                     
-                    Zone* zone = new Zone(zoneManager, navigators[0], navigationStyle, 0, touchIds, zoneName, zoneAlias, filePath);
-                    
+                    zoneManager->AddSingleZone(Zone(zoneManager, navigators[0], navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -380,7 +379,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
                         if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
                             widget->SetIsModifier();
                         
-                        zone->AddWidget(widget);
+                        zoneManager->GetLastZone()->AddWidget(widget);
                         
                         for(auto [modifier, actions] : modifierActions)
                         {
@@ -392,7 +391,7 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zoneManager->GetLastZone(), memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -402,14 +401,12 @@ static void ProcessSingleZoneFile(string filePath, ZoneManager* zoneManager)
                                 
                                 string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                 
-                                zone->AddActionContext(widget, expandedModifier, context);
+                                zoneManager->GetLastZone()->AddActionContext(widget, expandedModifier, context);
                                 
                             }
                         }
                     }
-                    
-                    zoneManager->AddSingleZone(zone);
-                        
+                                            
                     subZones.clear();
                     widgetActions.clear();
                     touchIds.clear();
@@ -2418,11 +2415,11 @@ void ZoneManager::MapFocusedFXToWidgets()
 
 void ZoneManager::MapSelectedTrackFXToWidgets()
 {
-    UnmapZones(tempZones_);
+    //UnmapZones(*tempZones_);
     
-    if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
-        for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
-            MapSelectedTrackFXSlotToWidgets(&tempZones_, i);
+    //if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
+        //for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
+            //MapSelectedTrackFXSlotToWidgets(tempZones_, i);
 }
 
 void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
@@ -2536,7 +2533,7 @@ void ZoneManager::GoZone(string zoneName)
         if(focusedFXZone_ != nullptr)
             UnmapFocusedFXFromWidgets();
                
-        UnmapZones(tempZones_);
+        //UnmapZones(tempZones_);
         
         for(auto zones : fixedZones_)
             DeactivateZones(zones);

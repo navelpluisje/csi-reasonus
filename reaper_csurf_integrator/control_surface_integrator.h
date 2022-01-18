@@ -873,7 +873,7 @@ private:
 
     Zone* focusedFXZone_ = nullptr;
     
-    vector<Zone*> tempZones_;
+    vector<Zone> tempZones_;
     
     vector<Zone*> selectedTrackFXMenuZones_;
     vector<Zone*> trackFXMenuZones_;
@@ -1136,6 +1136,19 @@ public:
         return false;
     }
     
+    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone> &zones)
+    {
+        for(auto zone : zones)
+        {
+            if(&zone == originatingZone)
+                return true;
+            else
+                zone.EnsureWidgetsNotUsed(originatingZone->GetWidgets());
+        }
+        
+        return false;
+    }
+    
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
     virtual ~ZoneManager() {}
@@ -1177,10 +1190,15 @@ public:
         zonesByName_[zone->GetName()] = zone;
     }
     
-    void AddSingleZone(Zone* zone)
+    void AddSingleZone(Zone zone)
     {
         tempZones_.push_back(zone);
-        zone->Activate();
+        zone.Activate();
+    }
+    
+    Zone* GetLastZone()
+    {
+        return &tempZones_.back();
     }
     
     map<int, map<int, int>> focusedFXDictionary;
@@ -1223,8 +1241,8 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
         
-        for(Zone* zone : tempZones_)
-            zone->DoAction(widget, isUsed, value);
+        for(Zone &zone : tempZones_)
+            zone.DoAction(widget, isUsed, value);
 
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
@@ -1241,8 +1259,8 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, delta);
         
-        for(Zone* zone : tempZones_)
-            zone->DoRelativeAction(widget, isUsed, delta);
+        for(Zone &zone : tempZones_)
+            zone.DoRelativeAction(widget, isUsed, delta);
 
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
@@ -1259,8 +1277,8 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
         
-        for(Zone* zone : tempZones_)
-            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        for(Zone &zone : tempZones_)
+            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
 
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
@@ -1277,8 +1295,8 @@ public:
         if(focusedFXZone_ != nullptr)
             focusedFXZone_->DoAction(widget, isUsed, value);
         
-        for(Zone* zone : tempZones_)
-            zone->DoAction(widget, isUsed, value);
+        for(Zone &zone : tempZones_)
+            zone.DoAction(widget, isUsed, value);
 
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
