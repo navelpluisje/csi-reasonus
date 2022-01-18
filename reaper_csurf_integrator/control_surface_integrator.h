@@ -866,9 +866,17 @@ private:
     vector<Zone*> selectedTrackSendsSlotZones_;
     vector<Zone*> trackSendsSlotZones_;
 
+    vector<Zone*> homeZone_;
+    
     vector<vector<Zone*>> fixedZones_;
     
-    Zone* homeZone_ = nullptr;
+    
+    
+    map<int, Navigator*> navigators_;
+ 
+    
+    map<string, string> zoneFilenames_;
+    map<string, Zone*> zonesByName_;
     
     void DeactivateZones(vector<Zone*> &zones)
     {
@@ -930,10 +938,7 @@ private:
     
     
     
-    map<int, Navigator*> navigators_;
- 
-    map<string, string> zoneFilenames_;
-    map<string, Zone*> zonesByName_;
+
       
     void Map(MapType mapType, ActionContext* context)
     {
@@ -1228,9 +1233,6 @@ public:
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoAction(widget, isUsed, value);
-        
-        if(homeZone_ != nullptr)
-            homeZone_->DoAction(widget, isUsed, value);
     }
     
     void DoRelativeAction(Widget* widget, double delta)
@@ -1246,9 +1248,6 @@ public:
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, delta);
-        
-        if(homeZone_ != nullptr)
-            homeZone_->DoRelativeAction(widget, isUsed, delta);
     }
     
     void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
@@ -1264,9 +1263,6 @@ public:
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-        
-        if(homeZone_ != nullptr)
-            homeZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
     
     void DoTouch(Widget* widget, double value)
@@ -1282,9 +1278,6 @@ public:
         for(vector<Zone*> zones : fixedZones_)
             for(Zone* zone : zones)
                 zone->DoAction(widget, isUsed, value);
-        
-        if(homeZone_ != nullptr)
-            homeZone_->DoAction(widget, isUsed, value);
     }
 };
 

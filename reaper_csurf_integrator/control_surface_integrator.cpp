@@ -2139,9 +2139,9 @@ void ZoneManager::Initialize()
 {
     InitZones();
     
-    homeZone_ = GetZone("Home");
+    LoadZones("Home", 1, &homeZone_);
        
-    if(homeZone_ == nullptr)
+    if(homeZone_.size() == 0)
     {
         MessageBox(g_hwnd, (surface_->GetName() + " needs a Home Zone to operate, please recheck your installation").c_str(), ("CSI cannot find Home Zone for " + surface_->GetName()).c_str(), MB_OK);
         return;
@@ -2157,9 +2157,7 @@ void ZoneManager::Initialize()
     LoadZones("TrackSendSlot", GetNumChannels(), &trackSendsSlotZones_);
     LoadZones("SelectedTrackSendSlot", GetNumSendSlots(), &selectedTrackSendsSlotZones_);
     LoadZones("SelectedTrackSend", GetNumSendSlots(), &selectedTrackSendsZones_);
-
-    homeZone_->Activate();
-    
+   
     fixedZones_.push_back(selectedTrackFXMenuZones_);
     fixedZones_.push_back(trackFXMenuZones_);
     
@@ -2170,6 +2168,9 @@ void ZoneManager::Initialize()
     fixedZones_.push_back(trackSendsSlotZones_);
     fixedZones_.push_back(selectedTrackSendsSlotZones_);
     fixedZones_.push_back(selectedTrackSendsZones_);
+    fixedZones_.push_back(homeZone_);
+    
+    GoHome();
 }
 
 void ZoneManager::RequestUpdate()
@@ -2181,14 +2182,10 @@ void ZoneManager::RequestUpdate()
 
     if(focusedFXZone_ != nullptr)
         focusedFXZone_->RequestUpdate(usedWidgets_);
-
-    
+   
     for(vector<Zone*> zones : fixedZones_)
         for(Zone* zone : zones)
             zone->RequestUpdate(usedWidgets_);
-    
-    if(homeZone_ != nullptr)
-        homeZone_->RequestUpdate(usedWidgets_);
     
     // default is to zero unused Widgets -- e.g. you can overrise this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
     for(auto &[key, value] : usedWidgets_)
@@ -2498,6 +2495,9 @@ void ZoneManager::GoHome()
     
     for(auto zones : fixedZones_)
         DeactivateZones(zones);
+    
+    for(auto zone : homeZone_)
+        zone->Activate();
 }
 
 Navigator* ZoneManager::GetNavigatorForChannel(int channelNum)
