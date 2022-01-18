@@ -500,7 +500,7 @@ private:
     string const alias_ = "";
     string const sourceFilePath_ = "";
     
-    NavigationType const navigationStyle_ = Standard;
+    NavigationType const navigationTypee_ = Standard;
     
     
     
@@ -514,27 +514,17 @@ private:
     vector<Widget*> widgets_;
     
     vector<Zone*> includedZones_;
-    vector<Zone*> subZones_;
 
     map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
     vector<ActionContext> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationStyle, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationStyle_(navigationStyle), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
-    
-    
+    void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
     
-    void SetSlotIndex(int index)
-    {
-        slotIndex_ = index;
-        
-        for(auto subZone : subZones_)
-            subZone->SetSlotIndex(index);
-    }
-
     void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
     {
         if(! isActive_ || isUsed)
@@ -561,9 +551,9 @@ public:
     void Activate();
     void Deactivate();
 
-
+    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
     Navigator* GetNavigator() { return navigator_; }
-
+    
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
     vector<Widget*> &GetWidgets() { return widgets_; }
 
@@ -574,17 +564,7 @@ public:
         else
             Activate();
     }
-    
-/*
- 
-    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
- 
-    void AddSubZone(Zone* &subZone)
-    {
-        subZone->SetNavigator(GetNavigator());
-        subZones_.push_back(subZone);
-    }
-*/
+
     string GetName()
     {
         return name_;

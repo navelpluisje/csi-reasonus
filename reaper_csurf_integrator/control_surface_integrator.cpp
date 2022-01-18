@@ -349,22 +349,23 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                 {
                     currentActionTemplate = nullptr;
                     
-                    vector<Navigator*> navigators;
+                    Navigator* navigator = nullptr;
                     
                     NavigationType navigationStyle = Standard;
                     
                     if(navigatorName == "")
-                        navigators.push_back(zoneManager->GetDefaultNavigator());
+                        navigator = zoneManager->GetDefaultNavigator();
                     if(navigatorName == "SelectedTrackNavigator")
-                        navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                        navigator = zoneManager->GetSelectedTrackNavigator();
                     else if(navigatorName == "FocusedFXNavigator")
-                        navigators.push_back(zoneManager->GetFocusedFXNavigator());
-                    else if(navigatorName == "MasterTrackNavigator")
-                        navigators.push_back(zoneManager->GetMasterTrackNavigator());
+                        navigator = zoneManager->GetFocusedFXNavigator();
+                    
+                    if(navigator == nullptr)
+                        navigator = zoneManager->GetDefaultNavigator();
                     
                     string numStr = "";
                     
-                    zoneManager->AddFXZone(Zone(zoneManager, navigators[0], navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
+                    zoneManager->AddFXZone(Zone(zoneManager, navigator, navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -1936,17 +1937,17 @@ vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
 
 int Zone::GetSlotIndex()
 {
-    if(navigationStyle_ == Standard)
+    if(navigationTypee_ == Standard)
         return slotIndex_;
-    else if(navigationStyle_ == SendSlot)
+    else if(navigationTypee_ == SendSlot)
         return zoneManager_->GetSendSlot();
-    else if(navigationStyle_ == ReceiveSlot)
+    else if(navigationTypee_ == ReceiveSlot)
         return zoneManager_->GetReceiveSlot();
-    else if(navigationStyle_ == FXMenuSlot)
+    else if(navigationTypee_ == FXMenuSlot)
         return zoneManager_->GetFXMenuSlot();
-    else if(navigationStyle_ == SelectedTrackSendSlot)
+    else if(navigationTypee_ == SelectedTrackSendSlot)
         return slotIndex_ + zoneManager_->GetSendSlot();
-    else if(navigationStyle_ == SelectedTrackReceiveSlot)
+    else if(navigationTypee_ == SelectedTrackReceiveSlot)
         return slotIndex_ + zoneManager_->GetReceiveSlot();
     else
         return 0;
