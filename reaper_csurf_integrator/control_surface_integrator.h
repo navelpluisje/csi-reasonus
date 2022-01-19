@@ -1034,30 +1034,7 @@ private:
                 broadcast.push_back(BroadcastType::MapTrackFXMenusSlot);
         }
     }
-      
-    void LoadZone(string baseName, vector<Zone*> *activeZones)
-    {
-        LoadZones(baseName, 1, activeZones);
-    }
-    
-    void LoadZones(string baseName, int numberOfSlots, vector<Zone*> *activeZones)
-    {
-        for(int i = 0; i < numberOfSlots; i++)
-        {
-            string name = baseName;
-            
-            if(numberOfSlots > 1)
-                name += to_string(i + 1);
-            
-            if(Zone* zone = GetZone(name))
-            {
-                
-                
-                activeZones->push_back(zone);
-            }
-        }
-    }
-    
+
 public:
     
     void GoHome();
@@ -1162,6 +1139,8 @@ public:
     
     void LoadZone(string zoneName);
     Zone* GetZone(string zoneName);
+    void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
+    void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     ControlSurface* GetSurface() { return surface_; }
@@ -1175,18 +1154,7 @@ public:
     {
         zonesByName_[zone->GetName()] = zone;
     }
-    
-    void AddFXZone(Zone zone)
-    {
-        fxZones_.push_back(zone);
-        zone.Activate();
-    }
-    
-    Zone* GetLastFXZone()
-    {
-        return &fxZones_.back();
-    }
-    
+        
     map<int, map<int, int>> focusedFXDictionary;
     
     void CheckFocusedFXState()

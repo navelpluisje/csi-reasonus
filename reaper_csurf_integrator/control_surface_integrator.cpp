@@ -474,6 +474,8 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zo
                                 if(numItems > 1)
                                     expandedName = includedZoneName + to_string(j + 1);
                                 
+                                
+                                // GAW TBD Process Included Zones -- paas included Zones ref
                                 Zone* includedZone = zoneManager->GetZone(expandedName);
                                 
                                 if(includedZone)
@@ -622,7 +624,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zo
 
 
 
-static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex)
+static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex, vector<Zone> &zones)
 {
     map<string, string> touchIds;
     
@@ -684,7 +686,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                     
                     string numStr = "";
                     
-                    zoneManager->AddFXZone(Zone(zoneManager, navigator, navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
+                    zones.push_back(Zone(zoneManager, navigator, navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -696,7 +698,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                         if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
                             widget->SetIsModifier();
                         
-                        zoneManager->GetLastFXZone()->AddWidget(widget);
+                        zones.back().AddWidget(widget);
                         
                         for(auto [modifier, actions] : modifierActions)
                         {
@@ -708,7 +710,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, zoneManager->GetLastFXZone(), memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, &zones.back(), memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -718,7 +720,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                 
                                 string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                 
-                                zoneManager->GetLastFXZone()->AddActionContext(widget, expandedModifier, context);
+                                zones.back().AddActionContext(widget, expandedModifier, context);
                                 
                             }
                         }
@@ -2466,17 +2468,33 @@ void ZoneManager::Initialize()
         MessageBox(g_hwnd, (surface_->GetName() + " needs a Home Zone to operate, please recheck your installation").c_str(), ("CSI cannot find Home Zone for " + surface_->GetName()).c_str(), MB_OK);
         return;
     }
-   
-    LoadZones("TrackFXMenuSlot", GetNumChannels(), &selectedTrackFXMenuZones_);
-    LoadZones("SelectedTrackFXMenuSlot", GetNumSendSlots(), &trackFXMenuZones_);
+       
+    if(zoneFilenames_.count("TrackFXMenuSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["TrackFXMenuSlot"], this, trackFXMenuZones_);
 
-    LoadZones("TrackReceiveSlot", GetNumChannels(), &trackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceiveSlot", GetNumSendSlots(), &selectedTrackReceivesSlotZones_);
-    LoadZones("SelectedTrackReceive", GetNumSendSlots(), &selectedTrackReceivesZones_);
+    if(zoneFilenames_.count("SelectedTrackFXMenuSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["SelectedTrackFXMenuSlot"], this, selectedTrackFXMenuZones_);
 
-    LoadZones("TrackSendSlot", GetNumChannels(), &trackSendsSlotZones_);
-    LoadZones("SelectedTrackSendSlot", GetNumSendSlots(), &selectedTrackSendsSlotZones_);
-    LoadZones("SelectedTrackSend", GetNumSendSlots(), &selectedTrackSendsZones_);
+    
+    if(zoneFilenames_.count("TrackReceiveSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["TrackReceiveSlot"], this, trackReceivesSlotZones_);
+
+    if(zoneFilenames_.count("SelectedTrackReceiveSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["SelectedTrackReceiveSlot"], this, selectedTrackReceivesSlotZones_);
+
+    if(zoneFilenames_.count("SelectedTrackReceive") > 0)
+        ProcessZoneFile(zoneFilenames_["SelectedTrackReceive"], this, selectedTrackReceivesZones_);
+    
+
+    if(zoneFilenames_.count("TrackSendSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["TrackSendSlot"], this, trackSendsSlotZones_);
+
+    if(zoneFilenames_.count("SelectedTrackSendSlot") > 0)
+        ProcessZoneFile(zoneFilenames_["SelectedTrackSendSlot"], this, selectedTrackSendsSlotZones_);
+
+    if(zoneFilenames_.count("SelectedTrackSend") > 0)
+        ProcessZoneFile(zoneFilenames_["SelectedTrackSend"], this, selectedTrackSendsZones_);
+    
    
     fixedZones_.push_back(selectedTrackFXMenuZones_);
     fixedZones_.push_back(trackFXMenuZones_);
@@ -2754,6 +2772,27 @@ void ZoneManager::LoadZone(string zoneName)
     {
         if(zoneFilenames_.count(zoneName) > 0)
             ProcessZoneFile(zoneFilenames_[zoneName], this);
+    }
+}
+
+void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
+{
+    if(zoneFilenames_.count(zoneName) > 0)
+        ProcessFXZoneFile(zoneFilenames_[zoneName], this, slotNumber, zones);
+    
+    // GAW TBD place  as key and first value in dictionary for subzones
+}
+
+void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones)
+{
+    if(zoneFilenames_.count(zoneName) > 0)
+    {
+        ProcessFXZoneFile(zoneFilenames_[zoneName], this, slotNumber, zones);
+    
+        if(originatingZone.GetNavigator() != nullptr)
+            zones.back().SetNavigator(originatingZone.GetNavigator());
+        
+        // GAW TBD place in dictionary for subzones
     }
 }
 
