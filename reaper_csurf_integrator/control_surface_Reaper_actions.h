@@ -1379,8 +1379,7 @@ public:
                 
                 DAW::TrackFX_GetFXName(track, context->GetSlotIndex(), fxName, sizeof(fxName));
                 
-                if(Zone* zone = context->GetSurface()->GetZoneManager()->GetZone(fxName))
-                    name = zone->GetNameOrAlias();
+                name = context->GetSurface()->GetZoneManager()->GetNameOrAlias(fxName);
             }
             
             context->UpdateWidgetValue(name);

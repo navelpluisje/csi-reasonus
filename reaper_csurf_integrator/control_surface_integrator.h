@@ -1139,8 +1139,21 @@ public:
     int GetNumReceiveSlots();
     int GetNumFXSlots();
     
+    string GetNameOrAlias(string name)
+    {
+        if(Zone* zone = GetZone(name))
+            name = zone->GetNameOrAlias();
+        
+        return "";
+    }
+    
     void LoadZone(string zoneName);
+    
+    map<string, string> &GetZoneFilenames() { return zoneFilenames_; }
+    
     Zone* GetZone(string zoneName);
+    
+    
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);

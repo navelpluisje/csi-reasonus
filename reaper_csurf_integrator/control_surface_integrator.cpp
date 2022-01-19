@@ -305,8 +305,16 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 
 
 
-static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zone*> &zones)
+static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
+    
+    if(zoneManager->GetZoneFilenames().count(zoneNameToProcess) < 1)
+        return;
+    
+    
+    string filePath = zoneManager->GetZoneFilenames()[zoneNameToProcess];
+    
+    
     vector<string> includedZones;
     bool isInIncludedZonesSection = false;
     map<string, string> touchIds;
@@ -2473,8 +2481,7 @@ void ZoneManager::Initialize()
 {
     InitZones();
       
-    if(zoneFilenames_.count("Home") > 0)
-        ProcessZoneFile(zoneFilenames_["Home"], this, homeZone_);
+    ProcessZoneFile("Home", this, homeZone_);
     
     if(homeZone_.size() == 0)
     {
@@ -2482,31 +2489,16 @@ void ZoneManager::Initialize()
         return;
     }
        
-    if(zoneFilenames_.count("TrackFXMenuSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["TrackFXMenuSlot"], this, trackFXMenuZones_);
-
-    if(zoneFilenames_.count("SelectedTrackFXMenuSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["SelectedTrackFXMenuSlot"], this, selectedTrackFXMenuZones_);
-
+    ProcessZoneFile("TrackFXMenuSlot", this, trackFXMenuZones_);
+    ProcessZoneFile("SelectedTrackFXMenuSlot", this, selectedTrackFXMenuZones_);
     
-    if(zoneFilenames_.count("TrackReceiveSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["TrackReceiveSlot"], this, trackReceivesSlotZones_);
-
-    if(zoneFilenames_.count("SelectedTrackReceiveSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["SelectedTrackReceiveSlot"], this, selectedTrackReceivesSlotZones_);
-
-    if(zoneFilenames_.count("SelectedTrackReceive") > 0)
-        ProcessZoneFile(zoneFilenames_["SelectedTrackReceive"], this, selectedTrackReceivesZones_);
+    ProcessZoneFile("TrackReceiveSlot", this, trackReceivesSlotZones_);
+    ProcessZoneFile("SelectedTrackReceiveSlot", this, selectedTrackReceivesSlotZones_);
+    ProcessZoneFile("SelectedTrackReceive", this, selectedTrackReceivesZones_);
     
-
-    if(zoneFilenames_.count("TrackSendSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["TrackSendSlot"], this, trackSendsSlotZones_);
-
-    if(zoneFilenames_.count("SelectedTrackSendSlot") > 0)
-        ProcessZoneFile(zoneFilenames_["SelectedTrackSendSlot"], this, selectedTrackSendsSlotZones_);
-
-    if(zoneFilenames_.count("SelectedTrackSend") > 0)
-        ProcessZoneFile(zoneFilenames_["SelectedTrackSend"], this, selectedTrackSendsZones_);
+    ProcessZoneFile("TrackSendSlot", this, trackSendsSlotZones_);
+    ProcessZoneFile("SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
+    ProcessZoneFile("SelectedTrackSend", this, selectedTrackSendsZones_);
     
    
     fixedZones_.push_back(selectedTrackFXMenuZones_);
