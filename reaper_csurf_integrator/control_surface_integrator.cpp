@@ -303,6 +303,325 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 
 
 
+
+
+static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zone*> &zones)
+{
+    vector<string> includedZones;
+    bool isInIncludedZonesSection = false;
+    map<string, string> touchIds;
+    
+    map<string, map<string, vector<ActionTemplate*>>> widgetActions;
+    
+    string zoneName = "";
+    string zoneAlias = "";
+    string navigatorName = "";
+    string actionName = "";
+    int lineNumber = 0;
+    
+    ActionTemplate* currentActionTemplate = nullptr;
+    
+    try
+    {
+        ifstream file(filePath);
+        
+        for (string line; getline(file, line) ; )
+        {
+            line = regex_replace(line, regex(TabChars), " ");
+            line = regex_replace(line, regex(CRLFChars), "");
+            
+            line = line.substr(0, line.find("//")); // remove trailing commewnts
+            
+            lineNumber++;
+            
+            // Trim leading and trailing spaces
+            line = regex_replace(line, regex("^\\s+|\\s+$"), "", regex_constants::format_default);
+            
+            if(line == "" || (line.size() > 0 && line[0] == '/')) // ignore blank lines and comment lines
+                continue;
+            
+            vector<string> tokens(GetTokens(line));
+            
+            if(tokens.size() > 0)
+            {
+                if(tokens[0] == "Zone")
+                {
+                    zoneName = tokens.size() > 1 ? tokens[1] : "";
+                    zoneAlias = tokens.size() > 2 ? tokens[2] : "";
+                }
+                else if(tokens[0] == "ZoneEnd" && zoneName != "")
+                {
+                    currentActionTemplate = nullptr;
+                    
+                    vector<Navigator*> navigators;
+                    
+                    NavigationType navigationStyle = Standard;
+                    
+                    if(navigatorName == "")
+                        navigators.push_back(zoneManager->GetDefaultNavigator());
+                    if(navigatorName == "SelectedTrackNavigator")
+                        navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                    else if(navigatorName == "FocusedFXNavigator")
+                        navigators.push_back(zoneManager->GetFocusedFXNavigator());
+                    else if(navigatorName == "MasterTrackNavigator")
+                        navigators.push_back(zoneManager->GetMasterTrackNavigator());
+                    else if(navigatorName == "TrackNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                    }
+                    else if(navigatorName == "SelectedTrackSendNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumSendSlots(); i++)
+                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                    }
+                    else if(navigatorName == "SelectedTrackReceiveNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumReceiveSlots(); i++)
+                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                    }
+                    else if(navigatorName == "SelectedTrackFXMenuNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumFXSlots(); i++)
+                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                    }
+                    else if(navigatorName == "TrackSendSlotNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                        
+                        navigationStyle = SendSlot;
+                    }
+                    else if(navigatorName == "TrackReceiveSlotNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                        
+                        navigationStyle = ReceiveSlot;
+                    }
+                    else if(navigatorName == "TrackFXMenuSlotNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                        
+                        navigationStyle = FXMenuSlot;
+                    }
+                    else if(navigatorName == "SelectedTrackSendSlotNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumSendSlots(); i++)
+                        {
+                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                            navigationStyle = SelectedTrackSendSlot;
+                        }
+                    }
+                    else if(navigatorName == "SelectedTrackReceiveSlotNavigator")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumReceiveSlots(); i++)
+                        {
+                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
+                            navigationStyle = SelectedTrackReceiveSlot;
+                        }
+                    }
+                   
+                    for(int i = 0; i < navigators.size(); i++)
+                    {
+                        string numStr = to_string(i + 1);
+                        
+                        string newZoneName = zoneName;
+                        
+                        map<string, string> expandedTouchIds;
+                        
+                        if(navigators.size() > 1)
+                        {
+                            newZoneName += numStr;
+                        
+                            for(auto [key, value] : touchIds)
+                            {
+                                string expandedKey = regex_replace(key, regex("[|]"), numStr);
+                                string expandedValue = regex_replace(value, regex("[|]"), numStr);
+
+                                expandedTouchIds[expandedKey] = expandedValue;
+                            }
+                        }
+                        else
+                        {
+                            expandedTouchIds = touchIds;
+                        }
+                        
+                                                
+                        Zone* zone = new Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
+                        
+                        for(auto includedZoneName : includedZones)
+                        {
+                            int numItems = 1;
+                            
+                            if((       includedZoneName == "Channel"
+                                    || includedZoneName == "TrackSendSlot"
+                                    || includedZoneName == "TrackReceiveSlot"
+                                    || includedZoneName == "TrackFXMenuSlot") && zoneManager->GetNumChannels() > 1)
+                                numItems = zoneManager->GetNumChannels();
+                            else if(includedZoneName == "SelectedTrackSend" && zoneManager->GetNumSendSlots() > 1)
+                                numItems = zoneManager->GetNumSendSlots();
+                            else if(includedZoneName == "SelectedTrackReceive" && zoneManager->GetNumReceiveSlots() > 1)
+                                numItems = zoneManager->GetNumReceiveSlots();
+                            else if(includedZoneName == "SelectedTrackFXMenu" && zoneManager->GetNumFXSlots() > 1)
+                                numItems = zoneManager->GetNumFXSlots();
+                            
+                            for(int j = 0; j < numItems; j++)
+                            {
+                                string expandedName = includedZoneName;
+                                
+                                if(numItems > 1)
+                                    expandedName = includedZoneName + to_string(j + 1);
+                                
+                                Zone* includedZone = zoneManager->GetZone(expandedName);
+                                
+                                if(includedZone)
+                                    zone->AddIncludedZone(includedZone);
+                            }
+                        }
+                        
+                        for(auto [widgetName, modifierActions] : widgetActions)
+                        {
+                            string surfaceWidgetName = widgetName;
+                            
+                            if(navigators.size() > 1)
+                                surfaceWidgetName = regex_replace(surfaceWidgetName, regex("[|]"), to_string(i + 1));
+                            
+                            Widget* widget = zoneManager->GetSurface()->GetWidgetByName(surfaceWidgetName);
+                            
+                            if(widget == nullptr)
+                                continue;
+                            
+                            if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
+                                widget->SetIsModifier();
+                            
+                            zone->AddWidget(widget);
+                            
+                            for(auto [modifier, actions] : modifierActions)
+                            {
+                                for(auto action : actions)
+                                {
+                                    string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
+                                    vector<string> memberParams;
+                                    for(int j = 0; j < action->params.size(); j++)
+                                        memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
+                                    
+                                    
+                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                                                        
+                                    if(action->isFeedbackInverted)
+                                        context.SetIsFeedbackInverted();
+                                    
+                                    if(action->holdDelayAmount != 0.0)
+                                        context.SetHoldDelayAmount(action->holdDelayAmount);
+                                    
+                                    string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
+                                    
+                                    zone->AddActionContext(widget, expandedModifier, context);
+                                    
+                                }
+                            }
+                        }
+                        
+                        zones.push_back(zone);
+                    }
+                                    
+                    includedZones.clear();
+                    widgetActions.clear();
+                    touchIds.clear();
+                    
+                    break;
+                }
+                
+                else if(   tokens[0] == "TrackNavigator"
+                        || tokens[0] == "TrackSendSlotNavigator"
+                        || tokens[0] == "TrackReceiveSlotNavigator"
+                        || tokens[0] == "TrackFXMenuSlotNavigator"
+                        || tokens[0] == "MasterTrackNavigator"
+                        || tokens[0] == "FocusedFXNavigator"
+                        || tokens[0] == "SelectedTrackNavigator"
+                        || tokens[0] == "SelectedTrackSendNavigator"
+                        || tokens[0] == "SelectedTrackReceiveNavigator"
+                        || tokens[0] == "SelectedTrackFXMenuNavigator"
+                        || tokens[0] == "SelectedTrackSendSlotNavigator"
+                        || tokens[0] == "SelectedTrackReceiveSlotNavigator")
+                    navigatorName = tokens[0];
+                
+                else if(tokens[0] == "IncludedZones")
+                    isInIncludedZonesSection = true;
+                
+                else if(tokens[0] == "IncludedZonesEnd")
+                    isInIncludedZonesSection = false;
+                
+                else if(tokens.size() == 1 && isInIncludedZonesSection)
+                    includedZones.push_back(tokens[0]);
+                               
+                else if(tokens.size() > 1)
+                {
+                    actionName = tokens[1];
+                    
+                    string widgetName = "";
+                    string modifier = "";
+                    string touchId = "";
+                    bool isFeedbackInverted = false;
+                    double holdDelayAmount = 0.0;
+                    bool isProperty = false;
+                    
+                    GetWidgetNameAndProperties(tokens[0], widgetName, modifier, touchId, isFeedbackInverted, holdDelayAmount, isProperty);
+                    
+                    if(touchId != "")
+                        touchIds[widgetName] = touchId;
+                    
+                    vector<string> params;
+                    for(int i = 1; i < tokens.size(); i++)
+                        params.push_back(tokens[i]);
+                    
+                    if(isProperty)
+                    {
+                        if(currentActionTemplate != nullptr)
+                            currentActionTemplate->properties.push_back(params);
+                    }
+                    else
+                    {
+                        currentActionTemplate = new ActionTemplate(actionName, params, isFeedbackInverted, holdDelayAmount);
+                        widgetActions[widgetName][modifier].push_back(currentActionTemplate);
+                    }
+                }
+            }
+        }
+    }
+    catch (exception &e)
+    {
+        char buffer[250];
+        snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", filePath.c_str(), lineNumber);
+        DAW::ShowConsoleMsg(buffer);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex)
 {
     map<string, string> touchIds;
@@ -2138,9 +2457,10 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
 void ZoneManager::Initialize()
 {
     InitZones();
+      
+    if(zoneFilenames_.count("Home") > 0)
+        ProcessZoneFile(zoneFilenames_["Home"], this, homeZone_);
     
-    LoadZones("Home", 1, &homeZone_);
-       
     if(homeZone_.size() == 0)
     {
         MessageBox(g_hwnd, (surface_->GetName() + " needs a Home Zone to operate, please recheck your installation").c_str(), ("CSI cannot find Home Zone for " + surface_->GetName()).c_str(), MB_OK);
