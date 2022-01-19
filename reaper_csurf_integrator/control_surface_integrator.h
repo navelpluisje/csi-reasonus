@@ -555,6 +555,8 @@ public:
     Navigator* GetNavigator() { return navigator_; }
     
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
+    vector<Zone*> &GetIncludedZones() { return includedZones_; }
+    
     vector<Widget*> &GetWidgets() { return widgets_; }
 
     void Toggle()
@@ -1148,6 +1150,14 @@ public:
     void AddZoneFilename(string name, string filename)
     {
         zoneFilenames_[name] = filename;
+    }
+    
+    string GetZoneFlename(string zoneName)
+    {
+        if(zoneFilenames_.count(zoneName) > 0)
+            return zoneFilenames_[zoneName];
+        
+        return "";
     }
     
     void AddZone(Zone* zone)

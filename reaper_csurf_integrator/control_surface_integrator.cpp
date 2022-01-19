@@ -453,6 +453,15 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zo
                         
                         for(auto includedZoneName : includedZones)
                         {
+                                                       
+                            string filename = zoneManager->GetZoneFlename(includedZoneName);
+                            
+                            
+                            if(filename != "")
+                                ProcessZoneFile(filename, zoneManager, zone->GetIncludedZones());
+                            
+                            /*
+                            
                             int numItems = 1;
                             
                             if((       includedZoneName == "Channel"
@@ -475,12 +484,16 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Zo
                                     expandedName = includedZoneName + to_string(j + 1);
                                 
                                 
-                                // GAW TBD Process Included Zones -- paas included Zones ref
+                                // GAW TBD Process Included Zones -- pass included Zones ref
                                 Zone* includedZone = zoneManager->GetZone(expandedName);
                                 
                                 if(includedZone)
                                     zone->AddIncludedZone(includedZone);
+                                
                             }
+                             
+                            */
+                             
                         }
                         
                         for(auto [widgetName, modifierActions] : widgetActions)
