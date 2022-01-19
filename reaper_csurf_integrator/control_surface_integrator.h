@@ -836,6 +836,14 @@ public:
     virtual void ForceValue(int param, double value) override;
 };
 
+
+struct CSIZoneInfo
+{
+    string filePath = "";
+    string alias = "";
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ZoneManager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -853,7 +861,7 @@ private:
     
     map<Widget*, bool> usedWidgets_;
 
-    Zone* focusedFXZone_ = nullptr;
+    vector<Zone> focusedFXZones_;
     
     vector<Zone> fxZones_;
     
@@ -877,7 +885,7 @@ private:
     map<int, Navigator*> navigators_;
  
     
-    map<string, string> zoneFilenames_;
+    map<string, CSIZoneInfo> zoneFilePaths_;
     map<string, Zone*> zonesByName_;
     
     void DeactivateZones(vector<Zone*> &zones)
@@ -937,8 +945,7 @@ private:
     
     
     
-    
-    
+
     
 
       
@@ -948,11 +955,7 @@ private:
         {
             if(param == "FocusedFX")
             {
-                if(focusedFXZone_ != nullptr)
-                {
-                     
-                     
-                }
+                MapFocusedFXToWidgets();
             }
             else if(param == "SelectedTrackFX")
             {
@@ -1073,12 +1076,13 @@ public:
 
     void EnsureWidgetsNotUsed(Zone* zone)
     {
-        if(zone == focusedFXZone_)
+        for(auto focusedFXZone : focusedFXZones_)
+        
+        if(zone == &focusedFXZone)
             return;
         
         // GAW -- think I'll put in a clear focusedFX for now, not sure if this will be right for all use cases
-        if(focusedFXZone_ != nullptr)
-            UnmapFocusedFXFromWidgets();
+        UnmapFocusedFXFromWidgets();
         
         if(IsZoneHereAndClear(zone, fxZones_))
             return;
@@ -1141,15 +1145,20 @@ public:
     
     string GetNameOrAlias(string name)
     {
-        if(Zone* zone = GetZone(name))
-            name = zone->GetNameOrAlias();
-        
+        if(zoneFilePaths_.count(name) > 0)
+        {
+            if(zoneFilePaths_[name].alias != "")
+                return zoneFilePaths_[name].alias;
+            else
+                return name;
+        }
+                
         return "";
     }
     
     void LoadZone(string zoneName);
     
-    map<string, string> &GetZoneFilenames() { return zoneFilenames_; }
+    map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
     
     Zone* GetZone(string zoneName);
     
@@ -1160,17 +1169,14 @@ public:
     
     ControlSurface* GetSurface() { return surface_; }
     
-    void AddZoneFilename(string name, string filename)
+    void AddZoneFilePath(string name, string alias, string filePath)
     {
-        zoneFilenames_[name] = filename;
-    }
-    
-    string GetZoneFlename(string zoneName)
-    {
-        if(zoneFilenames_.count(zoneName) > 0)
-            return zoneFilenames_[zoneName];
+        struct CSIZoneInfo info;
         
-        return "";
+        info.filePath = filePath;
+        info.alias = alias;
+        
+        zoneFilePaths_[name] = info;
     }
     
     void AddZone(Zone* zone)
@@ -1214,10 +1220,10 @@ public:
     void DoAction(Widget* widget, double value)
     {
         bool isUsed = false;
-     
-        if(focusedFXZone_ != nullptr)
-            focusedFXZone_->DoAction(widget, isUsed, value);
         
+        for(Zone &zone : focusedFXZones_)
+            zone.DoAction(widget, isUsed, value);
+
         for(Zone &zone : fxZones_)
             zone.DoAction(widget, isUsed, value);
 
@@ -1229,10 +1235,10 @@ public:
     void DoRelativeAction(Widget* widget, double delta)
     {
         bool isUsed = false;
-     
-        if(focusedFXZone_ != nullptr)
-            focusedFXZone_->DoRelativeAction(widget, isUsed, delta);
         
+        for(Zone &zone : focusedFXZones_)
+            zone.DoRelativeAction(widget, isUsed, delta);
+
         for(Zone &zone : fxZones_)
             zone.DoRelativeAction(widget, isUsed, delta);
 
@@ -1244,10 +1250,10 @@ public:
     void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
     {
         bool isUsed = false;
-     
-        if(focusedFXZone_ != nullptr)
-            focusedFXZone_->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-        
+               
+        for(Zone &zone : focusedFXZones_)
+            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+
         for(Zone &zone : fxZones_)
             zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
 
@@ -1259,10 +1265,10 @@ public:
     void DoTouch(Widget* widget, double value)
     {
         bool isUsed = false;
-     
-        if(focusedFXZone_ != nullptr)
-            focusedFXZone_->DoAction(widget, isUsed, value);
         
+        for(Zone &zone : focusedFXZones_)
+            zone.DoAction(widget, isUsed, value);
+
         for(Zone &zone : fxZones_)
             zone.DoAction(widget, isUsed, value);
 

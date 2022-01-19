@@ -271,10 +271,11 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
             
             if(tokens.size() > 0)
             {
-                if(tokens[0] == "Zone")
+                if(tokens[0] == "Zone" && tokens.size() > 1)
                 {
-                    zoneName = tokens.size() > 1 ? tokens[1] : "";
-                    zoneManager->AddZoneFilename(zoneName, filePath);
+                    zoneName = tokens[1];
+                    string zoneAlias = tokens.size() > 2 ? tokens[2] : "";
+                    zoneManager->AddZoneFilePath(zoneName, zoneAlias, filePath);
                     break;
                 }
             }
@@ -307,13 +308,10 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
 
 static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
-    
-    if(zoneManager->GetZoneFilenames().count(zoneNameToProcess) < 1)
+    if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
         return;
     
-    
-    string filePath = zoneManager->GetZoneFilenames()[zoneNameToProcess];
-    
+    string filePath = zoneManager->GetZoneFilePaths()[zoneNameToProcess].filePath;
     
     vector<string> includedZones;
     bool isInIncludedZonesSection = false;
@@ -460,50 +458,8 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                         Zone* zone = new Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
                         
                         for(auto includedZoneName : includedZones)
-                        {
-                                                       
-                            string filename = zoneManager->GetZoneFlename(includedZoneName);
-                            
-                            
-                            if(filename != "")
-                                ProcessZoneFile(filename, zoneManager, zone->GetIncludedZones());
-                            
-                            /*
-                            
-                            int numItems = 1;
-                            
-                            if((       includedZoneName == "Channel"
-                                    || includedZoneName == "TrackSendSlot"
-                                    || includedZoneName == "TrackReceiveSlot"
-                                    || includedZoneName == "TrackFXMenuSlot") && zoneManager->GetNumChannels() > 1)
-                                numItems = zoneManager->GetNumChannels();
-                            else if(includedZoneName == "SelectedTrackSend" && zoneManager->GetNumSendSlots() > 1)
-                                numItems = zoneManager->GetNumSendSlots();
-                            else if(includedZoneName == "SelectedTrackReceive" && zoneManager->GetNumReceiveSlots() > 1)
-                                numItems = zoneManager->GetNumReceiveSlots();
-                            else if(includedZoneName == "SelectedTrackFXMenu" && zoneManager->GetNumFXSlots() > 1)
-                                numItems = zoneManager->GetNumFXSlots();
-                            
-                            for(int j = 0; j < numItems; j++)
-                            {
-                                string expandedName = includedZoneName;
-                                
-                                if(numItems > 1)
-                                    expandedName = includedZoneName + to_string(j + 1);
-                                
-                                
-                                // GAW TBD Process Included Zones -- pass included Zones ref
-                                Zone* includedZone = zoneManager->GetZone(expandedName);
-                                
-                                if(includedZone)
-                                    zone->AddIncludedZone(includedZone);
-                                
-                            }
-                             
-                            */
-                             
-                        }
-                        
+                            ProcessZoneFile(includedZoneName, zoneManager, zone->GetIncludedZones());
+                                                    
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
                             string surfaceWidgetName = widgetName;
@@ -2522,15 +2478,18 @@ void ZoneManager::RequestUpdate()
     
     for(auto &[key, value] : usedWidgets_)
         value = false;
+    
+    for(Zone &zone : focusedFXZones_)
+        zone.RequestUpdate(usedWidgets_);
 
-    if(focusedFXZone_ != nullptr)
-        focusedFXZone_->RequestUpdate(usedWidgets_);
+    for(Zone &zone : fxZones_)
+        zone.RequestUpdate(usedWidgets_);
    
     for(vector<Zone*> zones : fixedZones_)
         for(Zone* zone : zones)
             zone->RequestUpdate(usedWidgets_);
     
-    // default is to zero unused Widgets -- e.g. you can overrise this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
+    // default is to zero unused Widgets -- e.g. you can override this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
     for(auto &[key, value] : usedWidgets_)
         if(value == false)
             key->UpdateValue(0.0);
@@ -2679,11 +2638,7 @@ void ControlSurface::MapFocusedFXToWidgets()
 
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
-    if(focusedFXZone_ != nullptr)
-    {
-        focusedFXZone_->Deactivate();
-        focusedFXZone_ = nullptr;
-    }
+    focusedFXZones_.clear();
 }
 
 void ZoneManager::MapFocusedFXToWidgets()
@@ -2704,14 +2659,10 @@ void ZoneManager::MapFocusedFXToWidgets()
         char FXName[BUFSZ];
         DAW::TrackFX_GetFXName(focusedTrack, fxSlot, FXName, sizeof(FXName));
         
-        if(Zone* zone = GetZone(FXName))
+        
+        if(zoneFilePaths_.count(FXName) > 0)
         {
-            if(zone->GetNavigator()->GetIsFocusedFXNavigator())
-            {
-                zone->SetSlotIndex(fxSlot);
-                zone->Activate();
-                focusedFXZone_ = zone;
-            }
+            ActivateFXZone(FXName, fxSlot, focusedFXZones_);
         }
     }
 }
@@ -2775,24 +2726,22 @@ void ZoneManager::LoadZone(string zoneName)
 {
     if(zonesByName_.count(zoneName) == 0)
     {
-        if(zoneFilenames_.count(zoneName) > 0)
-            ProcessZoneFile(zoneFilenames_[zoneName], this);
+        ProcessZoneFile(zoneName, this);
     }
 }
 
 void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
 {
-    if(zoneFilenames_.count(zoneName) > 0)
-        ProcessFXZoneFile(zoneFilenames_[zoneName], this, slotNumber, zones);
+    ProcessFXZoneFile(zoneName, this, slotNumber, zones);
     
     // GAW TBD place  as key and first value in dictionary for subzones
 }
 
 void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones)
 {
-    if(zoneFilenames_.count(zoneName) > 0)
+    if(zoneFilePaths_.count(zoneName) > 0)
     {
-        ProcessFXZoneFile(zoneFilenames_[zoneName], this, slotNumber, zones);
+        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
     
         if(originatingZone.GetNavigator() != nullptr)
             zones.back().SetNavigator(originatingZone.GetNavigator());
@@ -2806,7 +2755,7 @@ Zone* ZoneManager::GetZone(string zoneName)
     if(zonesByName_.count(zoneName) > 0)
         return zonesByName_[zoneName];
 
-    if(zoneFilenames_.count(zoneName) > 0)
+    if(zoneFilePaths_.count(zoneName) > 0)
     {
         LoadZone(zoneName);
         
@@ -2820,7 +2769,7 @@ Zone* ZoneManager::GetZone(string zoneName)
         while(isdigit(baseName.back()))
              baseName = baseName.substr(0, baseName.length() - 1);
         
-        if(zoneFilenames_.count(baseName) > 0)
+        if(zoneFilePaths_.count(baseName) > 0)
         {
             LoadZone(baseName);
             
@@ -2852,10 +2801,7 @@ void ZoneManager::GoSubZone(Zone* enclosingZone, string subZoneName, double valu
 
 void ZoneManager::GoHome()
 {
-    if(focusedFXZone_ != nullptr)
-        UnmapFocusedFXFromWidgets();
-           
-    fxZones_.clear();
+    UnmapFocusedFXFromWidgets();
     
     for(auto zones : fixedZones_)
         DeactivateZones(zones);
