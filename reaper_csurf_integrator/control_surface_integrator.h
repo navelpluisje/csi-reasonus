@@ -1163,6 +1163,7 @@ public:
     Zone* GetZone(string zoneName);
     
     
+    void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);

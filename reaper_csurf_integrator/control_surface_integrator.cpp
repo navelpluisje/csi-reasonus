@@ -289,23 +289,6 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
     if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
@@ -577,29 +560,6 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
         DAW::ShowConsoleMsg(buffer);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex, vector<Zone> &zones)
 {
@@ -1058,6 +1018,17 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager)
         DAW::ShowConsoleMsg(buffer);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 void SetRGB(vector<string> params, bool &supportsRGB, bool &supportsTrackColor, vector<rgb_color> &RGBValues)
 {
@@ -2659,11 +2630,8 @@ void ZoneManager::MapFocusedFXToWidgets()
         char FXName[BUFSZ];
         DAW::TrackFX_GetFXName(focusedTrack, fxSlot, FXName, sizeof(FXName));
         
-        
         if(zoneFilePaths_.count(FXName) > 0)
-        {
-            ActivateFXZone(FXName, fxSlot, focusedFXZones_);
-        }
+            ActivateFocusedFXZone(FXName, fxSlot, focusedFXZones_);
     }
 }
 
@@ -2687,14 +2655,8 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, in
     
     DAW::TrackFX_GetFXName(selectedTrack, fxSlot, FXName, sizeof(FXName));
     
-    if(Zone* zone = GetZone(FXName))
-    {
-        if( ! zone->GetNavigator()->GetIsFocusedFXNavigator())
-        {
-            zone->SetSlotIndex(fxSlot);
-            zone->Activate();
-        }
-    }
+    if(zoneFilePaths_.count(FXName) > 0)
+        ActivateFXZone(FXName, fxSlot, focusedFXZones_);
 }
 
 
@@ -2730,9 +2692,22 @@ void ZoneManager::LoadZone(string zoneName)
     }
 }
 
+void ZoneManager::ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
+{
+    ProcessFXZoneFile(zoneName, this, slotNumber, zones);
+    
+    if(zones.back().GetNavigator()->GetIsFocusedFXNavigator())
+        zones.back().Activate();
+    
+    // GAW TBD place  as key and first value in dictionary for subzones
+}
+
 void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
 {
     ProcessFXZoneFile(zoneName, this, slotNumber, zones);
+    
+    if( ! zones.back().GetNavigator()->GetIsFocusedFXNavigator())
+        zones.back().Activate();
     
     // GAW TBD place  as key and first value in dictionary for subzones
 }
@@ -2745,6 +2720,8 @@ void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int 
     
         if(originatingZone.GetNavigator() != nullptr)
             zones.back().SetNavigator(originatingZone.GetNavigator());
+        
+        zones.back().Activate();
         
         // GAW TBD place in dictionary for subzones
     }
