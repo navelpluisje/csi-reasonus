@@ -1156,12 +1156,7 @@ public:
         return "";
     }
     
-    void LoadZone(string zoneName);
-    
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
-    
-    Zone* GetZone(string zoneName);
-    
     
     void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
