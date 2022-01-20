@@ -839,10 +839,11 @@ private:
     int const numChannels_ = 0;
     int const numSends_ = 0;
     int const numFXSlots_ = 0;
-    
+       
     map<Widget*, bool> usedWidgets_;
 
     vector<Zone> focusedFXZones_;
+    map<int, map<int, int>> focusedFXDictionary;
     
     vector<Zone> fxZones_;
     
@@ -880,6 +881,9 @@ private:
 
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
+    
+
+    
     
     void MapSelectedTrackFXToWidgets();
 
@@ -919,17 +923,11 @@ private:
     
     void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
 
-    
-    
-    
-    
 
-    
 
-      
-    void Map(MapType mapType, ActionContext* context)
+    void Map(MapType mapType, vector<string> &mappingTypes)
     {
-        for(string param : context->GetMappingTypes())
+        for(string param : mappingTypes)
         {
             if(param == "FocusedFX")
             {
@@ -1000,8 +998,40 @@ private:
     }
 
 public:
+    ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
+    virtual ~ZoneManager() {}
+    
+    void ForceClearAllWidgets() { } // GAW clear all widgets in contest
+    
+    void Initialize();
+   
+    void RequestUpdate();
+    
+    void InitZones();
+    
+    Navigator* GetMasterTrackNavigator();
+    Navigator* GetSelectedTrackNavigator();
+    Navigator* GetFocusedFXNavigator();
+    Navigator* GetDefaultNavigator();
+    Navigator* GetNavigatorForChannel(int channelNum);
+    int GetSendSlot();
+    int GetReceiveSlot();
+    int GetFXMenuSlot();
+    int GetNumChannels();
+    int GetNumSendSlots();
+    int GetNumReceiveSlots();
+    int GetNumFXSlots();
+    
+    void ReceiveMappingSignal(MapType mapType, string mapping);
     void GoHome();
+    void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
+    void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
+    void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
+    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
+    
+    map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
+    ControlSurface* GetSurface() { return surface_; }
     
     void AddWidget(Widget* widget)
     {
@@ -1018,19 +1048,19 @@ public:
         SetBroadcast(receiveBroadcast_, context);
     }
 
-    void Map(ActionContext* context)
+    void Map(vector<string> &mappingTypes)
     {
-        Map(MapType::Map, context);
+        Map(MapType::Map, mappingTypes);
     }
 
-    void Unmap(ActionContext* context)
+    void Unmap(vector<string> &mappingTypes)
     {
-        Map(MapType::Unmap, context);
+        Map(MapType::Unmap, mappingTypes);
     }
 
-    void ToggleMap(ActionContext* context)
+    void ToggleMap(vector<string> &mappingTypes)
     {
-        Map(MapType::ToggleMap, context);
+        Map(MapType::ToggleMap, mappingTypes);
     }
 
     void EnsureWidgetsNotUsed(Zone* zone)
@@ -1077,31 +1107,6 @@ public:
         return false;
     }
     
-    ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
-    
-    virtual ~ZoneManager() {}
-    
-    void ForceClearAllWidgets() { } // GAW clear all widgets in contest
-    
-    void Initialize();
-   
-    void RequestUpdate();
-    
-    void InitZones();
-    
-    Navigator* GetMasterTrackNavigator();
-    Navigator* GetSelectedTrackNavigator();
-    Navigator* GetFocusedFXNavigator();
-    Navigator* GetDefaultNavigator();
-    Navigator* GetNavigatorForChannel(int channelNum);
-    int GetSendSlot();
-    int GetReceiveSlot();
-    int GetFXMenuSlot();
-    int GetNumChannels();
-    int GetNumSendSlots();
-    int GetNumReceiveSlots();
-    int GetNumFXSlots();
-    
     string GetNameOrAlias(string name)
     {
         if(zoneFilePaths_.count(name) > 0)
@@ -1115,15 +1120,6 @@ public:
         return "";
     }
     
-    map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
-    
-    void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
-    void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
-    void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
-    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
-    
-    ControlSurface* GetSurface() { return surface_; }
-    
     void AddZoneFilePath(string name, struct CSIZoneInfo info)
     {
         if(name != "")
@@ -1134,8 +1130,6 @@ public:
     {
         zonesByName_[zone->GetName()] = zone;
     }
-        
-    map<int, map<int, int>> focusedFXDictionary;
     
     void CheckFocusedFXState()
     {
@@ -2384,6 +2378,14 @@ public:
     {
         for(auto surface : surfaces_)
             surface->OnInitialization();
+    }
+    
+    void SignalMapping(ControlSurface* originatingSurface, MapType mapType, string mapping)
+    {
+        for(auto surface : surfaces_)
+            if(surface != originatingSurface)
+                surface->GetZoneManager()->ReceiveMappingSignal(mapType, mapping);
+
     }
     
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

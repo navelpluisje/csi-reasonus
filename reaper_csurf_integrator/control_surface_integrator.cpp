@@ -2295,21 +2295,28 @@ void ControlSurface::MapFocusedFXToWidgets()
 */
 
 
-
-
-
-
-
-
-
+void ZoneManager::ReceiveMappingSignal(MapType mapType, string mapping)
+{
+    if(find(receiveBroadcast_.begin(), receiveBroadcast_.end(), mapping) != receiveBroadcast_.end())
+    {
+        vector<string> mappings { mapping };
+        Map(mapType, mappings);
+    }
+}
 
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
+    if(find(broadcast_.begin(), broadcast_.end(), "UnmapFocusedFXFromWidgets") != broadcast_.end())
+        surface_->GetPage()->SignalMapping(surface_, MapType::Unmap, "UnmapFocusedFXFromWidgets");
+
     focusedFXZones_.clear();
 }
 
 void ZoneManager::MapFocusedFXToWidgets()
 {
+    if(find(broadcast_.begin(), broadcast_.end(), "MapFocusedFXToWidgets") != broadcast_.end())
+        surface_->GetPage()->SignalMapping(surface_, MapType::Map, "MapFocusedFXToWidgets");
+    
     UnmapFocusedFXFromWidgets();
     
     int trackNumber = 0;

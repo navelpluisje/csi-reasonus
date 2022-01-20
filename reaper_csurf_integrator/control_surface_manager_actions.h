@@ -460,7 +460,7 @@ public:
 
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->Map(context);
+        context->GetSurface()->GetZoneManager()->Map(context->GetMappingTypes());
     }
     
 };
@@ -474,7 +474,7 @@ public:
 
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->Unmap(context);
+        context->GetSurface()->GetZoneManager()->Unmap(context->GetMappingTypes());
     }
 };
 
@@ -487,7 +487,7 @@ public:
     
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->ToggleMap(context);
+        context->GetSurface()->GetZoneManager()->ToggleMap(context->GetMappingTypes());
     }
 };
 #endif /* control_surface_manager_actions_h */
