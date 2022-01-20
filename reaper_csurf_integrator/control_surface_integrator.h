@@ -188,7 +188,6 @@ public:
     virtual void PinChannel() {}
     virtual void SetPinnedTrack(MediaTrack* track) { }
     virtual void UnpinChannel() {}
-    virtual bool GetIsFocusedFXNavigator() { return false; }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,8 +256,6 @@ class FocusedFXNavigator : public Navigator
 public:
     FocusedFXNavigator(Page*  page) : Navigator(page) {}
     virtual ~FocusedFXNavigator() {}
-    
-    virtual bool GetIsFocusedFXNavigator() override { return true; }
     
     virtual string GetName() override { return "FocusedFXNavigator"; }
     
@@ -836,13 +833,12 @@ public:
     virtual void ForceValue(int param, double value) override;
 };
 
-
 struct CSIZoneInfo
 {
     string filePath = "";
     string alias = "";
+    string navigator = "NotFocusedFXNavigator";
 };
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ZoneManager
@@ -880,11 +876,8 @@ private:
     
     vector<vector<Zone*>> fixedZones_;
     
-    
-    
     map<int, Navigator*> navigators_;
  
-    
     map<string, CSIZoneInfo> zoneFilePaths_;
     map<string, Zone*> zonesByName_;
     
@@ -1165,14 +1158,10 @@ public:
     
     ControlSurface* GetSurface() { return surface_; }
     
-    void AddZoneFilePath(string name, string alias, string filePath)
+    void AddZoneFilePath(string name, struct CSIZoneInfo info)
     {
-        struct CSIZoneInfo info;
-        
-        info.filePath = filePath;
-        info.alias = alias;
-        
-        zoneFilePaths_[name] = info;
+        if(name != "")
+            zoneFilePaths_[name] = info;
     }
     
     void AddZone(Zone* zone)

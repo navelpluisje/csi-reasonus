@@ -252,6 +252,13 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     {
         ifstream file(filePath);
         
+        CSIZoneInfo info;
+        info.filePath = filePath;
+        
+        int numLinesRead = 0;
+    
+        vector<vector<string>> lines;
+        
         for (string line; getline(file, line) ; )
         {
             line = regex_replace(line, regex(TabChars), " ");
@@ -268,18 +275,30 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
                 continue;
             
             vector<string> tokens(GetTokens(line));
-            
+                       
             if(tokens.size() > 0)
+                lines.push_back(tokens);
+
+            numLinesRead++;
+            
+            if(numLinesRead > 1)
+                break;
+        }
+        
+        for(auto tokens : lines)
+        {
+            if(tokens[0] == "Zone" && tokens.size() > 1)
             {
-                if(tokens[0] == "Zone" && tokens.size() > 1)
-                {
-                    zoneName = tokens[1];
-                    string zoneAlias = tokens.size() > 2 ? tokens[2] : "";
-                    zoneManager->AddZoneFilePath(zoneName, zoneAlias, filePath);
-                    break;
-                }
+                zoneName = tokens[1];
+                info.alias = tokens.size() > 2 ? tokens[2] : "";
+            }
+            else if(tokens[0] == "FocusedFXNavigator")
+            {
+                info.navigator = "FocusedFXNavigator";
             }
         }
+        
+        zoneManager->AddZoneFilePath(zoneName, info);
     }
     catch (exception &e)
     {
@@ -2363,22 +2382,24 @@ void ZoneManager::InitZones()
 
 void ZoneManager::ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
 {
-    ProcessFXZoneFile(zoneName, this, slotNumber, zones);
-    
-    if(zones.back().GetNavigator()->GetIsFocusedFXNavigator())
+    if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator == "FocusedFXNavigator")
+    {
+        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
         zones.back().Activate();
-    
-    // GAW TBD place  as key and first value in dictionary for subzones
+        
+        // GAW TBD place  as key and first value in dictionary for subzones
+    }
 }
 
 void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
 {
-    ProcessFXZoneFile(zoneName, this, slotNumber, zones);
-    
-    if( ! zones.back().GetNavigator()->GetIsFocusedFXNavigator())
+    if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator != "FocusedFXNavigator")
+    {
+        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
         zones.back().Activate();
-    
-    // GAW TBD place  as key and first value in dictionary for subzones
+        
+        // GAW TBD place  as key and first value in dictionary for subzones
+    }
 }
 
 void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones)
