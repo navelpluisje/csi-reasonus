@@ -82,19 +82,6 @@ enum MapType
     ToggleMap,
 };
 
-enum BroadcastType
-{
-    GoZone,
-    GoFXSlot,
-    MapSelectedTrackSends,
-    MapSelectedTrackReceives,
-    MapSelectedTrackFX,
-    MapSelectedTrackFXMenu,
-    MapTrackSendsSlot,
-    MapTrackReceivesSlot,
-    MapTrackFXMenusSlot
-};
-
 class Manager;
 extern Manager* TheManager;
 
@@ -499,8 +486,6 @@ private:
     
     NavigationType const navigationTypee_ = Standard;
     
-    
-    
     bool isActive_ = false;
     map<string, string> touchIds_;
     map<string, bool> activeTouchIds_;
@@ -845,8 +830,8 @@ class ZoneManager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
-    vector<BroadcastType> broadcast_;
-    vector<BroadcastType> receiveBroadcast_;
+    vector<string> broadcast_;
+    vector<string> receiveBroadcast_;
 
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
@@ -1008,29 +993,10 @@ private:
         }
     }
     
-    void SetBroadcast(vector<BroadcastType> &broadcast, ActionContext* context)
+    void SetBroadcast(vector<string> &broadcast, ActionContext* context)
     {
         for(string param : context->GetBroadcastTypes())
-        {
-            if(param == "GoZone")
-                broadcast.push_back(BroadcastType::GoZone);
-            else if(param == "GoFXSlot")
-                broadcast.push_back(BroadcastType::GoFXSlot);
-            else if(param == "MapSelectedTrackSends")
-                broadcast.push_back(BroadcastType::MapSelectedTrackSends);
-            else if(param == "MapSelectedTrackReceives")
-                broadcast.push_back(BroadcastType::MapSelectedTrackReceives);
-            else if(param == "MapSelectedTrackFX")
-                broadcast.push_back(BroadcastType::MapSelectedTrackFX);
-            else if(param == "MapSelectedTrackFXMenu")
-                broadcast.push_back(BroadcastType::MapSelectedTrackFXMenu);
-            else if(param == "MapTrackSendsSlot")
-                broadcast.push_back(BroadcastType::MapTrackSendsSlot);
-            else if(param == "MapTrackReceivesSlot")
-                broadcast.push_back(BroadcastType::MapTrackReceivesSlot);
-            else if(param == "MapTrackFXMenusSlot")
-                broadcast.push_back(BroadcastType::MapTrackFXMenusSlot);
-        }
+            broadcast.push_back(param);
     }
 
 public:
