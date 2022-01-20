@@ -865,7 +865,6 @@ private:
     map<int, Navigator*> navigators_;
  
     map<string, CSIZoneInfo> zoneFilePaths_;
-    map<string, Zone*> zonesByName_;
     
     void DeactivateZones(vector<Zone*> &zones)
     {
@@ -1124,11 +1123,6 @@ public:
     {
         if(name != "")
             zoneFilePaths_[name] = info;
-    }
-    
-    void AddZone(Zone* zone)
-    {
-        zonesByName_[zone->GetName()] = zone;
     }
     
     void CheckFocusedFXState()
