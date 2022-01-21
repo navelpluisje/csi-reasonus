@@ -514,7 +514,7 @@ public:
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
     Navigator* GetNavigator() { return navigator_; }
     
-    void AddIncludedZone(Zone zone) { includedZones_.push_back(zone); }
+    void AddIncludedZone(Zone &zone) { includedZones_.push_back(zone); }
     vector<Zone> &GetIncludedZones() { return includedZones_; }
     
     vector<Widget*> &GetWidgets() { return widgets_; }
@@ -578,12 +578,9 @@ public:
                 return;
             }
         }
-        
-        for(auto &zone : includedZones_)
-            zone.EnsureWidgetsNotUsed(widgets);
     }
     
-    void DoAction(Widget* widget, bool &isUsed, double value)
+    void DoAction(Widget* widget, bool &isUsed,  double value)
     {
         if(! isActive_ || isUsed)
             return;
@@ -593,9 +590,6 @@ public:
         
         for(auto &context : GetActionContexts(widget))
             context.DoAction(value);
-        
-        for(auto &zone : includedZones_)
-            zone.DoAction(widget, isUsed, value);
     }
        
     void DoRelativeAction(Widget* widget, bool &isUsed, double delta)
@@ -608,9 +602,6 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(delta);
-        
-        for(auto &zone : includedZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
     }
     
     void DoRelativeAction(Widget* widget, bool &isUsed, int accelerationIndex, double delta)
@@ -623,9 +614,6 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(accelerationIndex, delta);
-        
-        for(auto &zone : includedZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
     
     void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
@@ -642,9 +630,6 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoTouch(value);
-        
-        for(auto &zone : includedZones_)
-            zone.DoTouch(widget, widgetName, isUsed, value);
     }
 };
 
