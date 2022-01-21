@@ -439,15 +439,15 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ReceiveBroadcast  : public Action
+class Receive  : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual string GetName() override { return "ReceiveBroadcast"; }
+    virtual string GetName() override { return "Receive"; }
 
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->SetReceiveBroadcast(context);
+        context->GetSurface()->GetZoneManager()->SetReceive(context);
     }
 };
 

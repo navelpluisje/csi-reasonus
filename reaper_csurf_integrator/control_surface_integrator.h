@@ -831,7 +831,7 @@ class ZoneManager
 {
 private:
     vector<string> broadcast_;
-    vector<string> receiveBroadcast_;
+    vector<string> receive_;
 
     ControlSurface* const surface_;
     string const zoneFolder_ = "";
@@ -1042,9 +1042,9 @@ public:
         SetBroadcast(broadcast_, context);
     }
 
-    void SetReceiveBroadcast(ActionContext* context)
+    void SetReceive(ActionContext* context)
     {
-        SetBroadcast(receiveBroadcast_, context);
+        SetBroadcast(receive_, context);
     }
 
     void Map(vector<string> &mappingTypes)

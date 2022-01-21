@@ -1170,7 +1170,7 @@ void Manager::InitActionsDictionary()
     actions_["GoPage"] =                            new GoPage();
     actions_["PageNameDisplay"] =                   new PageNameDisplay();
     actions_["Broadcast"] =                         new Broadcast();
-    actions_["ReceiveBroadcast"] =                  new ReceiveBroadcast();
+    actions_["Receive"] =                           new Receive();
     actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
     actions_["Map"] =                               new class Map();
@@ -1541,7 +1541,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone &zone, vector<
         SetAssociatedWidget(GetSurface()->GetWidgetByName(params[1]));
     }
     
-    if((actionName == "Broadcast" || actionName == "ReceiveBroadcast") && params.size() > 1)
+    if((actionName == "Broadcast" || actionName == "Receive") && params.size() > 1)
     {
         for(int i = 1; i < params.size(); i++)
             broadcastTypes_.push_back(params[i]);
@@ -2303,7 +2303,7 @@ void ControlSurface::MapFocusedFXToWidgets()
 
 void ZoneManager::ReceiveMappingSignal(MapType mapType, string mapping)
 {
-    if(find(receiveBroadcast_.begin(), receiveBroadcast_.end(), mapping) != receiveBroadcast_.end())
+    if(find(receive_.begin(), receive_.end(), mapping) != receive_.end())
     {
         vector<string> mappings { mapping };
         Map(mapType, mappings);
