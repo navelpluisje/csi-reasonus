@@ -256,7 +256,7 @@ class ActionContext
 private:
     Action* const action_ = nullptr;
     Widget* const widget_ = nullptr;
-    Zone &zone_;
+    Zone* const zone_;
     
     Widget* associatedWidget_ = nullptr;
     
@@ -306,12 +306,12 @@ private:
     vector<string> mappingTypes_;
     
 public:
-    ActionContext(Action* action, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties);
+    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
 
     virtual ~ActionContext() {}
     
     Widget* GetWidget() { return widget_; }
-    Zone &GetZone() { return zone_; }
+    Zone* GetZone() { return zone_; }
     int GetSlotIndex();
     string GetName();
 
@@ -1034,7 +1034,7 @@ public:
     void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
-    void GoSubZone(Zone &enclosingZone, string zoneName, double value);
+    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
     ControlSurface* GetSurface() { return surface_; }
@@ -2639,7 +2639,7 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
-    ActionContext GetActionContext(string actionName, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties)
+    ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)
             return ActionContext(actions_[actionName], widget, zone, params, properties);
