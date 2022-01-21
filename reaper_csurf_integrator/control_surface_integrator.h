@@ -256,7 +256,7 @@ class ActionContext
 private:
     Action* const action_ = nullptr;
     Widget* const widget_ = nullptr;
-    Zone &zone_;
+    Zone* const zone_ = nullptr;
     
     Widget* associatedWidget_ = nullptr;
     
@@ -306,12 +306,12 @@ private:
     vector<string> mappingTypes_;
     
 public:
-    ActionContext(Action* action, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties);
+    ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
 
     virtual ~ActionContext() {}
     
     Widget* GetWidget() { return widget_; }
-    Zone &GetZone() { return zone_; }
+    Zone* GetZone() { return zone_; }
     int GetSlotIndex();
     string GetName();
 
@@ -484,7 +484,7 @@ private:
     string const alias_ = "";
     string const sourceFilePath_ = "";
     
-    NavigationType const navigationType_ = Standard;
+    NavigationType const navigationTypee_ = Standard;
     
     bool isActive_ = false;
     map<string, string> touchIds_;
@@ -495,13 +495,13 @@ private:
 
     vector<Widget*> widgets_;
     
-    vector<Zone> includedZones_;
+    vector<Zone*> includedZones_;
 
     map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
     vector<ActionContext> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationType_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
     
     void SetSlotIndex(int index) { slotIndex_ = index; }
@@ -536,8 +536,8 @@ public:
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
     Navigator* GetNavigator() { return navigator_; }
     
-    void AddIncludedZone(Zone &zone) { includedZones_.push_back(zone); }
-    vector<Zone> &GetIncludedZones() { return includedZones_; }
+    void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
+    vector<Zone*> &GetIncludedZones() { return includedZones_; }
     
     vector<Widget*> &GetWidgets() { return widgets_; }
 
@@ -586,8 +586,8 @@ public:
             }
         }
 
-        for(auto &zone : includedZones_)
-            zone.RequestUpdate(usedWidgets);
+        for(auto zone : includedZones_)
+            zone->RequestUpdate(usedWidgets);
     }
 
     void EnsureWidgetsNotUsed(vector<Widget*> &widgets)
@@ -847,32 +847,32 @@ private:
     
     vector<Zone> fxZones_;
     
-    vector<Zone> selectedTrackFXMenuZones_;
-    vector<Zone> trackFXMenuZones_;
+    vector<Zone*> selectedTrackFXMenuZones_;
+    vector<Zone*> trackFXMenuZones_;
     
-    vector<Zone> selectedTrackReceivesZones_;
-    vector<Zone> selectedTrackReceivesSlotZones_;
-    vector<Zone> trackReceivesSlotZones_;
+    vector<Zone*> selectedTrackReceivesZones_;
+    vector<Zone*> selectedTrackReceivesSlotZones_;
+    vector<Zone*> trackReceivesSlotZones_;
     
-    vector<Zone> selectedTrackSendsZones_;
-    vector<Zone> selectedTrackSendsSlotZones_;
-    vector<Zone> trackSendsSlotZones_;
+    vector<Zone*> selectedTrackSendsZones_;
+    vector<Zone*> selectedTrackSendsSlotZones_;
+    vector<Zone*> trackSendsSlotZones_;
 
-    vector<Zone> homeZone_;
+    vector<Zone*> homeZone_;
     
-    //vector<vector<Zone>> fixedZones_;
+    vector<vector<Zone*>> fixedZones_;
     
     map<int, Navigator*> navigators_;
  
     map<string, CSIZoneInfo> zoneFilePaths_;
     
-    void DeactivateZones(vector<Zone> &zones)
+    void DeactivateZones(vector<Zone*> &zones)
     {
-        for(auto &zone : zones)
-            zone.Deactivate();
+        for(auto zone : zones)
+            zone->Deactivate();
     }
 
-    void UnmapZones(vector<Zone> &zones)
+    void UnmapZones(vector<Zone*> &zones)
     {
         DeactivateZones(zones);
         zones.clear();
@@ -887,7 +887,7 @@ private:
     void MapSelectedTrackFXToWidgets();
 
     
-    //void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
     
     
     
@@ -969,22 +969,22 @@ private:
          }
      }
         
-    void ConductMapping(MapType mapType, vector<Zone> &zones)
+    void ConductMapping(MapType mapType, vector<Zone*> &zones)
     {
-        for(Zone &zone : zones)
+        for(Zone* zone : zones)
         {
             switch (mapType)
             {
                 case  MapType::Map:
-                    zone.Activate();
+                    zone->Activate();
                     break;
                 
                 case  MapType::Unmap:
-                    zone.Deactivate();
+                    zone->Deactivate();
                     break;
                 
                 case  MapType::ToggleMap:
-                    zone.Toggle();
+                    zone->Toggle();
                     break;
             }
         }
@@ -1027,7 +1027,7 @@ public:
     void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
     void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
-    void GoSubZone(Zone &enclosingZone, string zoneName, double value);
+    void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
     ControlSurface* GetSurface() { return surface_; }
@@ -1064,9 +1064,10 @@ public:
 
     void EnsureWidgetsNotUsed(Zone* zone)
     {
-        for(auto &focusedFXZone : focusedFXZones_)
-            if(zone == &focusedFXZone)
-                return;
+        for(auto focusedFXZone : focusedFXZones_)
+        
+        if(zone == &focusedFXZone)
+            return;
         
         // GAW -- think I'll put in a clear focusedFX for now, not sure if this will be right for all use cases
         UnmapFocusedFXFromWidgets();
@@ -1074,55 +1075,32 @@ public:
         if(IsZoneHereAndClear(zone, fxZones_))
             return;
         
-        if(IsZoneHereAndClear(zone, selectedTrackFXMenuZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, trackFXMenuZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackReceivesZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackReceivesSlotZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, trackReceivesSlotZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackSendsZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, selectedTrackSendsSlotZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, trackSendsSlotZones_))
-            return;
-        
-        if(IsZoneHereAndClear(zone, homeZone_))
-            return;
+        for(auto zones : fixedZones_)
+            if(IsZoneHereAndClear(zone, zones))
+                return;
     }
     
-    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone> &zones)
+    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone*> zones)
     {
-        for(auto &zone : zones)
+        for(auto zone : zones)
         {
-            if(&zone == originatingZone)
+            if(zone == originatingZone)
                 return true;
             else
-                zone.EnsureWidgetsNotUsed(originatingZone->GetWidgets());
+                zone->EnsureWidgetsNotUsed(originatingZone->GetWidgets());
         }
         
         return false;
     }
     
-    bool IsZoneHereAndClear(Zone &originatingZone, vector<Zone> &zones)
+    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone> &zones)
     {
         for(auto zone : zones)
         {
-            if(&zone == &originatingZone)
+            if(&zone == originatingZone)
                 return true;
             else
-                zone.EnsureWidgetsNotUsed(originatingZone.GetWidgets());
+                zone.EnsureWidgetsNotUsed(originatingZone->GetWidgets());
         }
         
         return false;
@@ -1188,32 +1166,9 @@ public:
         for(Zone &zone : fxZones_)
             zone.DoAction(widget, isUsed, value);
 
-        for(Zone &zone : selectedTrackFXMenuZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : trackFXMenuZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : selectedTrackReceivesZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : selectedTrackReceivesSlotZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : trackReceivesSlotZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : selectedTrackSendsZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : selectedTrackSendsSlotZones_)
-            zone.DoAction(widget, isUsed, value);
-
-        for(Zone &zone : trackSendsSlotZones_)
-            zone.DoAction(widget, isUsed, value);
-        
-        for(Zone &zone : homeZone_)
-            zone.DoAction(widget, isUsed, value);
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoAction(widget, isUsed, value);
     }
     
     void DoRelativeAction(Widget* widget, double delta)
@@ -1226,33 +1181,9 @@ public:
         for(Zone &zone : fxZones_)
             zone.DoRelativeAction(widget, isUsed, delta);
 
-
-        for(Zone &zone : selectedTrackFXMenuZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : trackFXMenuZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : selectedTrackReceivesZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : selectedTrackReceivesSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : trackReceivesSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : selectedTrackSendsZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : selectedTrackSendsSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : trackSendsSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
-
-        for(Zone &zone : homeZone_)
-            zone.DoRelativeAction(widget, isUsed, delta);
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoRelativeAction(widget, isUsed, delta);
     }
     
     void DoRelativeAction(Widget* widget, int accelerationIndex, double delta)
@@ -1265,33 +1196,9 @@ public:
         for(Zone &zone : fxZones_)
             zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
 
-
-        for(Zone &zone : selectedTrackFXMenuZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : trackFXMenuZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : selectedTrackReceivesZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : selectedTrackReceivesSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : trackReceivesSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : selectedTrackSendsZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : selectedTrackSendsSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : trackSendsSlotZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
-
-        for(Zone &zone : homeZone_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
     
     void DoTouch(Widget* widget, double value)
@@ -1299,37 +1206,14 @@ public:
         bool isUsed = false;
         
         for(Zone &zone : focusedFXZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
+            zone.DoAction(widget, isUsed, value);
 
         for(Zone &zone : fxZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
+            zone.DoAction(widget, isUsed, value);
 
-        for(Zone &zone : selectedTrackFXMenuZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : trackFXMenuZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : selectedTrackReceivesZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : selectedTrackReceivesSlotZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : trackReceivesSlotZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : selectedTrackSendsZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : selectedTrackSendsSlotZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : trackSendsSlotZones_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
-
-        for(Zone &zone : homeZone_)
-            zone.DoTouch(widget, widget->GetName(), isUsed, value);
+        for(vector<Zone*> zones : fixedZones_)
+            for(Zone* zone : zones)
+                zone->DoAction(widget, isUsed, value);
     }
 };
 
@@ -2645,7 +2529,7 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
-    ActionContext GetActionContext(string actionName, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties)
+    ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)
             return ActionContext(actions_[actionName], widget, zone, params, properties);
