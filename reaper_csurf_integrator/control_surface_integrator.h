@@ -490,6 +490,8 @@ private:
     map<string, string> touchIds_;
     map<string, bool> activeTouchIds_;
     int slotIndex_ = 0;
+    
+    
 
     vector<Widget*> widgets_;
     
@@ -505,7 +507,27 @@ public:
     void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
     
+    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
+    {
+        if(! isActive_ || isUsed)
+            return;
+
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
+            isUsed = true;
+
+        activeTouchIds_[widgetName + "Touch"] = value;
+        activeTouchIds_[widgetName + "TouchPress"] = value;
+        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
+
+        for(auto &context : GetActionContexts(widget))
+            context.DoTouch(value);
+    }
+    
     vector<ActionContext> &GetActionContexts(Widget* widget);
+    
+    
+    
+    
     
     void RequestUpdateWidget(Widget* widget);
     void Activate();
@@ -614,22 +636,6 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(accelerationIndex, delta);
-    }
-    
-    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
-    {
-        if(! isActive_ || isUsed)
-            return;
-
-        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
-            isUsed = true;
-
-        activeTouchIds_[widgetName + "Touch"] = value;
-        activeTouchIds_[widgetName + "TouchPress"] = value;
-        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
-
-        for(auto &context : GetActionContexts(widget))
-            context.DoTouch(value);
     }
 };
 
@@ -854,6 +860,8 @@ private:
 
     vector<Zone> homeZone_;
     
+    //vector<vector<Zone>> fixedZones_;
+    
     map<int, Navigator*> navigators_;
  
     map<string, CSIZoneInfo> zoneFilePaths_;
@@ -999,7 +1007,7 @@ public:
    
     void RequestUpdate();
     
-    void PreProcessZones();
+    void InitZones();
     
     Navigator* GetMasterTrackNavigator();
     Navigator* GetSelectedTrackNavigator();
@@ -1102,6 +1110,19 @@ public:
                 return true;
             else
                 zone.EnsureWidgetsNotUsed(originatingZone->GetWidgets());
+        }
+        
+        return false;
+    }
+    
+    bool IsZoneHereAndClear(Zone &originatingZone, vector<Zone> &zones)
+    {
+        for(auto zone : zones)
+        {
+            if(&zone == &originatingZone)
+                return true;
+            else
+                zone.EnsureWidgetsNotUsed(originatingZone.GetWidgets());
         }
         
         return false;

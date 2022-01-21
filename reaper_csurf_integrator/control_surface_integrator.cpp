@@ -2098,7 +2098,7 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
 
 void ZoneManager::Initialize()
 {
-    PreProcessZones();
+    InitZones();
       
     ProcessZoneFile("Home", this, homeZone_);
     
@@ -2375,7 +2375,7 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, in
 
 
 
-void ZoneManager::PreProcessZones()
+void ZoneManager::InitZones()
 {
     try
     {
