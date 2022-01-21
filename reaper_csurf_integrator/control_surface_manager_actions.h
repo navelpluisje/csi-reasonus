@@ -18,7 +18,7 @@ public:
 
     void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateWidgetValue(context->GetZone()->GetNavigator()->GetIsChannelPinned());
+        context->UpdateWidgetValue(context->GetZone().GetNavigator()->GetIsChannelPinned());
     }
     
     void Do(ActionContext* context, double value) override

@@ -308,7 +308,7 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
-static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone*> &zones)
+static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone> &zones)
 {
     if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
         return;
@@ -456,11 +456,10 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                             expandedTouchIds = touchIds;
                         }
                         
-                                                
-                        Zone* zone = new Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
+                        zones.push_back(Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath));
                         
                         for(auto includedZoneName : includedZones)
-                            ProcessZoneFile(includedZoneName, zoneManager, zone->GetIncludedZones());
+                            ProcessZoneFile(includedZoneName, zoneManager, zones.back().GetIncludedZones());
                                                     
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
@@ -477,7 +476,7 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                             if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
                                 widget->SetIsModifier();
                             
-                            zone->AddWidget(widget);
+                            zones.back().AddWidget(widget);
                             
                             for(auto [modifier, actions] : modifierActions)
                             {
@@ -489,7 +488,7 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                     
                                     
-                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zones.back(), memberParams, action->properties);
                                                                         
                                     if(action->isFeedbackInverted)
                                         context.SetIsFeedbackInverted();
@@ -499,13 +498,11 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                                     
                                     string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                     
-                                    zone->AddActionContext(widget, expandedModifier, context);
+                                    zones.back().AddActionContext(widget, expandedModifier, context);
                                     
                                 }
                             }
                         }
-                        
-                        zones.push_back(zone);
                     }
                                     
                     includedZones.clear();
@@ -666,7 +663,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, &zones.back(), memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zones.back(), memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -1454,7 +1451,7 @@ MediaTrack* FocusedFXNavigator::GetTrack()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionContext
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
+ActionContext::ActionContext(Action* action, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
 {
     for(auto property : properties)
     {
@@ -1579,17 +1576,17 @@ ControlSurface* ActionContext::GetSurface()
 
 MediaTrack* ActionContext::GetTrack()
 {
-    return zone_->GetNavigator()->GetTrack();
+    return zone_.GetNavigator()->GetTrack();
 }
 
 int ActionContext::GetSlotIndex()
 {
-    return zone_->GetSlotIndex();
+    return zone_.GetSlotIndex();
 }
 
 string ActionContext::GetName()
 {
-    return zone_->GetNameOrAlias();
+    return zone_.GetNameOrAlias();
 }
 
 void ActionContext::RunDeferredActions()
@@ -1632,7 +1629,7 @@ void ActionContext::UpdateWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -1663,7 +1660,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -1697,7 +1694,7 @@ void ActionContext::ForceWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -1863,7 +1860,7 @@ void Zone::Activate()
     zoneManager_->GetSurface()->LoadingZone(GetName());
     
     for(auto zone : includedZones_)
-        zone->Activate();
+        zone.Activate();
 }
 
 void Zone::Deactivate()
@@ -1903,17 +1900,17 @@ vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
 
 int Zone::GetSlotIndex()
 {
-    if(navigationTypee_ == Standard)
+    if(navigationType_ == Standard)
         return slotIndex_;
-    else if(navigationTypee_ == SendSlot)
+    else if(navigationType_ == SendSlot)
         return zoneManager_->GetSendSlot();
-    else if(navigationTypee_ == ReceiveSlot)
+    else if(navigationType_ == ReceiveSlot)
         return zoneManager_->GetReceiveSlot();
-    else if(navigationTypee_ == FXMenuSlot)
+    else if(navigationType_ == FXMenuSlot)
         return zoneManager_->GetFXMenuSlot();
-    else if(navigationTypee_ == SelectedTrackSendSlot)
+    else if(navigationType_ == SelectedTrackSendSlot)
         return slotIndex_ + zoneManager_->GetSendSlot();
-    else if(navigationTypee_ == SelectedTrackReceiveSlot)
+    else if(navigationType_ == SelectedTrackReceiveSlot)
         return slotIndex_ + zoneManager_->GetReceiveSlot();
     else
         return 0;
@@ -2099,7 +2096,6 @@ ZoneManager::ZoneManager(ControlSurface* surface, string zoneFolder, int numChan
         navigators_[i] = surface->GetPage()->GetNavigatorForChannel(i + channelOffset);
 }
 
-
 void ZoneManager::Initialize()
 {
     InitZones();
@@ -2123,19 +2119,6 @@ void ZoneManager::Initialize()
     ProcessZoneFile("SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
     ProcessZoneFile("SelectedTrackSend", this, selectedTrackSendsZones_);
     
-   
-    fixedZones_.push_back(selectedTrackFXMenuZones_);
-    fixedZones_.push_back(trackFXMenuZones_);
-    
-    fixedZones_.push_back(trackReceivesSlotZones_);
-    fixedZones_.push_back(selectedTrackReceivesSlotZones_);
-    fixedZones_.push_back(selectedTrackReceivesZones_);
-
-    fixedZones_.push_back(trackSendsSlotZones_);
-    fixedZones_.push_back(selectedTrackSendsSlotZones_);
-    fixedZones_.push_back(selectedTrackSendsZones_);
-    fixedZones_.push_back(homeZone_);
-    
     GoHome();
 }
 
@@ -2152,9 +2135,32 @@ void ZoneManager::RequestUpdate()
     for(Zone &zone : fxZones_)
         zone.RequestUpdate(usedWidgets_);
    
-    for(vector<Zone*> zones : fixedZones_)
-        for(Zone* zone : zones)
-            zone->RequestUpdate(usedWidgets_);
+    for(Zone &zone : selectedTrackFXMenuZones_)
+        zone.RequestUpdate(usedWidgets_);
+
+    for(Zone &zone : trackFXMenuZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : selectedTrackReceivesZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : selectedTrackReceivesSlotZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : trackReceivesSlotZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : selectedTrackSendsZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : selectedTrackSendsSlotZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : trackSendsSlotZones_)
+        zone.RequestUpdate(usedWidgets_);
+    
+    for(Zone &zone : homeZone_)
+        zone.RequestUpdate(usedWidgets_);
     
     // default is to zero unused Widgets -- e.g. you can override this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
     for(auto &[key, value] : usedWidgets_)
@@ -2346,7 +2352,7 @@ void ZoneManager::MapSelectedTrackFXToWidgets()
         //for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
             //MapSelectedTrackFXSlotToWidgets(tempZones_, i);
 }
-
+/*
 void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
 {
     MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack();
@@ -2361,7 +2367,7 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, in
     if(zoneFilePaths_.count(FXName) > 0)
         ActivateFXZone(FXName, fxSlot, focusedFXZones_);
 }
-
+*/
 
 
 
@@ -2424,7 +2430,7 @@ void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int 
     }
 }
 
-void ZoneManager::GoSubZone(Zone* enclosingZone, string subZoneName, double value)
+void ZoneManager::GoSubZone(Zone &enclosingZone, string subZoneName, double value)
 {
     /*
     for(auto activeZones : allActiveZones_)
@@ -2446,11 +2452,32 @@ void ZoneManager::GoHome()
 {
     UnmapFocusedFXFromWidgets();
     
-    for(auto zones : fixedZones_)
-        DeactivateZones(zones);
+    for(auto &zone : selectedTrackFXMenuZones_)
+        zone.Deactivate();
     
-    for(auto zone : homeZone_)
-        zone->Activate();
+    for(auto &zone : trackFXMenuZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : selectedTrackReceivesZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : selectedTrackReceivesSlotZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : trackReceivesSlotZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : selectedTrackSendsZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : selectedTrackSendsSlotZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : trackSendsSlotZones_)
+        zone.Deactivate();
+    
+    for(auto &zone : homeZone_)
+        zone.Activate();
 }
 
 Navigator* ZoneManager::GetNavigatorForChannel(int channelNum)
