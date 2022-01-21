@@ -456,9 +456,6 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                             expandedTouchIds = touchIds;
                         }
                         
-                        if(newZoneName == "")
-                            int blah = 0;
-                        
                         zones.push_back(Zone(zoneManager, navigators[i], navigationStyle, i, expandedTouchIds, newZoneName, zoneAlias, filePath));
                         
                         for(auto includedZoneName : includedZones)
@@ -491,7 +488,7 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                     
                                     
-                                    ActionContext context = TheManager->GetActionContext(actionName, widget, &zones.back(), memberParams, action->properties);
+                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zones.back(), memberParams, action->properties);
                                                                         
                                     if(action->isFeedbackInverted)
                                         context.SetIsFeedbackInverted();
@@ -666,7 +663,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, &zones.back(), memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zones.back(), memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -1454,7 +1451,7 @@ MediaTrack* FocusedFXNavigator::GetTrack()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionContext
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
+ActionContext::ActionContext(Action* action, Widget* widget, Zone &zone, vector<string> params, vector<vector<string>> properties): action_(action), widget_(widget), zone_(zone), properties_(properties)
 {
     for(auto property : properties)
     {
@@ -1579,17 +1576,17 @@ ControlSurface* ActionContext::GetSurface()
 
 MediaTrack* ActionContext::GetTrack()
 {
-    return zone_->GetNavigator()->GetTrack();
+    return zone_.GetNavigator()->GetTrack();
 }
 
 int ActionContext::GetSlotIndex()
 {
-    return zone_->GetSlotIndex();
+    return zone_.GetSlotIndex();
 }
 
 string ActionContext::GetName()
 {
-    return zone_->GetNameOrAlias();
+    return zone_.GetNameOrAlias();
 }
 
 void ActionContext::RunDeferredActions()
@@ -1632,7 +1629,7 @@ void ActionContext::UpdateWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -1663,7 +1660,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -1697,7 +1694,7 @@ void ActionContext::ForceWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+        if(MediaTrack* track = zone_.GetNavigator()->GetTrack())
         {
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
@@ -2436,7 +2433,7 @@ void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int 
     }
 }
 
-void ZoneManager::GoSubZone(Zone*  enclosingZone, string subZoneName, double value)
+void ZoneManager::GoSubZone(Zone &enclosingZone, string subZoneName, double value)
 {
     /*
     for(auto activeZones : allActiveZones_)

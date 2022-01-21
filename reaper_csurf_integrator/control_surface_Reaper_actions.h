@@ -160,7 +160,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
+        context->GetZone().GetNavigator()->SetIsVolumeTouched(value);
         if(MediaTrack* track = context->GetTrack())
             DAW::CSurf_SetSurfaceVolume(track, DAW::CSurf_OnVolumeChange(track, normalizedToVol(GetCurrentNormalizedValue(context)), false), NULL);
     }
@@ -188,7 +188,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
+        context->GetZone().GetNavigator()->SetIsVolumeTouched(value);
     }
 };
 
@@ -214,7 +214,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
+        context->GetZone().GetNavigator()->SetIsVolumeTouched(value);
     }
 };
 
@@ -253,7 +253,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsVolumeTouched(value);
+        context->GetZone().GetNavigator()->SetIsVolumeTouched(value);
         if(MediaTrack* track = context->GetTrack())
             DAW::CSurf_SetSurfaceVolume(track, DAW::CSurf_OnVolumeChange(track, DB2VAL(GetCurrentDBValue(context)), false), NULL);
     }
@@ -333,7 +333,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanTouched(value);
     }
 };
 
@@ -378,7 +378,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanTouched(value);
         if(MediaTrack* track = context->GetTrack())
         {
             if(GetPanMode(track) != 6)
@@ -418,7 +418,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanTouched(value);
         if(MediaTrack* track = context->GetTrack())
         {
             if(GetPanMode(track) != 6)
@@ -466,7 +466,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanWidthTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanWidthTouched(value);
         if(MediaTrack* track = context->GetTrack())
             if(GetPanMode(track) != 6)
                 DAW::CSurf_OnWidthChange(track, normalizedToPan(GetCurrentNormalizedValue(context)), false);
@@ -500,7 +500,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanWidthTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanWidthTouched(value);
         if(MediaTrack* track = context->GetTrack())
         {
             if(GetPanMode(track) != 6)
@@ -549,7 +549,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanLeftTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanLeftTouched(value);
     }
 };
 
@@ -585,7 +585,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanLeftTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanLeftTouched(value);
         if(MediaTrack* track = context->GetTrack())
         {
             if(GetPanMode(track) == 6)
@@ -637,7 +637,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanRightTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanRightTouched(value);
     }
 };
 
@@ -673,7 +673,7 @@ public:
     
     virtual void Touch(ActionContext* context, double value) override
     {
-        context->GetZone()->GetNavigator()->SetIsPanRightTouched(value);
+        context->GetZone().GetNavigator()->SetIsPanRightTouched(value);
         if(MediaTrack* track = context->GetTrack())
         {
             if(GetPanMode(track) == 6)
@@ -2562,7 +2562,7 @@ public:
         
         if(MediaTrack* track = context->GetTrack())
         {
-            if(DAW::TrackFX_GetNamedConfigParm(track, context->GetZone()->GetSlotIndex(), "GainReduction_dB", buffer, sizeof(buffer)))
+            if(DAW::TrackFX_GetNamedConfigParm(track, context->GetZone().GetSlotIndex(), "GainReduction_dB", buffer, sizeof(buffer)))
                 context->UpdateWidgetValue(-atof(buffer)/20.0);
             else
                 context->UpdateWidgetValue(0.0);
