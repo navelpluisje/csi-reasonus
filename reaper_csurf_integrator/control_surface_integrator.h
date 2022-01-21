@@ -507,21 +507,6 @@ public:
     void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
     
-    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
-    {
-        if(! isActive_ || isUsed)
-            return;
-
-        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
-            isUsed = true;
-
-        activeTouchIds_[widgetName + "Touch"] = value;
-        activeTouchIds_[widgetName + "TouchPress"] = value;
-        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
-
-        for(auto &context : GetActionContexts(widget))
-            context.DoTouch(value);
-    }
     
     vector<ActionContext> &GetActionContexts(Widget* widget);
     
@@ -600,9 +585,12 @@ public:
                 return;
             }
         }
+        
+        for(auto zone : includedZones_)
+            zone->EnsureWidgetsNotUsed(widgets);
     }
     
-    void DoAction(Widget* widget, bool &isUsed,  double value)
+    void DoAction(Widget* widget, bool &isUsed, double value)
     {
         if(! isActive_ || isUsed)
             return;
@@ -612,6 +600,9 @@ public:
         
         for(auto &context : GetActionContexts(widget))
             context.DoAction(value);
+        
+        for(auto zone : includedZones_)
+            zone->DoAction(widget, isUsed, value);
     }
        
     void DoRelativeAction(Widget* widget, bool &isUsed, double delta)
@@ -624,6 +615,9 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(delta);
+        
+        for(auto zone : includedZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
     }
     
     void DoRelativeAction(Widget* widget, bool &isUsed, int accelerationIndex, double delta)
@@ -636,6 +630,25 @@ public:
 
         for(auto &context : GetActionContexts(widget))
             context.DoRelativeAction(accelerationIndex, delta);
+    }
+    
+    void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
+    {
+        if(! isActive_ || isUsed)
+            return;
+
+        if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
+            isUsed = true;
+
+        activeTouchIds_[widgetName + "Touch"] = value;
+        activeTouchIds_[widgetName + "TouchPress"] = value;
+        activeTouchIds_[widgetName + "TouchRelease"] = ! value;
+
+        for(auto &context : GetActionContexts(widget))
+            context.DoTouch(value);
+        
+        for(auto zone : includedZones_)
+            zone->DoTouch(widget, widgetName, isUsed, value);
     }
 };
 
