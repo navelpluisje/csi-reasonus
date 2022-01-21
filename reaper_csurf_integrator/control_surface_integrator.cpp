@@ -1859,13 +1859,16 @@ void Zone::Activate()
     
     zoneManager_->GetSurface()->LoadingZone(GetName());
     
-    for(auto zone : includedZones_)
+    for(auto &zone : includedZones_)
         zone.Activate();
 }
 
 void Zone::Deactivate()
 {
     isActive_ = false;
+    
+    for(auto &zone : includedZones_)
+        zone.Deactivate();
 }
 
 void Zone::RequestUpdateWidget(Widget* widget)
