@@ -577,6 +577,7 @@ public:
 
     void EnsureWidgetsNotUsed(vector<Widget*> &widgets)
     {
+        /*
         for(auto widget : widgets)
         {
             if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
@@ -588,6 +589,7 @@ public:
         
         for(auto zone : includedZones_)
             zone->EnsureWidgetsNotUsed(widgets);
+         */
     }
     
     void DoAction(Widget* widget, bool &isUsed, double value)
@@ -900,7 +902,7 @@ private:
     void MapSelectedTrackFXToWidgets();
 
     
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot);
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone> &activeZones, int fxSlot);
     
     
     
@@ -934,8 +936,6 @@ private:
     void UnmapSelectedTrackReceivesSlotFromWidgets() {}
     
     void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
-
-
 
     void Map(MapType mapType, vector<string> &mappingTypes)
     {

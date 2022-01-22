@@ -2122,7 +2122,6 @@ void ZoneManager::Initialize()
     ProcessZoneFile("TrackSendSlot", this, trackSendsSlotZones_);
     ProcessZoneFile("SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
     ProcessZoneFile("SelectedTrackSend", this, selectedTrackSendsZones_);
-    
    
     fixedZones_.push_back(selectedTrackFXMenuZones_);
     fixedZones_.push_back(trackFXMenuZones_);
@@ -2342,12 +2341,12 @@ void ZoneManager::MapSelectedTrackFXToWidgets()
 {
     //UnmapZones(*tempZones_);
     
-    //if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
-        //for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
-            //MapSelectedTrackFXSlotToWidgets(tempZones_, i);
+    if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
+        for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)
+            MapSelectedTrackFXSlotToWidgets(fxZones_, i);
 }
 
-void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, int fxSlot)
+void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone> &activeZones, int fxSlot)
 {
     MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack();
     
@@ -2359,7 +2358,7 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> *activeZones, in
     DAW::TrackFX_GetFXName(selectedTrack, fxSlot, FXName, sizeof(FXName));
     
     if(zoneFilePaths_.count(FXName) > 0)
-        ActivateFXZone(FXName, fxSlot, focusedFXZones_);
+        ActivateFXZone(FXName, fxSlot, activeZones);
 }
 
 
@@ -2391,7 +2390,7 @@ void ZoneManager::ActivateFocusedFXZone(string zoneName, int slotNumber, vector<
 {
     if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator == "FocusedFXNavigator")
     {
-        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
+        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
         zones.back().Activate();
         
         // GAW TBD place  as key and first value in dictionary for subzones
@@ -2402,7 +2401,7 @@ void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &
 {
     if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator != "FocusedFXNavigator")
     {
-        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
+        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
         zones.back().Activate();
         
         // GAW TBD place  as key and first value in dictionary for subzones
@@ -2413,7 +2412,7 @@ void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int 
 {
     if(zoneFilePaths_.count(zoneName) > 0)
     {
-        ProcessFXZoneFile(zoneName, this, slotNumber, zones);
+        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
     
         if(originatingZone.GetNavigator() != nullptr)
             zones.back().SetNavigator(originatingZone.GetNavigator());
