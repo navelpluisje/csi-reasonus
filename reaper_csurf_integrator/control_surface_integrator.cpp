@@ -2343,7 +2343,7 @@ void ZoneManager::MapFocusedFXToWidgets()
 
 void ZoneManager::MapSelectedTrackFXToWidgets()
 {
-    //UnmapZones(*tempZones_);
+    UnmapZones(fxZones_);
     
     if(MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack())
         for(int i = 0; i < DAW::TrackFX_GetCount(selectedTrack); i++)

@@ -1077,6 +1077,7 @@ public:
 
     void EnsureWidgetsNotUsed(Zone* zone)
     {
+        /*
         for(auto focusedFXZone : focusedFXZones_)
         
         if(zone == focusedFXZone)
@@ -1091,6 +1092,7 @@ public:
         for(auto zones : fixedZones_)
             if(IsZoneHereAndClear(zone, zones))
                 return;
+         */
     }
     
     bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone*> zones)
