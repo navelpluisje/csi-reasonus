@@ -1180,9 +1180,9 @@ void Manager::InitActionsDictionary()
     actions_["Receive"] =                           new Receive();
     actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
-    actions_["Map"] =                               new class Map();
-    actions_["Unmap"] =                             new class Unmap();
-    actions_["ToggleMap"] =                         new class ToggleMap();
+    actions_["Map"] =                               new Map();
+    actions_["Unmap"] =                             new Unmap();
+    actions_["ToggleMap"] =                         new ToggleMap();
     actions_["TrackBank"] =                         new TrackBank();
     actions_["SelectedTrackBank"] =                 new SelectedTrackBank();
     actions_["SendSlotBank"] =                      new SendSlotBank();
@@ -1193,7 +1193,7 @@ void Manager::InitActionsDictionary()
     actions_["Option"] =                            new SetOption();
     actions_["Control"] =                           new SetControl();
     actions_["Alt"] =                               new SetAlt();
-    actions_["GoFXSlot"] =                          new class GoFXSlot();
+    actions_["GoFXSlot"] =                          new GoFXSlot();
     actions_["GoCurrentFXSlot"] =                   new GoCurrentFXSlot();
     actions_["CycleTrackAutoMode"] =                new CycleTrackAutoMode();
     actions_["FocusedFXParam"] =                    new FocusedFXParam();
@@ -2149,14 +2149,14 @@ void ZoneManager::RequestUpdate()
     for(auto &[key, value] : usedWidgets_)
         value = false;
     
-    for(auto zone : focusedFXZones_)
+    for(auto &zone : focusedFXZones_)
         zone->RequestUpdate(usedWidgets_);
 
     for(auto &zone : fxZones_)
         zone->RequestUpdate(usedWidgets_);
    
-    for(vector<Zone*> zones : fixedZones_)
-        for(auto zone : zones)
+    for(vector<Zone*> &zones : fixedZones_)
+        for(auto &zone : zones)
             zone->RequestUpdate(usedWidgets_);
     
     // default is to zero unused Widgets -- e.g. you can override this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
@@ -2310,7 +2310,7 @@ void ZoneManager::ReceiveMappingSignal(MapType mapType, string mapping)
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
     if(find(broadcast_.begin(), broadcast_.end(), "UnmapFocusedFXFromWidgets") != broadcast_.end())
-        surface_->GetPage()->SignalMapping(surface_, MapType::Unmap, "UnmapFocusedFXFromWidgets");
+        surface_->GetPage()->SignalMapping(surface_, MapType::Unmapping, "UnmapFocusedFXFromWidgets");
 
     focusedFXZones_.clear();
 }
@@ -2318,7 +2318,7 @@ void ZoneManager::UnmapFocusedFXFromWidgets()
 void ZoneManager::MapFocusedFXToWidgets()
 {
     if(find(broadcast_.begin(), broadcast_.end(), "MapFocusedFXToWidgets") != broadcast_.end())
-        surface_->GetPage()->SignalMapping(surface_, MapType::Map, "MapFocusedFXToWidgets");
+        surface_->GetPage()->SignalMapping(surface_, MapType::Mapping, "MapFocusedFXToWidgets");
     
     UnmapFocusedFXFromWidgets();
     

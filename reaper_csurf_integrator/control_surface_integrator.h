@@ -77,9 +77,9 @@ enum NavigationType
 
 enum MapType
 {
-    Map,
-    Unmap,
-    ToggleMap,
+    Mapping,
+    Unmapping,
+    ToggleMapping,
 };
 
 class Manager;
@@ -480,6 +480,7 @@ class Zone
 private:
     ZoneManager* const zoneManager_ = nullptr;
     Navigator* navigator_= nullptr;
+    int slotIndex_ = 0;
     string const name_ = "";
     string const alias_ = "";
     string const sourceFilePath_ = "";
@@ -489,9 +490,8 @@ private:
     bool isActive_ = false;
     map<string, string> touchIds_;
     map<string, bool> activeTouchIds_;
-    int slotIndex_ = 0;
     
-    
+
 
     vector<Widget*> widgets_;
     
@@ -503,24 +503,19 @@ private:
 public:
     Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     Zone() {}
-    
+   
+    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
+    Navigator* GetNavigator() { return navigator_; }
+
     void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
     
-    
     vector<ActionContext*> &GetActionContexts(Widget* widget);
-    
-    
-    
-    
     
     void RequestUpdateWidget(Widget* widget);
     void Activate();
     void Deactivate();
 
-    void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
-    Navigator* GetNavigator() { return navigator_; }
-    
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
     vector<Zone*> &GetIncludedZones() { return includedZones_; }
     
@@ -988,15 +983,15 @@ private:
         {
             switch (mapType)
             {
-                case  MapType::Map:
+                case  MapType::Mapping:
                     zone->Activate();
                     break;
                 
-                case  MapType::Unmap:
+                case  MapType::Unmapping:
                     zone->Deactivate();
                     break;
                 
-                case  MapType::ToggleMap:
+                case  MapType::ToggleMapping:
                     zone->Toggle();
                     break;
             }
@@ -1062,17 +1057,17 @@ public:
 
     void Map(vector<string> &mappingTypes)
     {
-        Map(MapType::Map, mappingTypes);
+        Map(MapType::Mapping, mappingTypes);
     }
 
     void Unmap(vector<string> &mappingTypes)
     {
-        Map(MapType::Unmap, mappingTypes);
+        Map(MapType::Unmapping, mappingTypes);
     }
 
     void ToggleMap(vector<string> &mappingTypes)
     {
-        Map(MapType::ToggleMap, mappingTypes);
+        Map(MapType::ToggleMapping, mappingTypes);
     }
 
     void EnsureWidgetsNotUsed(Zone* zone)
@@ -1103,19 +1098,6 @@ public:
                 return true;
             else
                 zone->EnsureWidgetsNotUsed(originatingZone->GetWidgets());
-        }
-        
-        return false;
-    }
-    
-    bool IsZoneHereAndClear(Zone* originatingZone, vector<Zone> &zones)
-    {
-        for(auto zone : zones)
-        {
-            if(&zone == originatingZone)
-                return true;
-            else
-                zone.EnsureWidgetsNotUsed(originatingZone->GetWidgets());
         }
         
         return false;
