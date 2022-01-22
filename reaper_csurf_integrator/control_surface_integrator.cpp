@@ -2149,14 +2149,14 @@ void ZoneManager::RequestUpdate()
     for(auto &[key, value] : usedWidgets_)
         value = false;
     
-    for(auto &zone : focusedFXZones_)
+    for(Zone* zone : focusedFXZones_)
         zone->RequestUpdate(usedWidgets_);
 
-    for(auto &zone : fxZones_)
+    for(Zone* zone : fxZones_)
         zone->RequestUpdate(usedWidgets_);
    
     for(vector<Zone*> &zones : fixedZones_)
-        for(auto &zone : zones)
+        for(Zone* zone : zones)
             zone->RequestUpdate(usedWidgets_);
     
     // default is to zero unused Widgets -- e.g. you can override this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
