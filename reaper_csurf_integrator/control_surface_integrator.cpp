@@ -2431,6 +2431,9 @@ void ZoneManager::GoSubZone(Zone* enclosingZone, string subZoneName, double valu
 void ZoneManager::GoHome()
 {
     UnmapFocusedFXFromWidgets();
+
+    for(auto zone : fxZones_)
+        zone->Deactivate();
     
     for(auto zones : fixedZones_)
         DeactivateZones(zones);
