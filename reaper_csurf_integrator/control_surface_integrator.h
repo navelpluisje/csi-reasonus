@@ -491,11 +491,11 @@ private:
     map<string, string> touchIds_;
     map<string, bool> activeTouchIds_;
     
-
-
     vector<Widget*> widgets_;
     
     vector<Zone*> includedZones_;
+
+    vector<Zone*> subZones_;
 
     map<Widget*, map<string, vector<ActionContext*>>> actionContextDictionary_;
     vector<ActionContext*> defaultContexts_;
@@ -518,7 +518,7 @@ public:
 
     void AddIncludedZone(Zone* &zone) { includedZones_.push_back(zone); }
     vector<Zone*> &GetIncludedZones() { return includedZones_; }
-    
+      
     vector<Widget*> &GetWidgets() { return widgets_; }
 
     void Toggle()
@@ -570,6 +570,26 @@ public:
             zone->RequestUpdate(usedWidgets);
     }
 
+    void Unmap()
+    {
+        for(auto &[key, value] : actionContextDictionary_)
+            for(auto &[key, value] : value)
+                for(ActionContext* context : value)
+                    delete context;
+        
+        actionContextDictionary_.clear();
+        
+        for(Zone* zone : includedZones_)
+            zone->Unmap();
+        
+        includedZones_.clear();
+        
+        for(Zone* zone : subZones_)
+            zone->Unmap();
+        
+        subZones_.clear();
+    }
+    
     void EnsureWidgetsNotUsed(vector<Widget*> &widgets)
     {
         /*
@@ -881,13 +901,18 @@ private:
         for(auto zone : zones)
             zone->Deactivate();
     }
-
+    
     void UnmapZones(vector<Zone*> &zones)
     {
-        DeactivateZones(zones);
+        for(auto zone : zones)
+            zone->Unmap();
+
+        for(auto zone : zones)
+            delete zone;
+    
         zones.clear();
     }
-
+    
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
     

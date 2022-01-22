@@ -2312,6 +2312,10 @@ void ZoneManager::UnmapFocusedFXFromWidgets()
     if(find(broadcast_.begin(), broadcast_.end(), "UnmapFocusedFXFromWidgets") != broadcast_.end())
         surface_->GetPage()->SignalMapping(surface_, MapType::Unmapping, "UnmapFocusedFXFromWidgets");
 
+    
+    
+    
+    
     focusedFXZones_.clear();
 }
 
