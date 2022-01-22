@@ -497,8 +497,8 @@ private:
     
     vector<Zone*> includedZones_;
 
-    map<Widget*, map<string, vector<ActionContext>>> actionContextDictionary_;
-    vector<ActionContext> defaultContexts_;
+    map<Widget*, map<string, vector<ActionContext*>>> actionContextDictionary_;
+    vector<ActionContext*> defaultContexts_;
     
 public:
     Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
@@ -508,7 +508,7 @@ public:
     int GetSlotIndex();
     
     
-    vector<ActionContext> &GetActionContexts(Widget* widget);
+    vector<ActionContext*> &GetActionContexts(Widget* widget);
     
     
     
@@ -552,7 +552,7 @@ public:
         GetWidgets().push_back(widget);
     }
     
-    void AddActionContext(Widget* widget, string modifier, ActionContext actionContext)
+    void AddActionContext(Widget* widget, string modifier, ActionContext* actionContext)
     {
         actionContextDictionary_[widget][modifier].push_back(actionContext);
     }
@@ -600,8 +600,8 @@ public:
         if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
         
-        for(auto &context : GetActionContexts(widget))
-            context.DoAction(value);
+        for(auto context : GetActionContexts(widget))
+            context->DoAction(value);
         
         for(auto zone : includedZones_)
             zone->DoAction(widget, isUsed, value);
@@ -615,8 +615,8 @@ public:
         if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
 
-        for(auto &context : GetActionContexts(widget))
-            context.DoRelativeAction(delta);
+        for(auto context : GetActionContexts(widget))
+            context->DoRelativeAction(delta);
         
         for(auto zone : includedZones_)
             zone->DoRelativeAction(widget, isUsed, delta);
@@ -630,8 +630,8 @@ public:
         if(find(GetWidgets().begin(), GetWidgets().end(), widget) != GetWidgets().end())
             isUsed = true;
 
-        for(auto &context : GetActionContexts(widget))
-            context.DoRelativeAction(accelerationIndex, delta);
+        for(auto context : GetActionContexts(widget))
+            context->DoRelativeAction(accelerationIndex, delta);
     }
     
     void DoTouch(Widget* widget, string widgetName, bool &isUsed, double value)
@@ -646,8 +646,8 @@ public:
         activeTouchIds_[widgetName + "TouchPress"] = value;
         activeTouchIds_[widgetName + "TouchRelease"] = ! value;
 
-        for(auto &context : GetActionContexts(widget))
-            context.DoTouch(value);
+        for(auto context : GetActionContexts(widget))
+            context->DoTouch(value);
         
         for(auto zone : includedZones_)
             zone->DoTouch(widget, widgetName, isUsed, value);
@@ -2544,12 +2544,12 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
-    ActionContext GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
+    ActionContext* GetActionContext(string actionName, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)
-            return ActionContext(actions_[actionName], widget, zone, params, properties);
+            return new ActionContext(actions_[actionName], widget, zone, params, properties);
         else
-            return ActionContext(actions_["NoAction"], widget, zone, params, properties);
+            return new ActionContext(actions_["NoAction"], widget, zone, params, properties);
     }
 
     void OnTrackSelection(MediaTrack *track)

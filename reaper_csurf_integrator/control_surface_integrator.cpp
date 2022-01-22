@@ -489,13 +489,13 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                     
                                     
-                                    ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                    ActionContext* context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
                                                                         
                                     if(action->isFeedbackInverted)
-                                        context.SetIsFeedbackInverted();
+                                        context->SetIsFeedbackInverted();
                                     
                                     if(action->holdDelayAmount != 0.0)
-                                        context.SetHoldDelayAmount(action->holdDelayAmount);
+                                        context->SetHoldDelayAmount(action->holdDelayAmount);
                                     
                                     string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                     
@@ -666,13 +666,13 @@ static void ActivateFXZoneFile(string filePath, ZoneManager* zoneManager, int sl
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
+                                ActionContext* context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
-                                    context.SetIsFeedbackInverted();
+                                    context->SetIsFeedbackInverted();
                                 
                                 if(action->holdDelayAmount != 0.0)
-                                    context.SetHoldDelayAmount(action->holdDelayAmount);
+                                    context->SetHoldDelayAmount(action->holdDelayAmount);
                                 
                                 string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                 
@@ -1877,17 +1877,17 @@ void Zone::Deactivate()
 
 void Zone::RequestUpdateWidget(Widget* widget)
 {
-    for(auto &context : GetActionContexts(widget))
-        context.RunDeferredActions();
+    for(auto context : GetActionContexts(widget))
+        context->RunDeferredActions();
     
     if(GetActionContexts(widget).size() > 0)
     {
-        ActionContext& context = GetActionContexts(widget)[0];
-        context.RequestUpdate();
+        ActionContext* context = GetActionContexts(widget)[0];
+        context->RequestUpdate();
     }
 }
 
-vector<ActionContext>& Zone::GetActionContexts(Widget* widget)
+vector<ActionContext*> &Zone::GetActionContexts(Widget* widget)
 {
     string widgetName = widget->GetName();
     string modifier = "";
