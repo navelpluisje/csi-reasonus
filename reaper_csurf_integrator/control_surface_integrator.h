@@ -857,10 +857,10 @@ private:
        
     map<Widget*, bool> usedWidgets_;
 
-    vector<Zone> focusedFXZones_;
+    vector<Zone*> focusedFXZones_;
     map<int, map<int, int>> focusedFXDictionary;
     
-    vector<Zone> fxZones_;
+    vector<Zone*> fxZones_;
     
     vector<Zone*> selectedTrackFXMenuZones_;
     vector<Zone*> trackFXMenuZones_;
@@ -902,7 +902,7 @@ private:
     void MapSelectedTrackFXToWidgets();
 
     
-    void MapSelectedTrackFXSlotToWidgets(vector<Zone> &activeZones, int fxSlot);
+    void MapSelectedTrackFXSlotToWidgets(vector<Zone*> &zones, int fxSlot);
     
     
     
@@ -1037,9 +1037,9 @@ public:
     
     void ReceiveMappingSignal(MapType mapType, string mapping);
     void GoHome();
-    void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
-    void ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones);
-    void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones);
+    void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
+    void ActivateFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
+    void ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone*> &zones);
     void GoSubZone(Zone* enclosingZone, string zoneName, double value);
     
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
@@ -1079,7 +1079,7 @@ public:
     {
         for(auto focusedFXZone : focusedFXZones_)
         
-        if(zone == &focusedFXZone)
+        if(zone == focusedFXZone)
             return;
         
         // GAW -- think I'll put in a clear focusedFX for now, not sure if this will be right for all use cases
@@ -1173,14 +1173,14 @@ public:
     {
         bool isUsed = false;
         
-        for(Zone &zone : focusedFXZones_)
-            zone.DoAction(widget, isUsed, value);
+        for(auto zone : focusedFXZones_)
+            zone->DoAction(widget, isUsed, value);
 
-        for(Zone &zone : fxZones_)
-            zone.DoAction(widget, isUsed, value);
+        for(auto zone : fxZones_)
+            zone->DoAction(widget, isUsed, value);
 
         for(vector<Zone*> zones : fixedZones_)
-            for(Zone* zone : zones)
+            for(auto zone : zones)
                 zone->DoAction(widget, isUsed, value);
     }
     
@@ -1188,14 +1188,14 @@ public:
     {
         bool isUsed = false;
         
-        for(Zone &zone : focusedFXZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
+        for(auto zone : focusedFXZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
 
-        for(Zone &zone : fxZones_)
-            zone.DoRelativeAction(widget, isUsed, delta);
+        for(auto zone : fxZones_)
+            zone->DoRelativeAction(widget, isUsed, delta);
 
         for(vector<Zone*> zones : fixedZones_)
-            for(Zone* zone : zones)
+            for(auto zone : zones)
                 zone->DoRelativeAction(widget, isUsed, delta);
     }
     
@@ -1203,14 +1203,14 @@ public:
     {
         bool isUsed = false;
                
-        for(Zone &zone : focusedFXZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        for(auto zone : focusedFXZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
 
-        for(Zone &zone : fxZones_)
-            zone.DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        for(auto zone : fxZones_)
+            zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
 
         for(vector<Zone*> zones : fixedZones_)
-            for(Zone* zone : zones)
+            for(auto zone : zones)
                 zone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
     
@@ -1218,14 +1218,14 @@ public:
     {
         bool isUsed = false;
         
-        for(Zone &zone : focusedFXZones_)
-            zone.DoAction(widget, isUsed, value);
+        for(auto zone : focusedFXZones_)
+            zone->DoAction(widget, isUsed, value);
 
-        for(Zone &zone : fxZones_)
-            zone.DoAction(widget, isUsed, value);
+        for(auto zone : fxZones_)
+            zone->DoAction(widget, isUsed, value);
 
         for(vector<Zone*> zones : fixedZones_)
-            for(Zone* zone : zones)
+            for(auto zone : zones)
                 zone->DoAction(widget, isUsed, value);
     }
 };

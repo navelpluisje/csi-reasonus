@@ -580,7 +580,7 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
     }
 }
 
-static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex, vector<Zone> &zones)
+static void ActivateFXZoneFile(string filePath, ZoneManager* zoneManager, int slotIndex, vector<Zone*> &zones)
 {
     map<string, string> touchIds;
     
@@ -642,7 +642,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                     
                     string numStr = "";
                     
-                    zones.push_back(Zone(zoneManager, navigator, navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath));
+                    Zone * zone = new Zone(zoneManager, navigator, navigationStyle, slotIndex, touchIds, zoneName, zoneAlias, filePath);
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -654,7 +654,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                         if(actionName == Shift || actionName == Option || actionName == Control || actionName == Alt)
                             widget->SetIsModifier();
                         
-                        zones.back().AddWidget(widget);
+                        zone->AddWidget(widget);
                         
                         for(auto [modifier, actions] : modifierActions)
                         {
@@ -666,7 +666,7 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                     memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
                                 
                                 
-                                ActionContext context = TheManager->GetActionContext(actionName, widget, &zones.back(), memberParams, action->properties);
+                                ActionContext context = TheManager->GetActionContext(actionName, widget, zone, memberParams, action->properties);
                                                                     
                                 if(action->isFeedbackInverted)
                                     context.SetIsFeedbackInverted();
@@ -676,12 +676,16 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, int slo
                                 
                                 string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                 
-                                zones.back().AddActionContext(widget, expandedModifier, context);
+                                zone->AddActionContext(widget, expandedModifier, context);
                                 
                             }
                         }
                     }
                                             
+                    zones.push_back(zone);
+                    
+                    zone->Activate();
+                    
                     widgetActions.clear();
                     touchIds.clear();
                     
@@ -2145,14 +2149,14 @@ void ZoneManager::RequestUpdate()
     for(auto &[key, value] : usedWidgets_)
         value = false;
     
-    for(Zone &zone : focusedFXZones_)
-        zone.RequestUpdate(usedWidgets_);
+    for(auto zone : focusedFXZones_)
+        zone->RequestUpdate(usedWidgets_);
 
-    for(Zone &zone : fxZones_)
-        zone.RequestUpdate(usedWidgets_);
+    for(auto &zone : fxZones_)
+        zone->RequestUpdate(usedWidgets_);
    
     for(vector<Zone*> zones : fixedZones_)
-        for(Zone* zone : zones)
+        for(auto zone : zones)
             zone->RequestUpdate(usedWidgets_);
     
     // default is to zero unused Widgets -- e.g. you can override this by supplying an inverted NoAction context for an opposite sense device in the Home Zone
@@ -2346,7 +2350,7 @@ void ZoneManager::MapSelectedTrackFXToWidgets()
             MapSelectedTrackFXSlotToWidgets(fxZones_, i);
 }
 
-void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone> &activeZones, int fxSlot)
+void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone*> &zones, int fxSlot)
 {
     MediaTrack* selectedTrack = surface_->GetPage()->GetSelectedTrack();
     
@@ -2358,7 +2362,7 @@ void ZoneManager::MapSelectedTrackFXSlotToWidgets(vector<Zone> &activeZones, int
     DAW::TrackFX_GetFXName(selectedTrack, fxSlot, FXName, sizeof(FXName));
     
     if(zoneFilePaths_.count(FXName) > 0)
-        ActivateFXZone(FXName, fxSlot, activeZones);
+        ActivateFXZone(FXName, fxSlot, zones);
 }
 
 
@@ -2386,41 +2390,24 @@ void ZoneManager::InitZones()
     }
 }
 
-void ZoneManager::ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
+void ZoneManager::ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone*> &zones)
 {
     if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator == "FocusedFXNavigator")
-    {
-        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
-        zones.back().Activate();
-        
-        // GAW TBD place  as key and first value in dictionary for subzones
-    }
+        ActivateFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
 }
 
-void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone> &zones)
+void ZoneManager::ActivateFXZone(string zoneName, int slotNumber, vector<Zone*> &zones)
 {
     if(zoneFilePaths_.count(zoneName) > 0 && zoneFilePaths_[zoneName].navigator != "FocusedFXNavigator")
-    {
-        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
-        zones.back().Activate();
-        
-        // GAW TBD place  as key and first value in dictionary for subzones
-    }
+        ActivateFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
 }
 
-void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone> &zones)
+void ZoneManager::ActivateFXSubZone(string zoneName, Zone &originatingZone, int slotNumber, vector<Zone*> &zones)
 {
     if(zoneFilePaths_.count(zoneName) > 0)
-    {
-        ProcessFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
+        ActivateFXZoneFile(zoneFilePaths_[zoneName].filePath, this, slotNumber, zones);
     
-        if(originatingZone.GetNavigator() != nullptr)
-            zones.back().SetNavigator(originatingZone.GetNavigator());
-        
-        zones.back().Activate();
-        
-        // GAW TBD place in dictionary for subzones
-    }
+    // GAW TBD -- add a wrapeer that also sets the context -- nav and slot -- ActivateFXSubZoneFile ?
 }
 
 void ZoneManager::GoSubZone(Zone* enclosingZone, string subZoneName, double value)
