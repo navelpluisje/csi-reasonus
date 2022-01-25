@@ -1144,135 +1144,6 @@ public:
     }
 };
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    double lastDoubleValue_ = 0.0;
-    string lastStringValue_ = "";
-    int lastRValue = 0;
-    int lastGValue = 0;
-    int lastBValue = 0;
-
-    Widget* const widget_ = nullptr;
-    
-public:
-    FeedbackProcessor(Widget* widget) : widget_(widget) {}
-    virtual ~FeedbackProcessor() {}
-    Widget* GetWidget() { return widget_; }
-    virtual void SetRGBValue(int r, int g, int b) {}
-    virtual void ForceValue() {}
-    virtual void ForceValue(double value) {}
-    virtual void ForceValue(int param, double value) {}
-    virtual void ForceRGBValue(int r, int g, int b) {}
-    virtual void ForceValue(string value) {}
-    virtual void SetColors(rgb_color textColor, rgb_color textBackground) {}
-    virtual void SetCurrentColor(double value) {}
-    virtual void SetProperties(vector<vector<string>> properties) {}
-
-    virtual int GetMaxCharacters() { return 0; }
-    
-    virtual void SetValue(double value)
-    {
-        if(lastDoubleValue_ != value)
-            ForceValue(value);
-    }
-    
-    virtual void SetValue(int param, double value)
-    {
-        if(lastDoubleValue_ != value)
-            ForceValue(value);
-    }
-    
-    virtual void SetValue(string value)
-    {
-        if(lastStringValue_ != value)
-            ForceValue(value);
-    }
-
-    virtual void ClearCache()
-    {
-        lastDoubleValue_ = 0.0;
-        lastStringValue_ = "";
-    }
-    
-    virtual void Clear()
-    {
-        SetValue(0.0);
-        SetValue(0, 0.0);
-        SetValue("");
-        SetRGBValue(0, 0, 0);
-    }
-    
-    virtual void ForceClear()
-    {
-        ForceValue(0.0);
-        ForceValue(0, 0.0);
-        ForceValue("");
-        ForceRGBValue(0, 0, 0);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Midi_FeedbackProcessor : public FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Midi_ControlSurface* const surface_ = nullptr;
-    
-    MIDI_event_ex_t* lastMessageSent_ = new MIDI_event_ex_t(0, 0, 0);
-    MIDI_event_ex_t* midiFeedbackMessage1_ = new MIDI_event_ex_t(0, 0, 0);
-    MIDI_event_ex_t* midiFeedbackMessage2_ = new MIDI_event_ex_t(0, 0, 0);
-    
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : FeedbackProcessor(widget), surface_(surface) {}
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1, MIDI_event_ex_t* feedback2) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
-    
-    void SendMidiMessage(MIDI_event_ex_t* midiMessage);
-    void SendMidiMessage(int first, int second, int third);
-    void ForceMidiMessage(int first, int second, int third);
-
-public:
-    virtual void ClearCache() override
-    {
-        lastMessageSent_->midi_message[0] = 0;
-        lastMessageSent_->midi_message[1] = 0;
-        lastMessageSent_->midi_message[2] = 0;
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class OSC_FeedbackProcessor : public FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    OSC_ControlSurface* const surface_ = nullptr;
-    string oscAddress_ = "";
-    
-public:
-    
-    OSC_FeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : FeedbackProcessor(widget), surface_(surface), oscAddress_(oscAddress) {}
-    ~OSC_FeedbackProcessor() {}
-
-    virtual void SetRGBValue(int r, int g, int b) override;
-    virtual void ForceValue(double value) override;
-    virtual void ForceValue(int param, double value) override;
-    virtual void ForceValue(string value) override;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
-    ~OSC_IntFeedbackProcessor() {}
-
-    virtual void ForceValue(double value) override;
-    virtual void ForceValue(int param, double value) override;
-};
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1303,18 +1174,6 @@ public:
     {
         widget_->GetZoneManager()->DoTouch(widget_, value);
     }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Midi_CSIMessageGenerator : public CSIMessageGenerator
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Midi_CSIMessageGenerator(Widget* widget) : CSIMessageGenerator(widget) {}
-    
-public:
-    virtual ~Midi_CSIMessageGenerator() {}
-    virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1439,6 +1298,116 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    double lastDoubleValue_ = 0.0;
+    string lastStringValue_ = "";
+    int lastRValue = 0;
+    int lastGValue = 0;
+    int lastBValue = 0;
+
+    Widget* const widget_ = nullptr;
+    
+public:
+    FeedbackProcessor(Widget* widget) : widget_(widget) {}
+    virtual ~FeedbackProcessor() {}
+    Widget* GetWidget() { return widget_; }
+    virtual void SetRGBValue(int r, int g, int b) {}
+    virtual void ForceValue() {}
+    virtual void ForceValue(double value) {}
+    virtual void ForceValue(int param, double value) {}
+    virtual void ForceRGBValue(int r, int g, int b) {}
+    virtual void ForceValue(string value) {}
+    virtual void SetColors(rgb_color textColor, rgb_color textBackground) {}
+    virtual void SetCurrentColor(double value) {}
+    virtual void SetProperties(vector<vector<string>> properties) {}
+
+    virtual int GetMaxCharacters() { return 0; }
+    
+    virtual void SetValue(double value)
+    {
+        if(lastDoubleValue_ != value)
+            ForceValue(value);
+    }
+    
+    virtual void SetValue(int param, double value)
+    {
+        if(lastDoubleValue_ != value)
+            ForceValue(value);
+    }
+    
+    virtual void SetValue(string value)
+    {
+        if(lastStringValue_ != value)
+            ForceValue(value);
+    }
+
+    virtual void ClearCache()
+    {
+        lastDoubleValue_ = 0.0;
+        lastStringValue_ = "";
+    }
+    
+    virtual void Clear()
+    {
+        SetValue(0.0);
+        SetValue(0, 0.0);
+        SetValue("");
+        SetRGBValue(0, 0, 0);
+    }
+    
+    virtual void ForceClear()
+    {
+        ForceValue(0.0);
+        ForceValue(0, 0.0);
+        ForceValue("");
+        ForceRGBValue(0, 0, 0);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Midi_CSIMessageGenerator : public CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Midi_CSIMessageGenerator(Widget* widget) : CSIMessageGenerator(widget) {}
+    
+public:
+    virtual ~Midi_CSIMessageGenerator() {}
+    virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) {}
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Midi_FeedbackProcessor : public FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Midi_ControlSurface* const surface_ = nullptr;
+    
+    MIDI_event_ex_t* lastMessageSent_ = new MIDI_event_ex_t(0, 0, 0);
+    MIDI_event_ex_t* midiFeedbackMessage1_ = new MIDI_event_ex_t(0, 0, 0);
+    MIDI_event_ex_t* midiFeedbackMessage2_ = new MIDI_event_ex_t(0, 0, 0);
+    
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : FeedbackProcessor(widget), surface_(surface) {}
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1, MIDI_event_ex_t* feedback2) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
+    
+    void SendMidiMessage(MIDI_event_ex_t* midiMessage);
+    void SendMidiMessage(int first, int second, int third);
+    void ForceMidiMessage(int first, int second, int third);
+
+public:
+    virtual void ClearCache() override
+    {
+        lastMessageSent_->midi_message[0] = 0;
+        lastMessageSent_->midi_message[1] = 0;
+        lastMessageSent_->midi_message[2] = 0;
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Midi_ControlSurface : public ControlSurface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -1507,6 +1476,37 @@ public:
     {
         Midi_CSIMessageGeneratorsByMessage_[message].push_back(messageGenerator);
     }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSC_FeedbackProcessor : public FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    OSC_ControlSurface* const surface_ = nullptr;
+    string oscAddress_ = "";
+    
+public:
+    
+    OSC_FeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : FeedbackProcessor(widget), surface_(surface), oscAddress_(oscAddress) {}
+    ~OSC_FeedbackProcessor() {}
+
+    virtual void SetRGBValue(int r, int g, int b) override;
+    virtual void ForceValue(double value) override;
+    virtual void ForceValue(int param, double value) override;
+    virtual void ForceValue(string value) override;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
+    ~OSC_IntFeedbackProcessor() {}
+
+    virtual void ForceValue(double value) override;
+    virtual void ForceValue(int param, double value) override;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
