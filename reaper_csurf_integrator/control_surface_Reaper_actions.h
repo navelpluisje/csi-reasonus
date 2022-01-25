@@ -2562,7 +2562,7 @@ public:
         
         if(MediaTrack* track = context->GetTrack())
         {
-            if(DAW::TrackFX_GetNamedConfigParm(track, context->GetZone()->GetSlotIndex(), "GainReduction_dB", buffer, sizeof(buffer)))
+            if(DAW::TrackFX_GetNamedConfigParm(track, context->GetSlotIndex(), "GainReduction_dB", buffer, sizeof(buffer)))
                 context->UpdateWidgetValue(-atof(buffer)/20.0);
             else
                 context->UpdateWidgetValue(0.0);

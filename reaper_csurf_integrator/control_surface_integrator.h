@@ -107,6 +107,7 @@ class Widget;
 class TrackNavigationManager;
 class FeedbackProcessor;
 class Zone;
+class ZoneContext;
 class ZoneManager;
 class ActionContext;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,7 +303,7 @@ private:
     
     vector<vector<string>> properties_;
     
-    vector<string> broadcastTypes_;
+    vector<string> zoneNames_;
     vector<string> mappingTypes_;
     
 public:
@@ -318,7 +319,7 @@ public:
     void SetAssociatedWidget(Widget* widget) { associatedWidget_ = widget; }
     Widget* GetAssociatedWidget() { return associatedWidget_; }
 
-    vector<string> &GetBroadcastTypes() { return  broadcastTypes_; }
+    vector<string> &GetZoneNames() { return  zoneNames_; }
     vector<string> &GetMappingTypes() { return mappingTypes_; }
 
     int GetIntParam() { return intParam_; }
@@ -479,6 +480,7 @@ class Zone
 {
 private:
     ZoneManager* const zoneManager_ = nullptr;
+    ZoneContext* const zoneContext_ = nullptr;
     Navigator* navigator_= nullptr;
     int slotIndex_ = 0;
     string const name_ = "";
@@ -501,7 +503,10 @@ private:
     vector<ActionContext*> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    Zone(ZoneManager* const zoneManager, ZoneContext* zoneContext, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), zoneContext_(zoneContext), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    
+    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath);
+    
     Zone() {}
    
     void SetNavigator(Navigator* navigator) { navigator_ = navigator; }
@@ -670,6 +675,21 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ZoneContext
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    string const name_ = "";
+    Zone* const zone_ = nullptr;
+    
+public:
+    ZoneContext(string name, Zone*) : name_(name) {}
+    virtual ~ZoneContext() {}
+    Zone* GetZone() { return zone_; }
+    virtual int GetSlotIndex() { return  zone_->GetSlotIndex(); }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Widget
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -719,135 +739,6 @@ public:
     }
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    double lastDoubleValue_ = 0.0;
-    string lastStringValue_ = "";
-    int lastRValue = 0;
-    int lastGValue = 0;
-    int lastBValue = 0;
-
-    Widget* const widget_ = nullptr;
-    
-public:
-    FeedbackProcessor(Widget* widget) : widget_(widget) {}
-    virtual ~FeedbackProcessor() {}
-    Widget* GetWidget() { return widget_; }
-    virtual void SetRGBValue(int r, int g, int b) {}
-    virtual void ForceValue() {}
-    virtual void ForceValue(double value) {}
-    virtual void ForceValue(int param, double value) {}
-    virtual void ForceRGBValue(int r, int g, int b) {}
-    virtual void ForceValue(string value) {}
-    virtual void SetColors(rgb_color textColor, rgb_color textBackground) {}
-    virtual void SetCurrentColor(double value) {}
-    virtual void SetProperties(vector<vector<string>> properties) {}
-
-    virtual int GetMaxCharacters() { return 0; }
-    
-    virtual void SetValue(double value)
-    {
-        if(lastDoubleValue_ != value)
-            ForceValue(value);
-    }
-    
-    virtual void SetValue(int param, double value)
-    {
-        if(lastDoubleValue_ != value)
-            ForceValue(value);
-    }
-    
-    virtual void SetValue(string value)
-    {
-        if(lastStringValue_ != value)
-            ForceValue(value);
-    }
-
-    virtual void ClearCache()
-    {
-        lastDoubleValue_ = 0.0;
-        lastStringValue_ = "";
-    }
-    
-    virtual void Clear()
-    {
-        SetValue(0.0);
-        SetValue(0, 0.0);
-        SetValue("");
-        SetRGBValue(0, 0, 0);
-    }
-    
-    virtual void ForceClear()
-    {
-        ForceValue(0.0);
-        ForceValue(0, 0.0);
-        ForceValue("");
-        ForceRGBValue(0, 0, 0);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Midi_FeedbackProcessor : public FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Midi_ControlSurface* const surface_ = nullptr;
-    
-    MIDI_event_ex_t* lastMessageSent_ = new MIDI_event_ex_t(0, 0, 0);
-    MIDI_event_ex_t* midiFeedbackMessage1_ = new MIDI_event_ex_t(0, 0, 0);
-    MIDI_event_ex_t* midiFeedbackMessage2_ = new MIDI_event_ex_t(0, 0, 0);
-    
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : FeedbackProcessor(widget), surface_(surface) {}
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
-    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1, MIDI_event_ex_t* feedback2) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
-    
-    void SendMidiMessage(MIDI_event_ex_t* midiMessage);
-    void SendMidiMessage(int first, int second, int third);
-    void ForceMidiMessage(int first, int second, int third);
-
-public:
-    virtual void ClearCache() override
-    {
-        lastMessageSent_->midi_message[0] = 0;
-        lastMessageSent_->midi_message[1] = 0;
-        lastMessageSent_->midi_message[2] = 0;
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class OSC_FeedbackProcessor : public FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    OSC_ControlSurface* const surface_ = nullptr;
-    string oscAddress_ = "";
-    
-public:
-    
-    OSC_FeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : FeedbackProcessor(widget), surface_(surface), oscAddress_(oscAddress) {}
-    ~OSC_FeedbackProcessor() {}
-
-    virtual void SetRGBValue(int r, int g, int b) override;
-    virtual void ForceValue(double value) override;
-    virtual void ForceValue(int param, double value) override;
-    virtual void ForceValue(string value) override;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
-    ~OSC_IntFeedbackProcessor() {}
-
-    virtual void ForceValue(double value) override;
-    virtual void ForceValue(int param, double value) override;
-};
-
 struct CSIZoneInfo
 {
     string filePath = "";
@@ -893,6 +784,9 @@ private:
     vector<vector<Zone*>> fixedZones_;
     
     map<int, Navigator*> navigators_;
+    
+    vector<ZoneContext*> contexts_;
+    map<string, ZoneContext*> contextsByName_;
  
     map<string, CSIZoneInfo> zoneFilePaths_;
     
@@ -901,6 +795,13 @@ private:
         for(auto zone : zones)
             zone->Deactivate();
     }
+    
+    void ActivatingZone(string zoneName)
+    {
+        
+        
+    }
+    
     
     void UnmapZones(vector<Zone*> &zones)
     {
@@ -911,6 +812,14 @@ private:
             delete zone;
     
         zones.clear();
+    }
+    
+    void AddContext(ZoneContext* context)
+    {
+        
+        
+        
+        
     }
     
     void MapFocusedFXToWidgets();
@@ -1023,12 +932,6 @@ private:
         }
     }
     
-    void SetBroadcast(vector<string> &broadcast, ActionContext* context)
-    {
-        for(string param : context->GetBroadcastTypes())
-            broadcast.push_back(param);
-    }
-
 public:
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
@@ -1055,7 +958,7 @@ public:
     int GetNumReceiveSlots();
     int GetNumFXSlots();
     
-    void ReceiveMappingSignal(MapType mapType, string mapping);
+    void ReceiveActivate(MapType mapType, string mapping);
     void GoHome();
     void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
@@ -1072,12 +975,14 @@ public:
 
     void SetBroadcast(ActionContext* context)
     {
-        SetBroadcast(broadcast_, context);
+        for(string param : context->GetZoneNames())
+            broadcast_.push_back(param);
     }
 
     void SetReceive(ActionContext* context)
     {
-        SetBroadcast(receive_, context);
+        for(string param : context->GetZoneNames())
+            receive_.push_back(param);
     }
 
     void Map(vector<string> &mappingTypes)
@@ -1239,6 +1144,135 @@ public:
     }
 };
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    double lastDoubleValue_ = 0.0;
+    string lastStringValue_ = "";
+    int lastRValue = 0;
+    int lastGValue = 0;
+    int lastBValue = 0;
+
+    Widget* const widget_ = nullptr;
+    
+public:
+    FeedbackProcessor(Widget* widget) : widget_(widget) {}
+    virtual ~FeedbackProcessor() {}
+    Widget* GetWidget() { return widget_; }
+    virtual void SetRGBValue(int r, int g, int b) {}
+    virtual void ForceValue() {}
+    virtual void ForceValue(double value) {}
+    virtual void ForceValue(int param, double value) {}
+    virtual void ForceRGBValue(int r, int g, int b) {}
+    virtual void ForceValue(string value) {}
+    virtual void SetColors(rgb_color textColor, rgb_color textBackground) {}
+    virtual void SetCurrentColor(double value) {}
+    virtual void SetProperties(vector<vector<string>> properties) {}
+
+    virtual int GetMaxCharacters() { return 0; }
+    
+    virtual void SetValue(double value)
+    {
+        if(lastDoubleValue_ != value)
+            ForceValue(value);
+    }
+    
+    virtual void SetValue(int param, double value)
+    {
+        if(lastDoubleValue_ != value)
+            ForceValue(value);
+    }
+    
+    virtual void SetValue(string value)
+    {
+        if(lastStringValue_ != value)
+            ForceValue(value);
+    }
+
+    virtual void ClearCache()
+    {
+        lastDoubleValue_ = 0.0;
+        lastStringValue_ = "";
+    }
+    
+    virtual void Clear()
+    {
+        SetValue(0.0);
+        SetValue(0, 0.0);
+        SetValue("");
+        SetRGBValue(0, 0, 0);
+    }
+    
+    virtual void ForceClear()
+    {
+        ForceValue(0.0);
+        ForceValue(0, 0.0);
+        ForceValue("");
+        ForceRGBValue(0, 0, 0);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Midi_FeedbackProcessor : public FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Midi_ControlSurface* const surface_ = nullptr;
+    
+    MIDI_event_ex_t* lastMessageSent_ = new MIDI_event_ex_t(0, 0, 0);
+    MIDI_event_ex_t* midiFeedbackMessage1_ = new MIDI_event_ex_t(0, 0, 0);
+    MIDI_event_ex_t* midiFeedbackMessage2_ = new MIDI_event_ex_t(0, 0, 0);
+    
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : FeedbackProcessor(widget), surface_(surface) {}
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
+    Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1, MIDI_event_ex_t* feedback2) : FeedbackProcessor(widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
+    
+    void SendMidiMessage(MIDI_event_ex_t* midiMessage);
+    void SendMidiMessage(int first, int second, int third);
+    void ForceMidiMessage(int first, int second, int third);
+
+public:
+    virtual void ClearCache() override
+    {
+        lastMessageSent_->midi_message[0] = 0;
+        lastMessageSent_->midi_message[1] = 0;
+        lastMessageSent_->midi_message[2] = 0;
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSC_FeedbackProcessor : public FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    OSC_ControlSurface* const surface_ = nullptr;
+    string oscAddress_ = "";
+    
+public:
+    
+    OSC_FeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : FeedbackProcessor(widget), surface_(surface), oscAddress_(oscAddress) {}
+    ~OSC_FeedbackProcessor() {}
+
+    virtual void SetRGBValue(int r, int g, int b) override;
+    virtual void ForceValue(double value) override;
+    virtual void ForceValue(int param, double value) override;
+    virtual void ForceValue(string value) override;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
+    ~OSC_IntFeedbackProcessor() {}
+
+    virtual void ForceValue(double value) override;
+    virtual void ForceValue(int param, double value) override;
+};
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1336,7 +1370,7 @@ public:
     void TrackFXListChanged();
     void OnTrackSelection();
     virtual void SetHasMCUMeters(int displayType) {}
-    virtual void LoadingZone(string zoneName) {}
+    virtual void ActivatingZone(string zoneName) {}
     
     virtual void HandleExternalInput() {}
     virtual void UpdateTimeDisplay() {}
@@ -1500,7 +1534,7 @@ public:
     
     virtual string GetSourceFileName() override { return "/CSI/Surfaces/OSC/" + templateFilename_; }
     
-    virtual void LoadingZone(string zoneName) override;
+    virtual void ActivatingZone(string zoneName) override;
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, double value);
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, int value);
     void SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor, string oscAddress, string value);
@@ -2400,7 +2434,7 @@ public:
     {
         for(auto surface : surfaces_)
             if(surface != originatingSurface)
-                surface->GetZoneManager()->ReceiveMappingSignal(mapType, mapping);
+                surface->GetZoneManager()->ReceiveActivate(mapType, mapping);
 
     }
     

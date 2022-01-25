@@ -1548,16 +1548,10 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         SetAssociatedWidget(GetSurface()->GetWidgetByName(params[1]));
     }
     
-    if((actionName == "Broadcast" || actionName == "Receive") && params.size() > 1)
+    if(params.size() > 1 && (actionName == "Broadcast" || actionName == "Receive" || actionName == "Activate" || actionName == "Deactivate" || actionName == "Toggle"))
     {
         for(int i = 1; i < params.size(); i++)
-            broadcastTypes_.push_back(params[i]);
-    }
-
-    if((actionName == "Map" || actionName == "Unmap" || actionName == "ToggleMap") && params.size() > 1)
-    {
-        for(int i = 1; i < params.size(); i++)
-            mappingTypes_.push_back(params[i]);
+            zoneNames_.push_back(params[i]);
     }
 
     if(params.size() > 0)
@@ -1858,13 +1852,18 @@ void ActionContext::DoAcceleratedDeltaValueAction(int accelerationIndex, double 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Zone
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+Zone::Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath):  Zone(zoneManager, new ZoneContext("Standard",this), navigator, navigationType, slotIndex, touchIds, name, alias, sourceFilePath)
+{
+    
+}
+
 void Zone::Activate()
 {
     zoneManager_->EnsureWidgetsNotUsed(this);
     
     isActive_ = true;
     
-    zoneManager_->GetSurface()->LoadingZone(GetName());
+    zoneManager_->GetSurface()->ActivatingZone(GetName());
     
     for(auto zone : includedZones_)
         zone->Activate();
@@ -2298,12 +2297,26 @@ void ControlSurface::MapFocusedFXToWidgets()
 */
 
 
-void ZoneManager::ReceiveMappingSignal(MapType mapType, string mapping)
+void ZoneManager::ReceiveActivate(MapType mapType, string zoneName)
 {
-    if(find(receive_.begin(), receive_.end(), mapping) != receive_.end())
+    if(find(receive_.begin(), receive_.end(), zoneName) != receive_.end())
     {
-        vector<string> mappings { mapping };
+        vector<string> mappings { zoneName };
         Map(mapType, mappings);
+        
+        
+       
+        
+        
+        
+        // Find Zone and Activate
+        
+        
+         
+        
+        
+        
+        
     }
 }
 
@@ -2597,7 +2610,7 @@ void OSC_ControlSurface::ProcessOSCMessage(string message, double value)
     }
 }
 
-void OSC_ControlSurface::LoadingZone(string zoneName)
+void OSC_ControlSurface::ActivatingZone(string zoneName)
 {
     string oscAddress(zoneName);
     oscAddress = regex_replace(oscAddress, regex(BadFileChars), "_");
