@@ -308,7 +308,7 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
-static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, vector<Zone*> &zones)
+static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
     if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
         return;
@@ -322,7 +322,6 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
     map<string, map<string, vector<ActionTemplate*>>> widgetActions;
     
     string zoneName = "";
-    string basedOnZone = "";
     string zoneAlias = "";
     string actionName = "";
     int lineNumber = 0;
@@ -356,8 +355,6 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                 {
                     zoneName = tokens.size() > 1 ? tokens[1] : "";
                     zoneAlias = tokens.size() > 2 ? tokens[2] : "";
-                    
-                    basedOnZone = zoneName;
                 }
                 else if(tokens[0] == "ZoneEnd" && zoneName != "")
                 {
@@ -434,11 +431,10 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                             expandedTouchIds = touchIds;
                         }
                         
-                                                
                         Zone* zone = new Zone(zoneManager, navigators[i], basedOnZone, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
                         
                         for(auto includedZoneName : includedZones)
-                            ProcessZoneFile(includedZoneName, zoneManager, zone->GetIncludedZones());
+                            ProcessZoneFile(includedZoneName, basedOnZone, zoneManager, zone->GetIncludedZones());
                                                     
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
@@ -2064,7 +2060,7 @@ void ZoneManager::Initialize()
 {
     InitZones();
       
-    ProcessZoneFile("Home", this, homeZone_);
+    ProcessZoneFile("Home", "Home", this, homeZone_);
     
     if(homeZone_.size() == 0)
     {
@@ -2072,16 +2068,16 @@ void ZoneManager::Initialize()
         return;
     }
        
-    ProcessZoneFile("TrackFXMenuSlot", this, trackFXMenuZones_);
-    ProcessZoneFile("SelectedTrackFXMenuSlot", this, selectedTrackFXMenuZones_);
+    ProcessZoneFile("TrackFXMenuSlot", "TrackFXMenuSlot", this, trackFXMenuZones_);
+    ProcessZoneFile("SelectedTrackFXMenuSlot", "SelectedTrackFXMenuSlot", this, selectedTrackFXMenuZones_);
     
-    ProcessZoneFile("TrackReceiveSlot", this, trackReceivesSlotZones_);
-    ProcessZoneFile("SelectedTrackReceiveSlot", this, selectedTrackReceivesSlotZones_);
-    ProcessZoneFile("SelectedTrackReceive", this, selectedTrackReceivesZones_);
+    ProcessZoneFile("TrackReceiveSlot", "TrackReceiveSlot", this, trackReceivesSlotZones_);
+    ProcessZoneFile("SelectedTrackReceiveSlot", "SelectedTrackReceiveSlot", this, selectedTrackReceivesSlotZones_);
+    ProcessZoneFile("SelectedTrackReceive", "SelectedTrackReceive", this, selectedTrackReceivesZones_);
     
-    ProcessZoneFile("TrackSendSlot", this, trackSendsSlotZones_);
-    ProcessZoneFile("SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
-    ProcessZoneFile("SelectedTrackSend", this, selectedTrackSendsZones_);
+    ProcessZoneFile("TrackSendSlot", "TrackSendSlot", this, trackSendsSlotZones_);
+    ProcessZoneFile("SelectedTrackSendSlot", "SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
+    ProcessZoneFile("SelectedTrackSend", "SelectedTrackSend", this, selectedTrackSendsZones_);
    
     fixedZones_.push_back(selectedTrackFXMenuZones_);
     fixedZones_.push_back(trackFXMenuZones_);
