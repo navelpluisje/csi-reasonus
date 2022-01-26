@@ -65,16 +65,6 @@ const string TabChars = "[\t]";
 
 const int TempDisplayTime = 1250;
 
-enum NavigationType
-{
-    Standard,
-    SendSlot,
-    ReceiveSlot,
-    FXMenuSlot,
-    SelectedTrackSendSlot,
-    SelectedTrackReceiveSlot,
-};
-
 enum MapType
 {
     Mapping,
@@ -486,7 +476,7 @@ private:
     string const alias_ = "";
     string const sourceFilePath_ = "";
     
-    NavigationType const navigationTypee_ = Standard;
+    string const basedOnZone_ = "Standard";
     
     bool isActive_ = false;
     map<string, string> touchIds_;
@@ -502,7 +492,7 @@ private:
     vector<ActionContext*> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager,  Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
+    Zone(ZoneManager* const zoneManager,  Navigator* navigator, string basedOnZone, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), basedOnZone_(basedOnZone), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     
     Zone() {}
    
@@ -935,6 +925,7 @@ public:
     int GetSendSlot();
     int GetReceiveSlot();
     int GetFXMenuSlot();
+    int GetSlot(string basedOnZone);
     int GetNumChannels();
     int GetNumSendSlots();
     int GetNumReceiveSlots();
