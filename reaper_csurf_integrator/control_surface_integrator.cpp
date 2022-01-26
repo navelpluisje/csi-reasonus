@@ -322,8 +322,8 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
     map<string, map<string, vector<ActionTemplate*>>> widgetActions;
     
     string zoneName = "";
+    string basedOnZone = "";
     string zoneAlias = "";
-    string navigatorName = "";
     string actionName = "";
     int lineNumber = 0;
     
@@ -356,6 +356,8 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                 {
                     zoneName = tokens.size() > 1 ? tokens[1] : "";
                     zoneAlias = tokens.size() > 2 ? tokens[2] : "";
+                    
+                    basedOnZone = zoneName;
                 }
                 else if(tokens[0] == "ZoneEnd" && zoneName != "")
                 {
@@ -363,72 +365,48 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                     
                     vector<Navigator*> navigators;
                     
-                    string basedOnZone = "Standard";
-                    
-                    if(navigatorName == "")
+                    if(basedOnZone == "Home")
                         navigators.push_back(zoneManager->GetDefaultNavigator());
-                    if(navigatorName == "SelectedTrackNavigator")
+                    else if(basedOnZone == "Buttons")
+                        navigators.push_back(zoneManager->GetDefaultNavigator());
+                    else if(basedOnZone == "SelectedTrack")
                         navigators.push_back(zoneManager->GetSelectedTrackNavigator());
-                    else if(navigatorName == "FocusedFXNavigator")
-                        navigators.push_back(zoneManager->GetFocusedFXNavigator());
-                    else if(navigatorName == "MasterTrackNavigator")
+                    else if(basedOnZone == "MasterTrack")
                         navigators.push_back(zoneManager->GetMasterTrackNavigator());
-                    else if(navigatorName == "TrackNavigator")
+                    else if(basedOnZone == "Track")
                     {
                         for(int i = 0; i < zoneManager->GetNumChannels(); i++)
                             navigators.push_back(zoneManager->GetNavigatorForChannel(i));
                     }
-                    else if(navigatorName == "SelectedTrackSendNavigator")
+                    else if(basedOnZone == "TrackSend")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                    }
+                    else if(basedOnZone == "TrackReceive")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                    }
+                    else if(basedOnZone == "TrackFXMenu")
+                    {
+                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
+                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
+                    }
+                    else if(basedOnZone == "SelectedTrackSend")
                     {
                         for(int i = 0; i < zoneManager->GetNumSendSlots(); i++)
                             navigators.push_back(zoneManager->GetSelectedTrackNavigator());
                     }
-                    else if(navigatorName == "SelectedTrackReceiveNavigator")
+                    else if(basedOnZone == "SelectedTrackReceive")
                     {
                         for(int i = 0; i < zoneManager->GetNumReceiveSlots(); i++)
                             navigators.push_back(zoneManager->GetSelectedTrackNavigator());
                     }
-                    else if(navigatorName == "SelectedTrackFXMenuNavigator")
+                    else if(basedOnZone == "SelectedTrackFXMenu")
                     {
                         for(int i = 0; i < zoneManager->GetNumFXSlots(); i++)
                             navigators.push_back(zoneManager->GetSelectedTrackNavigator());
-                    }
-                    else if(navigatorName == "TrackSendSlotNavigator")
-                    {
-                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
-                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
-                        
-                        basedOnZone = "SendSlot";
-                    }
-                    else if(navigatorName == "TrackReceiveSlotNavigator")
-                    {
-                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
-                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
-                        
-                        basedOnZone = "ReceiveSlot";
-                    }
-                    else if(navigatorName == "TrackFXMenuSlotNavigator")
-                    {
-                        for(int i = 0; i < zoneManager->GetNumChannels(); i++)
-                            navigators.push_back(zoneManager->GetNavigatorForChannel(i));
-                        
-                        basedOnZone = "FXMenuSlot";
-                    }
-                    else if(navigatorName == "SelectedTrackSendSlotNavigator")
-                    {
-                        for(int i = 0; i < zoneManager->GetNumSendSlots(); i++)
-                        {
-                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
-                            basedOnZone = "SelectedTrackSendSlot";
-                        }
-                    }
-                    else if(navigatorName == "SelectedTrackReceiveSlotNavigator")
-                    {
-                        for(int i = 0; i < zoneManager->GetNumReceiveSlots(); i++)
-                        {
-                            navigators.push_back(zoneManager->GetSelectedTrackNavigator());
-                            basedOnZone = "SelectedTrackReceiveSlot";
-                        }
                     }
                    
                     for(int i = 0; i < navigators.size(); i++)
@@ -514,21 +492,7 @@ static void ProcessZoneFile(string zoneNameToProcess, ZoneManager* zoneManager, 
                     
                     break;
                 }
-                
-                else if(   tokens[0] == "TrackNavigator"
-                        || tokens[0] == "TrackSendSlotNavigator"
-                        || tokens[0] == "TrackReceiveSlotNavigator"
-                        || tokens[0] == "TrackFXMenuSlotNavigator"
-                        || tokens[0] == "MasterTrackNavigator"
-                        || tokens[0] == "FocusedFXNavigator"
-                        || tokens[0] == "SelectedTrackNavigator"
-                        || tokens[0] == "SelectedTrackSendNavigator"
-                        || tokens[0] == "SelectedTrackReceiveNavigator"
-                        || tokens[0] == "SelectedTrackFXMenuNavigator"
-                        || tokens[0] == "SelectedTrackSendSlotNavigator"
-                        || tokens[0] == "SelectedTrackReceiveSlotNavigator")
-                    navigatorName = tokens[0];
-                
+                                
                 else if(tokens[0] == "IncludedZones")
                     isInIncludedZonesSection = true;
                 
@@ -640,7 +604,7 @@ static void ActivateFXZoneFile(string filePath, ZoneManager* zoneManager, int sl
                     
                     string numStr = "";
                     
-                    Zone * zone = new Zone(zoneManager, navigator, "Standard", slotIndex, touchIds, zoneName, zoneAlias, filePath);
+                    Zone * zone = new Zone(zoneManager, navigator, zoneName, slotIndex, touchIds, zoneName, zoneAlias, filePath);
                     
                     for(auto [widgetName, modifierActions] : widgetActions)
                     {
@@ -1899,7 +1863,7 @@ vector<ActionContext*> &Zone::GetActionContexts(Widget* widget)
 
 int Zone::GetSlotIndex()
 {
-    if(basedOnZone_ == "Standard")
+    if(basedOnZone_ == name_)
         return slotIndex_;
     else if(basedOnZone_ == "SendSlot")
         return zoneManager_->GetSendSlot();
