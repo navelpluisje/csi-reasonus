@@ -1852,11 +1852,6 @@ void ActionContext::DoAcceleratedDeltaValueAction(int accelerationIndex, double 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Zone
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-Zone::Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath):  Zone(zoneManager, new ZoneContext("Standard",this), navigator, navigationType, slotIndex, touchIds, name, alias, sourceFilePath)
-{
-    
-}
-
 void Zone::Activate()
 {
     zoneManager_->EnsureWidgetsNotUsed(this);

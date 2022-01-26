@@ -480,7 +480,6 @@ class Zone
 {
 private:
     ZoneManager* const zoneManager_ = nullptr;
-    ZoneContext* const zoneContext_ = nullptr;
     Navigator* navigator_= nullptr;
     int slotIndex_ = 0;
     string const name_ = "";
@@ -503,9 +502,7 @@ private:
     vector<ActionContext*> defaultContexts_;
     
 public:
-    Zone(ZoneManager* const zoneManager, ZoneContext* zoneContext, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), zoneContext_(zoneContext), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
-    
-    Zone(ZoneManager* const zoneManager, Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath);
+    Zone(ZoneManager* const zoneManager,  Navigator* navigator, NavigationType navigationType, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath): zoneManager_(zoneManager), navigator_(navigator), navigationTypee_(navigationType), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath) {}
     
     Zone() {}
    
@@ -672,21 +669,6 @@ public:
         for(auto zone : includedZones_)
             zone->DoTouch(widget, widgetName, isUsed, value);
     }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ZoneContext
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-private:
-    string const name_ = "";
-    Zone* const zone_ = nullptr;
-    
-public:
-    ZoneContext(string name, Zone*) : name_(name) {}
-    virtual ~ZoneContext() {}
-    Zone* GetZone() { return zone_; }
-    virtual int GetSlotIndex() { return  zone_->GetSlotIndex(); }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
