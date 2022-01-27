@@ -308,12 +308,12 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
-static void ProcessZoneFile(string zoneFilePathToProcess, string basedOnZone, ZoneManager* zoneManager, vector<Zone*> &zones)
+static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
-    if(zoneManager->GetZoneFilePaths().count(zoneFilePathToProcess) < 1)
+    if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
         return;
     
-    string filePath = zoneManager->GetZoneFilePaths()[zoneFilePathToProcess].filePath;
+    string filePath = zoneManager->GetZoneFilePaths()[zoneNameToProcess].filePath;
        
     vector<CSIZoneAssociation> associatedZones;
     bool isInIncludedZonesSection = false;
