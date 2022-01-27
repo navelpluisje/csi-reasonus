@@ -945,7 +945,9 @@ public:
     {
         if(name == basedOnZone)
         {
-            fixedZones_.push_back(vector<Zone*>());
+            vector<Zone*> *zones =  new vector<Zone*>();
+            
+            fixedZones_.push_back(*zones);
             return fixedZones_.back();
         }
         else
