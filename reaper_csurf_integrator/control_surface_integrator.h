@@ -943,16 +943,21 @@ public:
     
     vector<Zone*> &GetAssociatedZones(string name, string basedOnZone)
     {
-        if(associatedZones_.count(basedOnZone) == 0)
-            associatedZones_[basedOnZone] = new map<string, vector<Zone*>*>();
-        
-        if(associatedZones_[basedOnZone]->count(name) == 0)
-            associatedZones_[basedOnZone]->at(name) = new vector<Zone*>();
-        
         if(name == basedOnZone)
-            fixedZones_.push_back(*associatedZones_[basedOnZone]->at(name));
-        
-        return *associatedZones_[basedOnZone]->at(name);
+        {
+            fixedZones_.push_back(vector<Zone*>());
+            return fixedZones_.back();
+        }
+        else
+        {
+            if(associatedZones_.count(basedOnZone) == 0)
+                associatedZones_[basedOnZone] = new map<string, vector<Zone*>*>();
+            
+            if(associatedZones_[basedOnZone]->count(name) == 0)
+                associatedZones_[basedOnZone]->at(name) = new vector<Zone*>();
+            
+            return *associatedZones_[basedOnZone]->at(name);
+        }
     }
 
     void AddWidget(Widget* widget)
