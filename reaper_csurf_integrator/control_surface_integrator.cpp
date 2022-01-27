@@ -308,15 +308,17 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
-static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneManager* zoneManager, vector<Zone*> &zones)
+static void ProcessZoneFile(string zoneFilePathToProcess, string basedOnZone, ZoneManager* zoneManager, vector<Zone*> &zones)
 {
-    if(zoneManager->GetZoneFilePaths().count(zoneNameToProcess) < 1)
+    if(zoneManager->GetZoneFilePaths().count(zoneFilePathToProcess) < 1)
         return;
     
-    string filePath = zoneManager->GetZoneFilePaths()[zoneNameToProcess].filePath;
-    
-    vector<string> includedZones;
+    string filePath = zoneManager->GetZoneFilePaths()[zoneFilePathToProcess].filePath;
+       
+    vector<CSIZoneAssociation> associatedZones;
     bool isInIncludedZonesSection = false;
+    vector<string> includedZones;
+    bool isInAssociatedZonesSection = false;
     map<string, string> touchIds;
     
     map<string, map<string, vector<ActionTemplate*>>> widgetActions;
@@ -435,7 +437,10 @@ static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneMa
                         
                         for(auto includedZoneName : includedZones)
                             ProcessZoneFile(includedZoneName, basedOnZone, zoneManager, zone->GetIncludedZones());
-                                                    
+                        
+                        for(auto associate : associatedZones)
+                            ProcessZoneFile(associate.name, associate.basedOnZone, zoneManager, zoneManager->GetAssociatedZones(associate.name, associate.basedOnZone));
+
                         for(auto [widgetName, modifierActions] : widgetActions)
                         {
                             string surfaceWidgetName = widgetName;
@@ -495,9 +500,27 @@ static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneMa
                 else if(tokens[0] == "IncludedZonesEnd")
                     isInIncludedZonesSection = false;
                 
-                else if(tokens.size() == 1 && isInIncludedZonesSection)
+                else if(isInIncludedZonesSection)
+                {
                     includedZones.push_back(tokens[0]);
-                               
+                    
+                    if(tokens.size() > 1)
+                        for(int i = 1; i < tokens.size(); i++)
+                            associatedZones.push_back(CSIZoneAssociation (tokens[0],  tokens[i]));
+                }
+                 
+                else if(tokens[0] == "AssociatedZones")
+                    isInAssociatedZonesSection = true;
+                
+                else if(tokens[0] == "AssociatedZonesEnd")
+                    isInAssociatedZonesSection = false;
+                
+                else if(isInAssociatedZonesSection)
+                {
+                    for(int i = 0; i < tokens.size(); i++)
+                        associatedZones.push_back(CSIZoneAssociation (tokens[0],  tokens[i]));
+                }
+                 
                 else if(tokens.size() > 1)
                 {
                     actionName = tokens[1];

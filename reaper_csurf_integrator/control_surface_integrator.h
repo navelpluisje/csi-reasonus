@@ -97,7 +97,6 @@ class Widget;
 class TrackNavigationManager;
 class FeedbackProcessor;
 class Zone;
-class ZoneContext;
 class ZoneManager;
 class ActionContext;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,6 +717,14 @@ struct CSIZoneInfo
     string navigator = "NotFocusedFXNavigator";
 };
 
+struct CSIZoneAssociation
+{
+    string name = "";
+    string basedOnZone = "";
+
+    CSIZoneAssociation ( string aName, string aBasedOnZone ): name(aName), basedOnZone(aBasedOnZone) {}
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ZoneManager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -754,12 +761,13 @@ private:
     vector<Zone*> homeZone_;
     
     vector<vector<Zone*>> fixedZones_;
+       
+    map<string, map<string, vector<Zone*>*>*> associatedZones_;
+    
     
     map<int, Navigator*> navigators_;
     
-    vector<ZoneContext*> contexts_;
-    map<string, ZoneContext*> contextsByName_;
- 
+
     map<string, CSIZoneInfo> zoneFilePaths_;
     
     void DeactivateZones(vector<Zone*> &zones)
@@ -785,15 +793,7 @@ private:
     
         zones.clear();
     }
-    
-    void AddContext(ZoneContext* context)
-    {
         
-        
-        
-        
-    }
-    
     void MapFocusedFXToWidgets();
     void UnmapFocusedFXFromWidgets();
     
@@ -941,6 +941,17 @@ public:
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
     ControlSurface* GetSurface() { return surface_; }
     
+    vector<Zone*> &GetAssociatedZones(string name, string basedOnZone)
+    {
+        if(associatedZones_.count(basedOnZone) == 0)
+            associatedZones_[basedOnZone] = new map<string, vector<Zone*>*>();
+        
+        if(associatedZones_[basedOnZone]->count(name) == 0)
+            associatedZones_[basedOnZone]->at(name) = new vector<Zone*>();
+        
+        return *associatedZones_[basedOnZone]->at(name);
+    }
+
     void AddWidget(Widget* widget)
     {
         usedWidgets_[widget] = false;
