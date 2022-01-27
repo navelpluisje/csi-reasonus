@@ -949,6 +949,9 @@ public:
         if(associatedZones_[basedOnZone]->count(name) == 0)
             associatedZones_[basedOnZone]->at(name) = new vector<Zone*>();
         
+        if(name == basedOnZone)
+            fixedZones_.push_back(*associatedZones_[basedOnZone]->at(name));
+        
         return *associatedZones_[basedOnZone]->at(name);
     }
 

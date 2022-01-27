@@ -2090,28 +2090,7 @@ void ZoneManager::Initialize()
         MessageBox(g_hwnd, (surface_->GetName() + " needs a Home Zone to operate, please recheck your installation").c_str(), ("CSI cannot find Home Zone for " + surface_->GetName()).c_str(), MB_OK);
         return;
     }
-       
-    ProcessZoneFile("TrackFXMenuSlot", "TrackFXMenuSlot", this, trackFXMenuZones_);
-    ProcessZoneFile("SelectedTrackFXMenuSlot", "SelectedTrackFXMenuSlot", this, selectedTrackFXMenuZones_);
-    
-    ProcessZoneFile("TrackReceiveSlot", "TrackReceiveSlot", this, trackReceivesSlotZones_);
-    ProcessZoneFile("SelectedTrackReceiveSlot", "SelectedTrackReceiveSlot", this, selectedTrackReceivesSlotZones_);
-    ProcessZoneFile("SelectedTrackReceive", "SelectedTrackReceive", this, selectedTrackReceivesZones_);
-    
-    ProcessZoneFile("TrackSendSlot", "TrackSendSlot", this, trackSendsSlotZones_);
-    ProcessZoneFile("SelectedTrackSendSlot", "SelectedTrackSendSlot", this, selectedTrackSendsSlotZones_);
-    ProcessZoneFile("SelectedTrackSend", "SelectedTrackSend", this, selectedTrackSendsZones_);
-   
-    fixedZones_.push_back(selectedTrackFXMenuZones_);
-    fixedZones_.push_back(trackFXMenuZones_);
-    
-    fixedZones_.push_back(trackReceivesSlotZones_);
-    fixedZones_.push_back(selectedTrackReceivesSlotZones_);
-    fixedZones_.push_back(selectedTrackReceivesZones_);
 
-    fixedZones_.push_back(trackSendsSlotZones_);
-    fixedZones_.push_back(selectedTrackSendsSlotZones_);
-    fixedZones_.push_back(selectedTrackSendsZones_);
     fixedZones_.push_back(homeZone_);
     
     GoHome();
