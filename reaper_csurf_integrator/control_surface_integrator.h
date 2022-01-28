@@ -907,9 +907,25 @@ private:
 public:
     ZoneManager(ControlSurface* surface, string zoneFolder, int numChannels, int numSends, int numFX, int channelOffset);
     
-    virtual ~ZoneManager() {}
+    virtual ~ZoneManager()
+    {
+        for(auto [key, value] : associatedZones_)
+        {
+            for(auto [subKey, subValue] : *value)
+            {
+                for(Zone* zone : *subValue)
+                    delete zone;
+                
+                subValue->clear();
+                
+                delete subValue;
+            }
+            
+            delete value;
+        }
+    }
     
-    void ForceClearAllWidgets() { } // GAW clear all widgets in contest
+    void ForceClearAllWidgets() { } // GAW clear all widgets in context
     
     void Initialize();
    
