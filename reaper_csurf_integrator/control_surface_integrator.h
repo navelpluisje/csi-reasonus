@@ -293,8 +293,7 @@ private:
     vector<vector<string>> properties_;
     
     vector<string> zoneNames_;
-    vector<string> zoneTypes_;
-    
+
 public:
     ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
 
@@ -309,7 +308,6 @@ public:
     Widget* GetAssociatedWidget() { return associatedWidget_; }
 
     vector<string> &GetZoneNames() { return  zoneNames_; }
-    vector<string> &GetZoneTypes() { return zoneTypes_; }
 
     int GetIntParam() { return intParam_; }
     string GetStringParam() { return stringParam_; }

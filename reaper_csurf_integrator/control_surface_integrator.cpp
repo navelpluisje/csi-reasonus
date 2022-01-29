@@ -1529,7 +1529,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         SetAssociatedWidget(GetSurface()->GetWidgetByName(params[1]));
     }
     
-    if(params.size() > 1 && (actionName == "Broadcast" || actionName == "Receive" || actionName == "Activate" || actionName == "Deactivate" || actionName == "Toggle"))
+    if(params.size() > 1 && (actionName == "Broadcast" || actionName == "Receive" || actionName == "Activate" || actionName == "Deactivate" || actionName == "ToggleActivation"))
     {
         for(int i = 1; i < params.size(); i++)
             zoneNames_.push_back(params[i]);
