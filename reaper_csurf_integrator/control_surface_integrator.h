@@ -1143,14 +1143,14 @@ public:
         bool isUsed = false;
         
         for(auto zone : focusedFXZones_)
-            zone->DoAction(widget, isUsed, value);
+            zone->DoTouch(widget, widget->GetName(), isUsed, value);
 
         for(auto zone : fxZones_)
-            zone->DoAction(widget, isUsed, value);
+            zone->DoTouch(widget, widget->GetName(), isUsed, value);
 
         for(vector<Zone*> zones : fixedZones_)
             for(auto zone : zones)
-                zone->DoAction(widget, isUsed, value);
+                zone->DoTouch(widget, widget->GetName(), isUsed, value);
     }
 };
 
