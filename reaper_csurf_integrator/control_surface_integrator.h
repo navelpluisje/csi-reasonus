@@ -65,11 +65,11 @@ const string TabChars = "[\t]";
 
 const int TempDisplayTime = 1250;
 
-enum MapType
+enum ActivationType
 {
-    Mapping,
-    Unmapping,
-    ToggleMapping,
+    Activating,
+    Deactivating,
+    TogglingActivation,
 };
 
 class Manager;
@@ -293,7 +293,7 @@ private:
     vector<vector<string>> properties_;
     
     vector<string> zoneNames_;
-    vector<string> mappingTypes_;
+    vector<string> zoneTypes_;
     
 public:
     ActionContext(Action* action, Widget* widget, Zone* zone, vector<string> params, vector<vector<string>> properties);
@@ -309,7 +309,7 @@ public:
     Widget* GetAssociatedWidget() { return associatedWidget_; }
 
     vector<string> &GetZoneNames() { return  zoneNames_; }
-    vector<string> &GetMappingTypes() { return mappingTypes_; }
+    vector<string> &GetZoneTypes() { return zoneTypes_; }
 
     int GetIntParam() { return intParam_; }
     string GetStringParam() { return stringParam_; }
@@ -838,66 +838,66 @@ private:
     
     void MapSelectedTrackFXMenuSlotToWidgets(int slot) {}
 
-    void Map(MapType mapType, vector<string> &mappingTypes)
+    void Activate(ActivationType activationType, vector<string> &zoneTypes)
     {
-        for(string param : mappingTypes)
+        for(string zoneType : zoneTypes)
         {
-            if(param == "FocusedFX")
+            if(zoneType == "FocusedFX")
             {
                 MapFocusedFXToWidgets();
             }
-            else if(param == "SelectedTrackFX")
+            else if(zoneType == "SelectedTrackFX")
             {
                 MapSelectedTrackFXToWidgets(); 
             }
-            else if(param == "SelectedTrackFXMenu")
+            else if(zoneType == "SelectedTrackFXMenu")
             {
                  
             }
-            else if(param == "SelectedTrackFXMenuSlot")
+            else if(zoneType == "SelectedTrackFXMenuSlot")
             {
                  
             }
-            else if(param == "TrackFXMenu")
+            else if(zoneType == "TrackFXMenu")
             {
                  
             }
-            else if(param == "TrackFXMenusSlot")
+            else if(zoneType == "TrackFXMenusSlot")
             {
                  
             }
              
-            else if(param == "SelectedTrackReceives")
-                ConductMapping(mapType, selectedTrackReceivesZones_);
-            else if(param == "SelectedTrackReceivesSlot")
-                ConductMapping(mapType, selectedTrackReceivesSlotZones_);
-            else if(param == "TrackReceivesSlot")
-                ConductMapping(mapType, trackReceivesSlotZones_);
+            else if(zoneType == "SelectedTrackReceives")
+                Activate(activationType, selectedTrackReceivesZones_);
+            else if(zoneType == "SelectedTrackReceivesSlot")
+                Activate(activationType, selectedTrackReceivesSlotZones_);
+            else if(zoneType == "TrackReceivesSlot")
+                Activate(activationType, trackReceivesSlotZones_);
              
-            else if(param == "SelectedTrackSends")
-                ConductMapping(mapType, selectedTrackSendsZones_);
-            else if(param == "SelectedTrackSendsSlot")
-                ConductMapping(mapType, selectedTrackSendsSlotZones_);
-            else if(param == "TrackSendsSlot")
-                ConductMapping(mapType, trackSendsSlotZones_);
+            else if(zoneType == "SelectedTrackSends")
+                Activate(activationType, selectedTrackSendsZones_);
+            else if(zoneType == "SelectedTrackSendsSlot")
+                Activate(activationType, selectedTrackSendsSlotZones_);
+            else if(zoneType == "TrackSendsSlot")
+                Activate(activationType, trackSendsSlotZones_);
          }
      }
         
-    void ConductMapping(MapType mapType, vector<Zone*> &zones)
+    void Activate(ActivationType activationType, vector<Zone*> &zones)
     {
         for(Zone* zone : zones)
         {
-            switch (mapType)
+            switch (activationType)
             {
-                case  MapType::Mapping:
+                case  ActivationType::Activating:
                     zone->Activate();
                     break;
                 
-                case  MapType::Unmapping:
+                case  ActivationType::Deactivating:
                     zone->Deactivate();
                     break;
                 
-                case  MapType::ToggleMapping:
+                case  ActivationType::TogglingActivation:
                     zone->Toggle();
                     break;
             }
@@ -947,7 +947,7 @@ public:
     int GetNumReceiveSlots();
     int GetNumFXSlots();
     
-    void ReceiveActivate(MapType mapType, string mapping);
+    void ReceiveActivate(ActivationType activationType, string zoneName);
     void GoHome();
     void ActivateFocusedFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
     void ActivateFXZone(string zoneName, int slotNumber, vector<Zone*> &zones);
@@ -995,19 +995,19 @@ public:
             receive_.push_back(param);
     }
 
-    void Map(vector<string> &mappingTypes)
+    void Activate(vector<string> &zoneTypes)
     {
-        Map(MapType::Mapping, mappingTypes);
+        Activate(ActivationType::Activating, zoneTypes);
     }
 
-    void Unmap(vector<string> &mappingTypes)
+    void Deactivate(vector<string> &zoneTypes)
     {
-        Map(MapType::Unmapping, mappingTypes);
+        Activate(ActivationType::Deactivating, zoneTypes);
     }
 
-    void ToggleMap(vector<string> &mappingTypes)
+    void ToggleActivation(vector<string> &zoneTypes)
     {
-        Map(MapType::ToggleMapping, mappingTypes);
+        Activate(ActivationType::TogglingActivation, zoneTypes);
     }
 
     void EnsureWidgetsNotUsed(Zone* zone)
@@ -2440,11 +2440,11 @@ public:
             surface->OnInitialization();
     }
     
-    void SignalMapping(ControlSurface* originatingSurface, MapType mapType, string mapping)
+    void SignalMapping(ControlSurface* originatingSurface, ActivationType activationType, string zoneName)
     {
         for(auto surface : surfaces_)
             if(surface != originatingSurface)
-                surface->GetZoneManager()->ReceiveActivate(mapType, mapping);
+                surface->GetZoneManager()->ReceiveActivate(activationType, zoneName);
 
     }
     

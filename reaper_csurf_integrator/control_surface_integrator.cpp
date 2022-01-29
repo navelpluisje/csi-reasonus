@@ -1161,9 +1161,9 @@ void Manager::InitActionsDictionary()
     actions_["Receive"] =                           new Receive();
     actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
-    actions_["Map"] =                               new Map();
-    actions_["Unmap"] =                             new Unmap();
-    actions_["ToggleMap"] =                         new ToggleMap();
+    actions_["Activate"] =                          new Activate();
+    actions_["Deactivate"] =                        new Deactivate();
+    actions_["ToggleActivation"] =                  new ToggleActivation();
     actions_["TrackBank"] =                         new TrackBank();
     actions_["SelectedTrackBank"] =                 new SelectedTrackBank();
     actions_["SendSlotBank"] =                      new SendSlotBank();
@@ -2252,12 +2252,12 @@ void ControlSurface::MapFocusedFXToWidgets()
 */
 
 
-void ZoneManager::ReceiveActivate(MapType mapType, string zoneName)
+void ZoneManager::ReceiveActivate(ActivationType activationType, string zoneName)
 {
     if(find(receive_.begin(), receive_.end(), zoneName) != receive_.end())
     {
-        vector<string> mappings { zoneName };
-        Map(mapType, mappings);
+        vector<string> zoneTypes { zoneName };
+        Activate(activationType, zoneTypes);
         
         
        
@@ -2277,8 +2277,8 @@ void ZoneManager::ReceiveActivate(MapType mapType, string zoneName)
 
 void ZoneManager::UnmapFocusedFXFromWidgets()
 {
-    if(find(broadcast_.begin(), broadcast_.end(), "UnmapFocusedFXFromWidgets") != broadcast_.end())
-        surface_->GetPage()->SignalMapping(surface_, MapType::Unmapping, "UnmapFocusedFXFromWidgets");
+    if(find(broadcast_.begin(), broadcast_.end(), "FocusedFX") != broadcast_.end())
+        surface_->GetPage()->SignalMapping(surface_, ActivationType::Deactivating, "FocusedFX");
 
     
     
@@ -2289,8 +2289,8 @@ void ZoneManager::UnmapFocusedFXFromWidgets()
 
 void ZoneManager::MapFocusedFXToWidgets()
 {
-    if(find(broadcast_.begin(), broadcast_.end(), "MapFocusedFXToWidgets") != broadcast_.end())
-        surface_->GetPage()->SignalMapping(surface_, MapType::Mapping, "MapFocusedFXToWidgets");
+    if(find(broadcast_.begin(), broadcast_.end(), "FocusedFX") != broadcast_.end())
+        surface_->GetPage()->SignalMapping(surface_, ActivationType::Activating, "FocusedFX");
     
     UnmapFocusedFXFromWidgets();
     

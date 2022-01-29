@@ -452,42 +452,41 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Map  : public Action
+class Activate  : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual string GetName() override { return "Map"; }
+    virtual string GetName() override { return "Activate"; }
 
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->Map(context->GetMappingTypes());
-    }
-    
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Unmap  : public Action
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    virtual string GetName() override { return "Unmap"; }
-
-    void Do(ActionContext* context, double value) override
-    {
-        context->GetSurface()->GetZoneManager()->Unmap(context->GetMappingTypes());
+        context->GetSurface()->GetZoneManager()->Activate(context->GetZoneTypes());
     }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ToggleMap  : public Action
+class Deactivate  : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual string GetName() override { return "ToggleMap"; }
+    virtual string GetName() override { return "Deactivate"; }
+
+    void Do(ActionContext* context, double value) override
+    {
+        context->GetSurface()->GetZoneManager()->Deactivate(context->GetZoneTypes());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ToggleActivation  : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "ToggleActivation"; }
     
     void Do(ActionContext* context, double value) override
     {
-        context->GetSurface()->GetZoneManager()->ToggleMap(context->GetMappingTypes());
+        context->GetSurface()->GetZoneManager()->ToggleActivation(context->GetZoneTypes());
     }
 };
 #endif /* control_surface_manager_actions_h */
