@@ -436,7 +436,7 @@ static void ProcessZoneFile(string zoneNameToProcess, string basedOnZone, ZoneMa
                         Zone* zone = new Zone(zoneManager, navigators[i], basedOnZone, i, expandedTouchIds, newZoneName, zoneAlias, filePath);
                         
                         for(auto includedZoneName : includedZones)
-                            ProcessZoneFile(includedZoneName, basedOnZone, zoneManager, zone->GetIncludedZones());
+                            ProcessZoneFile(includedZoneName, includedZoneName, zoneManager, zone->GetIncludedZones());
                         
                         for(auto associate : associatedZones)
                             ProcessZoneFile(associate.name, associate.basedOnZone, zoneManager, zoneManager->GetAssociatedZones(associate.name, associate.basedOnZone));
