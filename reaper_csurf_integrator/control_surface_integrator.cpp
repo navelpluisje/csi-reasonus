@@ -281,7 +281,7 @@ static void PreProcessZoneFile(string filePath, ControlSurface* surface)
             }
         }
     }
-    catch (exception &e)
+    catch (exception &ActionContexte)
     {
         char buffer[250];
         snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", filePath.c_str(), lineNumber);
@@ -778,30 +778,138 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
         string widgetClass = tokenLines[i][0];
 
         // Control Signal Generators
-        if(widgetClass == "AnyPress" && (size == 4 || size == 7))
-            new AnyPress_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+        if (widgetClass == "AnyPress" && (size == 4 || size == 7))
+            new AnyPress_Midi_CSIMessageGenerator(
+                                                  surface,
+                                                  widget,
+                                                  new MIDI_event_ex_t(
+                                                                      strToHex(tokenLines[i][1]),
+                                                                      strToHex(tokenLines[i][2]),
+                                                                      strToHex(tokenLines[i][3])
+                                                                      )
+                                                  );
         if(widgetClass == "Press" && size == 4)
-            new PressRelease_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new PressRelease_Midi_CSIMessageGenerator(
+                                                      surface,
+                                                      widget,
+                                                      new MIDI_event_ex_t(
+                                                                          strToHex(tokenLines[i][1]),
+                                                                          strToHex(tokenLines[i][2]),
+                                                                          strToHex(tokenLines[i][3])
+                                                                          )
+                                                      );
         else if(widgetClass == "Press" && size == 7)
-            new PressRelease_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6])));
+            new PressRelease_Midi_CSIMessageGenerator(
+                                                      surface,
+                                                      widget,
+                                                      new MIDI_event_ex_t(
+                                                                          strToHex(tokenLines[i][1]),
+                                                                          strToHex(tokenLines[i][2]),
+                                                                          strToHex(tokenLines[i][3])
+                                                                          ),
+                                                      new MIDI_event_ex_t(
+                                                                          strToHex(tokenLines[i][4]),
+                                                                          strToHex(tokenLines[i][5]),
+                                                                          strToHex(tokenLines[i][6])
+                                                                          )
+                                                      );
         else if(widgetClass == "Fader14Bit" && size == 4)
-            new Fader14Bit_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new Fader14Bit_Midi_CSIMessageGenerator(
+                                                    surface,
+                                                    widget,
+                                                    new MIDI_event_ex_t(
+                                                                        strToHex(tokenLines[i][1]),
+                                                                        strToHex(tokenLines[i][2]),
+                                                                        strToHex(tokenLines[i][3])
+                                                                        )
+                                                    );
         else if(widgetClass == "Fader7Bit" && size== 4)
-            new Fader7Bit_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new Fader7Bit_Midi_CSIMessageGenerator(
+                                                   surface,
+                                                   widget,
+                                                   new MIDI_event_ex_t(
+                                                                       strToHex(tokenLines[i][1]),
+                                                                       strToHex(tokenLines[i][2]),
+                                                                       strToHex(tokenLines[i][3])
+                                                                       )
+                                                   );
         else if(widgetClass == "Encoder" && size == 4)
-            new Encoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new Encoder_Midi_CSIMessageGenerator(
+                                                 surface,
+                                                 widget,
+                                                 new MIDI_event_ex_t(
+                                                                     strToHex(tokenLines[i][1]),
+                                                                     strToHex(tokenLines[i][2]),
+                                                                     strToHex(tokenLines[i][3])
+                                                                     )
+                                                 );
         else if(widgetClass == "Encoder" && size > 4)
-            new AcceleratedEncoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), tokenLines[i]);
+            new AcceleratedEncoder_Midi_CSIMessageGenerator(
+                                                            surface,
+                                                            widget,
+                                                            new MIDI_event_ex_t(
+                                                                                strToHex(tokenLines[i][1]),
+                                                                                strToHex(tokenLines[i][2]),
+                                                                                strToHex(tokenLines[i][3])
+                                                                                ),
+                                                            tokenLines[i]
+                                                            );
         else if(widgetClass == "MFTEncoder" && size > 4)
-            new MFT_AcceleratedEncoder_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), tokenLines[i]);
+            new MFT_AcceleratedEncoder_Midi_CSIMessageGenerator(
+                                                                surface,
+                                                                widget,
+                                                                new MIDI_event_ex_t(
+                                                                                    strToHex(tokenLines[i][1]),
+                                                                                    strToHex(tokenLines[i][2]),
+                                                                                    strToHex(tokenLines[i][3])
+                                                                                    ),
+                                                                tokenLines[i]
+                                                                );
         else if(widgetClass == "EncoderPlain" && size == 4)
-            new EncoderPlain_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new EncoderPlain_Midi_CSIMessageGenerator(
+                                                      surface,
+                                                      widget,
+                                                      new MIDI_event_ex_t(
+                                                                          strToHex(tokenLines[i][1]),
+                                                                          strToHex(tokenLines[i][2]),
+                                                                          strToHex(tokenLines[i][3])
+                                                                          )
+                                                      );
         else if(widgetClass == "EncoderPlainReverse" && size == 4)
-            new EncoderPlainReverse_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new EncoderPlainReverse_Midi_CSIMessageGenerator(
+                                                             surface,
+                                                             widget,
+                                                             new MIDI_event_ex_t(
+                                                                                 strToHex(tokenLines[i][1]),
+                                                                                 strToHex(tokenLines[i][2]),
+                                                                                 strToHex(tokenLines[i][3])
+                                                                                 )
+                                                             );
         else if(widgetClass == "Touch" && size == 7)
-            new Touch_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])), new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6])));
+            new Touch_Midi_CSIMessageGenerator(
+                                               surface,
+                                               widget,
+                                               new MIDI_event_ex_t(
+                                                                   strToHex(tokenLines[i][1]),
+                                                                   strToHex(tokenLines[i][2]),
+                                                                   strToHex(tokenLines[i][3])
+                                                                   ),
+                                               new MIDI_event_ex_t(
+                                                                   strToHex(tokenLines[i][4]),
+                                                                   strToHex(tokenLines[i][5]),
+                                                                   strToHex(tokenLines[i][6])
+                                                                   )
+                                               );
         else if(widgetClass == "Toggle" && size == 4)
-            new Toggle_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+            new Toggle_Midi_CSIMessageGenerator(
+                                                surface,
+                                                widget,
+                                                new MIDI_event_ex_t(
+                                                                    strToHex(tokenLines[i][1]),
+                                                                    strToHex(tokenLines[i][2]),
+                                                                    strToHex(tokenLines[i][3])
+                                                                    )
+                                                );
 
         // Feedback Processors
         FeedbackProcessor* feedbackProcessor = nullptr;
@@ -821,6 +929,14 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
         else if(widgetClass == "FB_FaderportRGB7Bit" && size == 4)
         {
             feedbackProcessor = new FaderportRGB7Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
+        }
+        else if(widgetClass == "FB_FaderportValueBar"  && size == 2)
+        {
+                feedbackProcessor = new FPValueBar_Midi_FeedbackProcessor(
+                                                                            surface,
+                                                                            widget,
+                                                                            stoi(tokenLines[i][1])
+                                                                            );
         }
         else if(widgetClass == "FB_Fader14Bit" && size == 4)
         {

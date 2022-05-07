@@ -417,7 +417,7 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////// //////////////////////////////////////////
 {
 private:
     int lastR = 0;
@@ -467,6 +467,35 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
         
         SendMidiMessage(&midiSysExData.evt);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FPValueBar_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    double lastValue_ = 0;
+    int channel_ = 0;
+    
+public:
+    virtual ~FPValueBar_Midi_FeedbackProcessor() {}
+    FPValueBar_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int channel) : Midi_FeedbackProcessor(surface, widget), channel_(channel) { }
+    
+    virtual void SetValue(double value) override
+    {
+        if(value == lastValue_)
+            return;
+        
+        ForceValue(value);
+    }
+
+    virtual void ForceValue(double value) override
+    {
+        lastValue_ = value;
+
+        SendMidiMessage(0xb0, channel_ + 0x30, value * 127.0);
+        SendMidiMessage(0xb0, channel_ + 0x38, 1);
     }
 };
 
@@ -757,7 +786,14 @@ private:
 
 public:
     virtual ~MCUDisplay_Midi_FeedbackProcessor() {}
-    MCUDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel) { }
+    MCUDisplay_Midi_FeedbackProcessor(
+                                      Midi_ControlSurface* surface,
+                                      Widget* widget,
+                                      int displayUpperLower,
+                                      int displayType,
+                                      int displayRow,
+                                      int channel
+                                      ) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel) { }
     
     virtual void ClearCache() override
     {
@@ -1560,6 +1596,25 @@ public:
         }
         midiSysExData;
         
+        midiSysExData.evt.frame_offset = 0;
+        midiSysExData.evt.size = 0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x06;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_; // Faderport8=0x02, Faderport16=0x16
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x13;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;    // xx channel_ id
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;        // type of display layout
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
+        SendMidiMessage(&midiSysExData.evt);
+
+        
+        
+        
+        midiSysExData;
+
         midiSysExData.evt.frame_offset = 0;
         midiSysExData.evt.size = 0;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;

@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <dlfcn.h>
 #include <ctype.h>
+#include <TargetConditionals.h>
 
 #if defined(__cplusplus)
 #include <cstddef>
@@ -142,7 +143,11 @@ INT_PTR SWELLAppMain(int msg, INT_PTR parm1, INT_PTR parm2); // to be implemente
 
 
 // basic types
+#if TARGET_CPU_ARM64
+typedef bool BOOL;
+#elif TARGET_CPU_X86_64
 typedef signed char BOOL;
+#endif
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef unsigned int DWORD;
