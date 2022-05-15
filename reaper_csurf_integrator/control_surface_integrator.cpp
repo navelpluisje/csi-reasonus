@@ -938,6 +938,27 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
                                                                             stoi(tokenLines[i][1])
                                                                             );
         }
+        else if((widgetClass == "FB_FP8DisplayType" || widgetClass == "FB_FP16DisplayType") && size == 2)
+        {
+            if(widgetClass == "FB_FP8DisplayType")
+            {
+                feedbackProcessor = new FPDisplayType_Midi_FeedbackProcessor(
+                                                                            surface,
+                                                                            widget,
+                                                                            0x02,
+                                                                            stoi(tokenLines[i][1])
+                                                                            );
+            }
+            if(widgetClass == "FB_FP16DisplayType")
+            {
+                feedbackProcessor = new FPDisplayType_Midi_FeedbackProcessor(
+                                                                            surface,
+                                                                            widget,
+                                                                            0x16,
+                                                                            stoi(tokenLines[i][1])
+                                                                            );
+            }
+        }
         else if(widgetClass == "FB_Fader14Bit" && size == 4)
         {
             feedbackProcessor = new Fader14Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
@@ -971,6 +992,13 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
             int displayType = widgetClass == "FB_MCUVUMeter" ? 0x14 : 0x15;
             
             feedbackProcessor = new MCUVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
+            
+            surface->SetHasMCUMeters(displayType);
+        }
+        else if((widgetClass == "FB_FPVUMeter") && size == 2)
+        {
+            int displayType = 0x02;
+            feedbackProcessor = new FPVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
             
             surface->SetHasMCUMeters(displayType);
         }
@@ -1152,6 +1180,7 @@ void Manager::InitActionsDictionary()
     actions_["EuConTimeDisplay"] =                  new EuConTimeDisplay();
     actions_["NoAction"] =                          new NoAction();
     actions_["Reaper"] =                            new ReaperAction();
+    actions_["DisplayType"] =                       new DisplayTypeAction();
     actions_["FixedTextDisplay"] =                  new FixedTextDisplay(); ;
     actions_["FixedRGBColourDisplay"] =             new FixedRGBColourDisplay();
     actions_["Rewind"] =                            new Rewind();
@@ -1244,6 +1273,7 @@ void Manager::InitActionsDictionary()
     actions_["TrackPanRPercent"] =                  new TrackPanRPercent();
     actions_["TogglePin"] =                         new TogglePin();
     actions_["TrackNameDisplay"] =                  new TrackNameDisplay();
+    actions_["TrackIdxDisplay"] =                   new TrackIdxDisplay();
     actions_["TrackVolumeDisplay"] =                new TrackVolumeDisplay();
     actions_["MCUTrackPanDisplay"] =                new MCUTrackPanDisplay();
     actions_["TrackPanDisplay"] =                   new TrackPanDisplay();
@@ -1538,6 +1568,18 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
             
             if(commandId_ == 0) // can't find it
                 commandId_ = 65535; // no-op
+        }
+    }
+    
+    if(actionName == "DisplayType" && params.size() > 1)
+    {
+        if (isdigit(params[1][0]))
+        {
+            displayType_ = atol(params[1].c_str());
+        }
+        else // look up by string
+        {
+            displayType_ = 2;
         }
     }
     
