@@ -506,6 +506,54 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FPDisplayType_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    int displayType_ = 0x02;
+    double lastValue_ = 0;
+    int channel_ = 0;
+    
+public:
+    virtual ~FPDisplayType_Midi_FeedbackProcessor() {}
+    FPDisplayType_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel) { }
+        
+    virtual void SetValue(double value) override
+    {
+        if(value == lastValue_)
+            return;
+        
+        ForceValue(value);
+    }
+
+    virtual void ForceValue(double value) override
+    {
+        lastValue_ = value;
+        
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[512];
+        }
+        midiSysExData;
+        
+        midiSysExData.evt.frame_offset = 0;
+        midiSysExData.evt.size = 0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x06;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_; // Faderport8=0x02, Faderport16=0x16
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x13;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;     // xx channel_ id
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00 + value; //    0x00 + value; // type of display layout
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
+        SendMidiMessage(&midiSysExData.evt);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class FaderportRGB7Bit_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -774,6 +822,49 @@ public:
         int midiValue = value * 0x0f;
         if(midiValue > 0x0d)
             midiValue = 0x0d;
+
+        return midiValue;
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FPVUMeter_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    int displayType_ = 0x02;
+    int channelNumber_ = 0;
+    int lastMidiValue_ = 0;
+    bool isClipOn_ = false;
+
+public:
+    virtual ~FPVUMeter_Midi_FeedbackProcessor() {}
+    FPVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channelNumber) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channelNumber_(channelNumber) {}
+    
+    virtual void SetValue(double value) override
+    {
+        if(channelNumber_ < 8)
+        {
+            SendMidiMessage(0xd0 + channelNumber_, GetMidiValue(value), 0);
+        } else {
+            SendMidiMessage(0xc0 + channelNumber_, GetMidiValue(value), 0);
+        }
+    }
+
+    virtual void ForceValue(double value) override
+    {
+        if(channelNumber_ < 8)
+        {
+            ForceMidiMessage(0xd0 + channelNumber_, GetMidiValue(value), 0);
+        } else {
+            ForceMidiMessage(0xc0 + channelNumber_, GetMidiValue(value), 0);
+        }
+    }
+    
+    int GetMidiValue(double value)
+    {
+        //Dn, vv   : n meter address, vv meter value (0...7F)
+        int midiValue = value * 0xa0;
 
         return midiValue;
     }
@@ -1580,45 +1671,40 @@ public:
         lastStringSent_ = " ";
     }
     
-    virtual void SetValue(string displayText) override
+    virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
     {
-        if(displayText != lastStringSent_) // changes since last send
-            ForceValue(displayText);
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, textAlign, invertTextColor);
     }
     
-    virtual void ForceValue(string displayText) override
+    virtual void SetValue(string value) override
     {
-        lastStringSent_ = displayText;
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, 0, 0);
+    }
+    
+    virtual void ForceValue(string value) override
+    {
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, 0, 0);
+    }
+    
+    virtual void ForceDisplayValue(string value, int textAlign, int invertTextColor) override
+    {
+        lastStringSent_ = value;
 
-        if(displayText == "")
-            displayText = "                            ";
+        if(value == "")
+            value = "                            ";
         
-        const char* text = displayText.c_str();
+        const char* text = value.c_str();
+        
+        int align = 0x0000000 + invertTextColor * 4 + textAlign;
     
         struct
         {
             MIDI_event_ex_t evt;
             char data[512];
         }
-        midiSysExData;
-        
-        midiSysExData.evt.frame_offset = 0;
-        midiSysExData.evt.size = 0;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x06;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_; // Faderport8=0x02, Faderport16=0x16
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x13;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;    // xx channel_ id
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;        // type of display layout
-
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
-        SendMidiMessage(&midiSysExData.evt);
-
-        
-        
-        
         midiSysExData;
 
         midiSysExData.evt.frame_offset = 0;
@@ -1633,7 +1719,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x12;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;                // xx channel_ id
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayRow_;             // yy line number 0-3
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x0000000;               // zz alignment flag 0000000=centre, see manual for other setups.
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = align;               // zz alignment flag 0000000=centre, see manual for other setups.
         
         int length = strlen(text);
         

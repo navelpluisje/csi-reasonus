@@ -266,6 +266,12 @@ private:
     
     int commandId_ = 0;
     
+    int displayType_ = 2;
+    
+    bool hasFPText_ = false;
+    int textAlign_ = 0;
+    int invertTextColor_ = 0;
+
     double rangeMinimum_ = 0.0;
     double rangeMaximum_ = 1.0;
     
@@ -285,7 +291,7 @@ private:
     
     bool shouldUseDisplayStyle_ = false;
     int displayStyle_ = 0;
-    
+
     bool supportsRGB_ = false;
     vector<rgb_color> RGBValues_;
     int currentRGBIndex_ = 0;
@@ -311,6 +317,7 @@ public:
     int GetIntParam() { return intParam_; }
     string GetStringParam() { return stringParam_; }
     int GetCommandId() { return commandId_; }
+    int GetDisplayType() { return displayType_; }
     bool GetShouldUseDisplayStyle() { return shouldUseDisplayStyle_; }
     int GetDisplayStyle() { return displayStyle_; }
     
@@ -324,6 +331,10 @@ public:
     Page* GetPage();
     ControlSurface* GetSurface();
     int GetParamIndex() { return paramIndex_; }
+    
+    bool hasFPText() { return hasFPText_; }
+    int getTextAlign() { return textAlign_; }
+    int getInvertTextColor() { return invertTextColor_; }
     
     bool GetSupportsRGB() { return supportsRGB_; }
     
@@ -407,26 +418,26 @@ public:
         if(left)
         {
             if(panIntVal == 100)
-                trackPanValueString += "<";
+                trackPanValueString += "L";
             else if(panIntVal < 100 && panIntVal > 9)
-                trackPanValueString += "< ";
+                trackPanValueString += "L";
             else
-                trackPanValueString += "<  ";
+                trackPanValueString += "L";
             
             trackPanValueString += to_string(panIntVal);
         }
         else
         {
-            trackPanValueString += "   ";
-            
-            trackPanValueString += to_string(panIntVal);
+            trackPanValueString += "";
             
             if(panIntVal == 100)
-                trackPanValueString += ">";
+                trackPanValueString += "R";
             else if(panIntVal < 100 && panIntVal > 9)
-                trackPanValueString += " >";
+                trackPanValueString += "R";
             else
-                trackPanValueString += "  >";
+                trackPanValueString += "R";
+
+            trackPanValueString += to_string(panIntVal);
         }
         
         if(panIntVal == 0)
@@ -629,8 +640,10 @@ public:
     void UpdateValue(int mode, double value);
     void UpdateValue(string value);
     void UpdateRGBValue(int r, int g, int b);
+    void UpdateDisplayValue(string value, int textAlign, int invertTextColor);
     void ForceValue(double value);
     void ForceRGBValue(int r, int g, int b);
+    void ForceDisplayValue(string value, int textAlign, int invertTextColor);
     void ClearCache();
     void Clear();
     void ForceClear();
@@ -724,6 +737,7 @@ public:
     virtual void SetRGBValue(int r, int g, int b) {}
     virtual void ForceValue() {}
     virtual void ForceValue(double value) {}
+    virtual void ForceDisplayValue(string value, int textAlign, int inverTextColor) {}
     virtual void ForceValue(int param, double value) {}
     virtual void ForceRGBValue(int r, int g, int b) {}
     virtual void ForceValue(string value) {}
@@ -737,6 +751,12 @@ public:
     {
         if(lastDoubleValue_ != value)
             ForceValue(value);
+    }
+    
+    virtual void SetDisplayValue(string value, int textAlign, int inverTextColor)
+    {
+        if(lastStringValue_ != value)
+            ForceDisplayValue(value, textAlign, inverTextColor);
     }
     
     virtual void SetValue(int param, double value)

@@ -14,24 +14,24 @@
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1133"
-            endingLineNumber = "1133"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "1224"
+            endingLineNumber = "1224"
+            landmarkName = "SCE24_Text_Midi_FeedbackProcessor"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "6EAE00D8-0598-4B4D-A7F1-52F23EE70B02"
-            shouldBeEnabled = "No"
+            uuid = "ECFF6CCF-654D-48EC-9D4E-6A337CB643D2"
+            shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "487"
-            endingLineNumber = "487"
+            startingLineNumber = "525"
+            endingLineNumber = "525"
             landmarkName = "SetValue(value)"
             landmarkType = "7">
          </BreakpointContent>
@@ -39,17 +39,17 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "F5ADE147-6C60-4B84-8991-8AE668F7C7E7"
-            shouldBeEnabled = "No"
+            uuid = "FB5390CC-1675-493D-A59A-C12840C189D5"
+            shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "531"
-            endingLineNumber = "531"
-            landmarkName = "ForceRGBValue(r, g, b)"
-            landmarkType = "7">
+            startingLineNumber = "666"
+            endingLineNumber = "666"
+            landmarkName = "SetSteppedValues(params, deltaValue, acceleratedDeltaValues, rangeMinimum, rangeMaximum, steppedValues, acceleratedTickValues)"
+            landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

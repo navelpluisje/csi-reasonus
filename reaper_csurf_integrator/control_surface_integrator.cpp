@@ -726,6 +726,43 @@ void SetSteppedValues(vector<string> params, double &deltaValue, vector<double> 
     }
 }
 
+void SetTextAlignment(vector<string> params, int &textAlign, int &invertTextColor, bool &hasFPText)
+{
+    vector<int> rawValues;
+        
+    auto openCurlyBrace = find(params.begin(), params.end(), "{%");
+    auto closeCurlyBrace = find(params.begin(), params.end(), "%}");
+    
+    if(openCurlyBrace != params.end() && closeCurlyBrace != params.end())
+    {
+        for(auto it = openCurlyBrace + 1; it != closeCurlyBrace; ++it)
+        {
+            string strVal = *(it);
+            
+            if(strVal == "Left")
+            {
+                hasFPText = true;
+                textAlign = 1;
+            }
+            if(strVal == "Center")
+            {
+                hasFPText = true;
+                textAlign = 0;
+            }
+            if(strVal == "Right")
+            {
+                hasFPText = true;
+                textAlign = 2;
+            }
+            if(strVal == "Invert")
+            {
+                hasFPText = true;
+                invertTextColor = 1;
+            }
+        }
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Widgets
 //////////////////////////////////////////////////////////////////////////////
@@ -938,6 +975,27 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
                                                                             stoi(tokenLines[i][1])
                                                                             );
         }
+        else if((widgetClass == "FB_FP8DisplayType" || widgetClass == "FB_FP16DisplayType") && size == 2)
+        {
+            if(widgetClass == "FB_FP8DisplayType")
+            {
+                feedbackProcessor = new FPDisplayType_Midi_FeedbackProcessor(
+                                                                            surface,
+                                                                            widget,
+                                                                            0x02,
+                                                                            stoi(tokenLines[i][1])
+                                                                            );
+            }
+            if(widgetClass == "FB_FP16DisplayType")
+            {
+                feedbackProcessor = new FPDisplayType_Midi_FeedbackProcessor(
+                                                                            surface,
+                                                                            widget,
+                                                                            0x16,
+                                                                            stoi(tokenLines[i][1])
+                                                                            );
+            }
+        }
         else if(widgetClass == "FB_Fader14Bit" && size == 4)
         {
             feedbackProcessor = new Fader14Bit_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
@@ -971,6 +1029,13 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
             int displayType = widgetClass == "FB_MCUVUMeter" ? 0x14 : 0x15;
             
             feedbackProcessor = new MCUVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
+            
+            surface->SetHasMCUMeters(displayType);
+        }
+        else if((widgetClass == "FB_FPVUMeter") && size == 2)
+        {
+            int displayType = 0x02;
+            feedbackProcessor = new FPVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
             
             surface->SetHasMCUMeters(displayType);
         }
@@ -1152,6 +1217,7 @@ void Manager::InitActionsDictionary()
     actions_["EuConTimeDisplay"] =                  new EuConTimeDisplay();
     actions_["NoAction"] =                          new NoAction();
     actions_["Reaper"] =                            new ReaperAction();
+    actions_["DisplayType"] =                       new DisplayTypeAction();
     actions_["FixedTextDisplay"] =                  new FixedTextDisplay(); ;
     actions_["FixedRGBColourDisplay"] =             new FixedRGBColourDisplay();
     actions_["Rewind"] =                            new Rewind();
@@ -1244,6 +1310,7 @@ void Manager::InitActionsDictionary()
     actions_["TrackPanRPercent"] =                  new TrackPanRPercent();
     actions_["TogglePin"] =                         new TogglePin();
     actions_["TrackNameDisplay"] =                  new TrackNameDisplay();
+    actions_["TrackIdxDisplay"] =                   new TrackIdxDisplay();
     actions_["TrackVolumeDisplay"] =                new TrackVolumeDisplay();
     actions_["MCUTrackPanDisplay"] =                new MCUTrackPanDisplay();
     actions_["TrackPanDisplay"] =                   new TrackPanDisplay();
@@ -1541,6 +1608,18 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         }
     }
     
+    if(actionName == "DisplayType" && params.size() > 1)
+    {
+        if (isdigit(params[1][0]))
+        {
+            displayType_ = atol(params[1].c_str());
+        }
+        else // look up by string
+        {
+            displayType_ = 2;
+        }
+    }
+    
     if(actionName == "FXParam" && params.size() > 1 && isdigit(params[1][0])) // C++ 11 says empty strings can be queried without catastrophe :)
     {
         paramIndex_ = atol(params[1].c_str());
@@ -1574,6 +1653,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
     {
         SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);
         SetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
+        SetTextAlignment(params, textAlign_, invertTextColor_, hasFPText_);
     }
     
     if(acceleratedTickValues_.size() < 1)
@@ -1692,7 +1772,13 @@ void ActionContext::UpdateWidgetValue(int param, double value)
 
 void ActionContext::UpdateWidgetValue(string value)
 {
-    widget_->UpdateValue(value);
+    if (this->hasFPText())
+    {
+        widget_->UpdateDisplayValue(value, this->getTextAlign(), this->getInvertTextColor());
+    } else
+    {
+        widget_->UpdateValue(value);
+    }
 }
 
 void ActionContext::ForceWidgetValue(double value)
@@ -2068,6 +2154,19 @@ void  Widget::UpdateRGBValue(int r, int g, int b)
 {
     for(auto processor : feedbackProcessors_)
         processor->SetRGBValue(r, g, b);
+}
+
+void Widget::UpdateDisplayValue(string value, int textAlign, int invertTextColor)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->SetDisplayValue(value, textAlign, invertTextColor);
+}
+
+
+void  Widget::ForceDisplayValue(string value, int textAlign, int invertTextColor)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->ForceDisplayValue(value, textAlign, invertTextColor);
 }
 
 void  Widget::ForceValue(double value)
