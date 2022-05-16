@@ -493,9 +493,15 @@ public:
     virtual void ForceValue(double value) override
     {
         lastValue_ = value;
-
-        SendMidiMessage(0xb0, channel_ + 0x30, value * 127.0);
-        SendMidiMessage(0xb0, channel_ + 0x38, 1);
+        
+        if (channel_ > 7) {
+            SendMidiMessage(0xb0, channel_ - 8 + 0x40, value * 127.0);
+            SendMidiMessage(0xb0, channel_ - 8 + 0x48, 1);
+        }
+        else {
+            SendMidiMessage(0xb0, channel_ + 0x30, value * 127.0);
+            SendMidiMessage(0xb0, channel_ + 0x38, 1);
+        }
     }
 };
 

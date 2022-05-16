@@ -14,10 +14,10 @@
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1127"
-            endingLineNumber = "1127"
-            landmarkName = "SCE24_Text_Midi_FeedbackProcessor"
-            landmarkType = "3">
+            startingLineNumber = "1133"
+            endingLineNumber = "1133"
+            landmarkName = "unknown"
+            landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -46,8 +46,8 @@
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "525"
-            endingLineNumber = "525"
+            startingLineNumber = "531"
+            endingLineNumber = "531"
             landmarkName = "ForceRGBValue(r, g, b)"
             landmarkType = "7">
          </BreakpointContent>
