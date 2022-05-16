@@ -726,6 +726,43 @@ void SetSteppedValues(vector<string> params, double &deltaValue, vector<double> 
     }
 }
 
+void SetTextAlignment(vector<string> params, int &textAlign, int &invertTextColor, bool &hasFPText)
+{
+    vector<int> rawValues;
+        
+    auto openCurlyBrace = find(params.begin(), params.end(), "{%");
+    auto closeCurlyBrace = find(params.begin(), params.end(), "%}");
+    
+    if(openCurlyBrace != params.end() && closeCurlyBrace != params.end())
+    {
+        for(auto it = openCurlyBrace + 1; it != closeCurlyBrace; ++it)
+        {
+            string strVal = *(it);
+            
+            if(strVal == "Left")
+            {
+                hasFPText = true;
+                textAlign = 1;
+            }
+            if(strVal == "Center")
+            {
+                hasFPText = true;
+                textAlign = 0;
+            }
+            if(strVal == "Right")
+            {
+                hasFPText = true;
+                textAlign = 2;
+            }
+            if(strVal == "Invert")
+            {
+                hasFPText = true;
+                invertTextColor = 1;
+            }
+        }
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Widgets
 //////////////////////////////////////////////////////////////////////////////
@@ -1616,6 +1653,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
     {
         SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);
         SetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
+        SetTextAlignment(params, textAlign_, invertTextColor_, hasFPText_);
     }
     
     if(acceleratedTickValues_.size() < 1)
@@ -1734,7 +1772,13 @@ void ActionContext::UpdateWidgetValue(int param, double value)
 
 void ActionContext::UpdateWidgetValue(string value)
 {
-    widget_->UpdateValue(value);
+    if (this->hasFPText())
+    {
+        widget_->UpdateDisplayValue(value, this->getTextAlign(), this->getInvertTextColor());
+    } else
+    {
+        widget_->UpdateValue(value);
+    }
 }
 
 void ActionContext::ForceWidgetValue(double value)
@@ -2110,6 +2154,19 @@ void  Widget::UpdateRGBValue(int r, int g, int b)
 {
     for(auto processor : feedbackProcessors_)
         processor->SetRGBValue(r, g, b);
+}
+
+void Widget::UpdateDisplayValue(string value, int textAlign, int invertTextColor)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->SetDisplayValue(value, textAlign, invertTextColor);
+}
+
+
+void  Widget::ForceDisplayValue(string value, int textAlign, int invertTextColor)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->ForceDisplayValue(value, textAlign, invertTextColor);
 }
 
 void  Widget::ForceValue(double value)

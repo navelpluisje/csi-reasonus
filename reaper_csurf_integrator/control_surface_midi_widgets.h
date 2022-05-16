@@ -511,7 +511,7 @@ private:
 public:
     virtual ~FPDisplayType_Midi_FeedbackProcessor() {}
     FPDisplayType_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel) { }
-    
+        
     virtual void SetValue(double value) override
     {
         if(value == lastValue_)
@@ -1665,20 +1665,34 @@ public:
         lastStringSent_ = " ";
     }
     
-    virtual void SetValue(string displayText) override
+    virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
     {
-        if(displayText != lastStringSent_) // changes since last send
-            ForceValue(displayText);
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, textAlign, invertTextColor);
     }
     
-    virtual void ForceValue(string displayText) override
+    virtual void SetValue(string value) override
     {
-        lastStringSent_ = displayText;
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, 0, 0);
+    }
+    
+    virtual void ForceValue(string value) override
+    {
+        if(value != lastStringSent_) // changes since last send
+            ForceDisplayValue(value, 0, 0);
+    }
+    
+    virtual void ForceDisplayValue(string value, int textAlign, int invertTextColor) override
+    {
+        lastStringSent_ = value;
 
-        if(displayText == "")
-            displayText = "                            ";
+        if(value == "")
+            value = "                            ";
         
-        const char* text = displayText.c_str();
+        const char* text = value.c_str();
+        
+        int align = 0x0000000 + invertTextColor * 4 + textAlign;
     
         struct
         {
@@ -1699,7 +1713,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x12;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;                // xx channel_ id
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayRow_;             // yy line number 0-3
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x0000000;               // zz alignment flag 0000000=centre, see manual for other setups.
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = align;               // zz alignment flag 0000000=centre, see manual for other setups.
         
         int length = strlen(text);
         
