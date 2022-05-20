@@ -482,25 +482,29 @@ public:
     virtual ~FPValueBar_Midi_FeedbackProcessor() {}
     FPValueBar_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int channel) : Midi_FeedbackProcessor(surface, widget), channel_(channel) { }
     
-    virtual void SetValue(double value) override
+    virtual void ForceClear() override
+    {
+        ForceValue(4, 0);
+    }
+    
+    virtual void SetValueBarValue(int type, double value) override
     {
         if(value == lastValue_)
             return;
         
-        ForceValue(value);
+        ForceValueBarValue(type, value);
     }
 
-    virtual void ForceValue(double value) override
+    virtual void ForceValueBarValue(int type, double value) override
     {
         lastValue_ = value;
-        
         if (channel_ > 7) {
             SendMidiMessage(0xb0, channel_ - 8 + 0x40, value * 127.0);
-            SendMidiMessage(0xb0, channel_ - 8 + 0x48, 1);
+            SendMidiMessage(0xb0, channel_ - 8 + 0x48, type);
         }
         else {
             SendMidiMessage(0xb0, channel_ + 0x30, value * 127.0);
-            SendMidiMessage(0xb0, channel_ + 0x38, 1);
+            SendMidiMessage(0xb0, channel_ + 0x38, type);
         }
     }
 };
@@ -832,14 +836,13 @@ class FPVUMeter_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
-    int displayType_ = 0x02;
     int channelNumber_ = 0;
     int lastMidiValue_ = 0;
     bool isClipOn_ = false;
 
 public:
     virtual ~FPVUMeter_Midi_FeedbackProcessor() {}
-    FPVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channelNumber) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channelNumber_(channelNumber) {}
+    FPVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int channelNumber) : Midi_FeedbackProcessor(surface, widget), channelNumber_(channelNumber) {}
     
     virtual void SetValue(double value) override
     {
@@ -1671,21 +1674,26 @@ public:
         lastStringSent_ = " ";
     }
     
+    virtual void ForceClear() override
+    {
+        ForceDisplayValue("", 0, 0);
+    }
+    
     virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
     {
-        if(value != lastStringSent_) // changes since last send
+        if(value != lastStringSent_ || value == "") // changes since last send
             ForceDisplayValue(value, textAlign, invertTextColor);
     }
     
     virtual void SetValue(string value) override
     {
-        if(value != lastStringSent_) // changes since last send
+        if(value != lastStringSent_ || value == "") // changes since last send
             ForceDisplayValue(value, 0, 0);
     }
     
     virtual void ForceValue(string value) override
     {
-        if(value != lastStringSent_) // changes since last send
+        if(value != lastStringSent_ || value == "") // changes since last send
             ForceDisplayValue(value, 0, 0);
     }
     

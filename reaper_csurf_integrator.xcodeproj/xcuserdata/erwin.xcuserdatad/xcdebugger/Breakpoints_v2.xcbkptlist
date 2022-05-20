@@ -14,24 +14,24 @@
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1224"
-            endingLineNumber = "1224"
-            landmarkName = "SCE24_Text_Midi_FeedbackProcessor"
-            landmarkType = "3">
+            startingLineNumber = "1227"
+            endingLineNumber = "1227"
+            landmarkName = "unknown"
+            landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "ECFF6CCF-654D-48EC-9D4E-6A337CB643D2"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "525"
-            endingLineNumber = "525"
+            startingLineNumber = "529"
+            endingLineNumber = "529"
             landmarkName = "SetValue(value)"
             landmarkType = "7">
          </BreakpointContent>

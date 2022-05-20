@@ -272,6 +272,9 @@ private:
     int textAlign_ = 0;
     int invertTextColor_ = 0;
 
+    bool hasValueBar_ = false;
+    int valueBarType_ = 1;
+    
     double rangeMinimum_ = 0.0;
     double rangeMaximum_ = 1.0;
     
@@ -335,6 +338,9 @@ public:
     bool hasFPText() { return hasFPText_; }
     int getTextAlign() { return textAlign_; }
     int getInvertTextColor() { return invertTextColor_; }
+    
+    bool HasValueBar() { return hasValueBar_; }
+    int GetValueBarType() { return valueBarType_; }
     
     bool GetSupportsRGB() { return supportsRGB_; }
     
@@ -641,9 +647,11 @@ public:
     void UpdateValue(string value);
     void UpdateRGBValue(int r, int g, int b);
     void UpdateDisplayValue(string value, int textAlign, int invertTextColor);
+    void UpdateValueBarValue(int type, double value);
     void ForceValue(double value);
     void ForceRGBValue(int r, int g, int b);
     void ForceDisplayValue(string value, int textAlign, int invertTextColor);
+    void ForceValueBarValue(int type, double value);
     void ClearCache();
     void Clear();
     void ForceClear();
@@ -737,6 +745,7 @@ public:
     virtual void SetRGBValue(int r, int g, int b) {}
     virtual void ForceValue() {}
     virtual void ForceValue(double value) {}
+    virtual void ForceValueBarValue(int type, double value) {}
     virtual void ForceDisplayValue(string value, int textAlign, int inverTextColor) {}
     virtual void ForceValue(int param, double value) {}
     virtual void ForceRGBValue(int r, int g, int b) {}
@@ -759,10 +768,19 @@ public:
             ForceDisplayValue(value, textAlign, inverTextColor);
     }
     
+    virtual void SetValueBarValue(int type, double value)
+    {
+        if(lastDoubleValue_ != value)
+            ForceValueBarValue(type, value);
+    }
+    
     virtual void SetValue(int param, double value)
     {
         if(lastDoubleValue_ != value)
+        {
             ForceValue(value);
+        }
+            
     }
     
     virtual void SetValue(string value)
@@ -783,6 +801,7 @@ public:
         SetValue(0, 0.0);
         SetValue("");
         SetRGBValue(0, 0, 0);
+        SetValueBarValue(4, 0);
     }
     
     virtual void ForceClear()

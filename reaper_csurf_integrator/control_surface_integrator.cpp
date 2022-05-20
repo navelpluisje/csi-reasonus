@@ -726,7 +726,7 @@ void SetSteppedValues(vector<string> params, double &deltaValue, vector<double> 
     }
 }
 
-void SetTextAlignment(vector<string> params, int &textAlign, int &invertTextColor, bool &hasFPText)
+void SetFaderPortValues(vector<string> params, int &textAlign, int &invertTextColor, bool &hasFPText, bool &hasValueBar, int &valueBarType)
 {
     vector<int> rawValues;
         
@@ -758,6 +758,31 @@ void SetTextAlignment(vector<string> params, int &textAlign, int &invertTextColo
             {
                 hasFPText = true;
                 invertTextColor = 1;
+            }
+            if(strVal == "Normal")
+            {
+                hasValueBar = true;
+                valueBarType = 0;
+            }
+            if(strVal == "BiPolar")
+            {
+                hasValueBar = true;
+                valueBarType = 1;
+            }
+            if(strVal == "Fill")
+            {
+                hasValueBar = true;
+                valueBarType = 2;
+            }
+            if(strVal == "Spread")
+            {
+                hasValueBar = true;
+                valueBarType = 3;
+            }
+            if(strVal == "Off")
+            {
+                hasValueBar = true;
+                valueBarType = 4;
             }
         }
     }
@@ -1034,10 +1059,7 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
         }
         else if((widgetClass == "FB_FPVUMeter") && size == 2)
         {
-            int displayType = 0x02;
-            feedbackProcessor = new FPVUMeter_Midi_FeedbackProcessor(surface, widget, displayType, stoi(tokenLines[i][1]));
-            
-            surface->SetHasMCUMeters(displayType);
+            feedbackProcessor = new FPVUMeter_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]));
         }
         else if(widgetClass == "FB_SCE24_Text" && size == 3)
         {
@@ -1653,7 +1675,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
     {
         SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);
         SetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
-        SetTextAlignment(params, textAlign_, invertTextColor_, hasFPText_);
+        SetFaderPortValues(params, textAlign_, invertTextColor_, hasFPText_, hasValueBar_, valueBarType_);
     }
     
     if(acceleratedTickValues_.size() < 1)
@@ -1716,9 +1738,14 @@ void ActionContext::UpdateWidgetValue(double value)
         SetSteppedValueIndex(value);
 
     value = isFeedbackInverted_ == false ? value : 1.0 - value;
+    
+    if (this->HasValueBar())
+    {
+        widget_->UpdateValueBarValue(this->GetValueBarType(), value);
+    } else {
+        widget_->UpdateValue(value);
+    }
    
-    widget_->UpdateValue(value);
-
     if(supportsRGB_)
     {
         currentRGBIndex_ = value == 0 ? 0 : 1;
@@ -1746,7 +1773,12 @@ void ActionContext::UpdateWidgetValue(int param, double value)
 
     value = isFeedbackInverted_ == false ? value : 1.0 - value;
         
-    widget_->UpdateValue(param, value);
+    if (this->HasValueBar())
+    {
+        widget_->UpdateValueBarValue(this->GetValueBarType(), value);
+    } else {
+        widget_->UpdateValue(param, value);
+    }
     
     currentRGBIndex_ = value == 0 ? 0 : 1;
     
@@ -2167,6 +2199,19 @@ void  Widget::ForceDisplayValue(string value, int textAlign, int invertTextColor
 {
     for(auto processor : feedbackProcessors_)
         processor->ForceDisplayValue(value, textAlign, invertTextColor);
+}
+
+void Widget::UpdateValueBarValue(int type, double value)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->SetValueBarValue(type, value);
+}
+
+
+void  Widget::ForceValueBarValue(int type, double value)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->ForceValueBarValue(type, value);
 }
 
 void  Widget::ForceValue(double value)
