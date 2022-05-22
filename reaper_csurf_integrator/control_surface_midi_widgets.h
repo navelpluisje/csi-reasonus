@@ -532,6 +532,9 @@ public:
 
     virtual void ForceValue(double value) override
     {
+        if(value == lastValue_)
+            return;
+
         lastValue_ = value;
         
         struct
@@ -846,21 +849,27 @@ public:
     
     virtual void SetValue(double value) override
     {
+        if(lastMidiValue_ == value || GetMidiValue(value) < 7)
+        {
+            return;
+        }
+        
         if(channelNumber_ < 8)
         {
             SendMidiMessage(0xd0 + channelNumber_, GetMidiValue(value), 0);
         } else {
-            SendMidiMessage(0xc0 + channelNumber_, GetMidiValue(value), 0);
+            SendMidiMessage(0xc0 + channelNumber_ - 8, GetMidiValue(value), 0);
         }
     }
 
     virtual void ForceValue(double value) override
     {
+        lastMidiValue_ = value;
         if(channelNumber_ < 8)
         {
             ForceMidiMessage(0xd0 + channelNumber_, GetMidiValue(value), 0);
         } else {
-            ForceMidiMessage(0xc0 + channelNumber_, GetMidiValue(value), 0);
+            ForceMidiMessage(0xc0 + channelNumber_ - 8, GetMidiValue(value), 0);
         }
     }
     
@@ -1681,19 +1690,19 @@ public:
     
     virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
     {
-        if(value != lastStringSent_ || value == "") // changes since last send
+        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
             ForceDisplayValue(value, textAlign, invertTextColor);
     }
     
     virtual void SetValue(string value) override
     {
-        if(value != lastStringSent_ || value == "") // changes since last send
+        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
             ForceDisplayValue(value, 0, 0);
     }
     
     virtual void ForceValue(string value) override
     {
-        if(value != lastStringSent_ || value == "") // changes since last send
+        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
             ForceDisplayValue(value, 0, 0);
     }
     
@@ -1702,7 +1711,7 @@ public:
         lastStringSent_ = value;
 
         if(value == "")
-            value = "                            ";
+            value = "               ";
         
         const char* text = value.c_str();
         
@@ -1731,8 +1740,8 @@ public:
         
         int length = strlen(text);
         
-        if (length > 30)
-            length = 30;
+        if (length > 15)
+            length = 15;
         
         int count = 0;
         

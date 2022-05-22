@@ -1762,7 +1762,7 @@ void ActionContext::UpdateWidgetValue(double value)
             int g = (*rgb_colour >> 8) & 0xff;
             int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
+            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
@@ -1799,7 +1799,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
             int g = (*rgb_colour >> 8) & 0xff;
             int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
+            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
@@ -1840,7 +1840,7 @@ void ActionContext::ForceWidgetValue(double value)
             int g = (*rgb_colour >> 8) & 0xff;
             int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
+            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
