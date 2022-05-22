@@ -300,7 +300,7 @@ private:
     int currentRGBIndex_ = 0;
     
     bool supportsTrackColor_ = false;
-        
+
     bool noFeedback_ = false;
     
     vector<vector<string>> properties_;
@@ -335,13 +335,15 @@ public:
     ControlSurface* GetSurface();
     int GetParamIndex() { return paramIndex_; }
     
+    //  Presonus FaderPort
     bool hasFPText() { return hasFPText_; }
     int getTextAlign() { return textAlign_; }
     int getInvertTextColor() { return invertTextColor_; }
     
     bool HasValueBar() { return hasValueBar_; }
     int GetValueBarType() { return valueBarType_; }
-    
+    //  End Presonus FaderPort
+
     bool GetSupportsRGB() { return supportsRGB_; }
     
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }

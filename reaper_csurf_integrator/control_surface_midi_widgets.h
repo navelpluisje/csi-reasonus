@@ -1725,9 +1725,9 @@ public:
         
         // <SysExHdr> 12, xx, yy, zz, tx,tx,tx,... F7
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x12;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;                // xx channel_ id
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayRow_;             // yy line number 0-3
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = align;               // zz alignment flag 0000000=centre, see manual for other setups.
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;     // xx channel_ id
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayRow_;  // yy line number 0-3
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = align;        // zz alignment flag 0000000=centre, see manual for other setups.
         
         int length = strlen(text);
         

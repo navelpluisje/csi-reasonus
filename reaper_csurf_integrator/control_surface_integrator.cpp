@@ -1755,13 +1755,14 @@ void ActionContext::UpdateWidgetValue(double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
-            int r = (*rgb_colour >> 0) & 0xff;
+            int r = (*rgb_colour >> 16) & 0xff;
             int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 16) & 0xff;
+            int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->UpdateRGBValue(r, g, b);
+            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
@@ -1791,13 +1792,14 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
-            int r = (*rgb_colour >> 0) & 0xff;
+            int r = (*rgb_colour >> 16) & 0xff;
             int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 16) & 0xff;
+            int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->UpdateRGBValue(r, g, b);
+            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
@@ -1831,13 +1833,14 @@ void ActionContext::ForceWidgetValue(double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
-            int r = (*rgb_colour >> 0) & 0xff;
+            int r = (*rgb_colour >> 16) & 0xff;
             int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 16) & 0xff;
+            int b = (*rgb_colour >> 0) & 0xff;
             
-            widget_->ForceRGBValue(r, g, b);
+            widget_->ForceRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
         }
     }
 }
