@@ -1822,6 +1822,13 @@ void ActionContext::ForceWidgetValue(double value)
     
     value = isFeedbackInverted_ == false ? value : 1.0 - value;
     
+    if (this->HasValueBar())
+    {
+        widget_->ForceValueBarValue(this->GetValueBarType(), value);
+    } else {
+        widget_->ForceValue(value);
+    }
+    
     widget_->ForceValue(value);
 
     if(supportsRGB_)

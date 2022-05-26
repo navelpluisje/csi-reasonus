@@ -812,6 +812,7 @@ public:
         ForceValue(0, 0.0);
         ForceValue("");
         ForceRGBValue(0, 0, 0);
+        SetValueBarValue(4, 0);
     }
 };
 

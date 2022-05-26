@@ -476,6 +476,7 @@ class FPValueBar_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 private:
     double lastValue_ = 0;
+    int lastType_ = 4;
     int channel_ = 0;
     
 public:
@@ -489,7 +490,7 @@ public:
     
     virtual void SetValueBarValue(int type, double value) override
     {
-        if(value == lastValue_)
+        if(value == lastValue_ && type == lastType_)
             return;
         
         ForceValueBarValue(type, value);
@@ -498,6 +499,8 @@ public:
     virtual void ForceValueBarValue(int type, double value) override
     {
         lastValue_ = value;
+        lastType_ = type;
+        
         if (channel_ > 7) {
             SendMidiMessage(0xb0, channel_ - 8 + 0x40, value * 127.0);
             SendMidiMessage(0xb0, channel_ - 8 + 0x48, type);
@@ -1688,22 +1691,34 @@ public:
         ForceDisplayValue("", 0, 0);
     }
     
-    virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
-    {
-        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
-            ForceDisplayValue(value, textAlign, invertTextColor);
-    }
-    
     virtual void SetValue(string value) override
     {
-        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
-            ForceDisplayValue(value, 0, 0);
+        if(value == lastStringSent_ && value != "")
+        {
+            return;
+        }
+//        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
+        ForceDisplayValue(value, 0, 0);
     }
     
     virtual void ForceValue(string value) override
     {
-        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
+//        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
+        ForceDisplayValue(value, 0, 0);
+    }
+    
+    virtual void SetDisplayValue(string value, int textAlign, int invertTextColor) override
+    {
+        if(value == lastStringSent_)
+            return;
+        
+        if(value == "")
+        {
             ForceDisplayValue(value, 0, 0);
+            return;
+        }
+//        if(value != lastStringSent_ || (value == "" && value != lastStringSent_)) // changes since last send
+        ForceDisplayValue(value, textAlign, invertTextColor);
     }
     
     virtual void ForceDisplayValue(string value, int textAlign, int invertTextColor) override
