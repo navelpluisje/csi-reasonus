@@ -2298,7 +2298,7 @@ public:
     void Run()
     {
         trackNavigationManager_->RebuildTrackList();
-        
+
         for(auto surface : surfaces_)
             surface->HandleExternalInput();
         

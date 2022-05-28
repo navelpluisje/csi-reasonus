@@ -1484,6 +1484,12 @@ void Manager::Init()
         // Restore the Pinned Tracks
         if(pages_.size() > 0)
             pages_[currentPageIndex_]->RestorePinnedTracks();
+
+        // A bit of a hacky way to set the initial state of actions and show all tracks
+        int cmdId = NamedCommandLookup("_REASONUS_LED_STATE_MIX_ALL_BTN");
+        if (cmdId)
+            Main_OnCommandEx(cmdId, 0, 0);
+        
     }
     catch (exception &e)
     {
@@ -1755,7 +1761,7 @@ void ActionContext::UpdateWidgetValue(double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
             int r = (*rgb_colour >> 16) & 0xff;
@@ -1792,7 +1798,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
             int r = (*rgb_colour >> 16) & 0xff;
@@ -1840,7 +1846,7 @@ void ActionContext::ForceWidgetValue(double value)
     {
         if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
         {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 4;
+            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
             unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
             
             int r = (*rgb_colour >> 16) & 0xff;
