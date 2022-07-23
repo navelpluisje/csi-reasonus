@@ -101,7 +101,7 @@ jobs:
         with:
           draft: true
           files: |
-            /Users/runner/Export/reaper_csurf_integrator.dylib
+            reaper_csurf_integrator.dylib
 
 
       # - name: Package for Distribution
