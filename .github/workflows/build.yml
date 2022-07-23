@@ -89,7 +89,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: reaper_csurf_integrator
+          name: reaper_csurf_integrator.zip
           path: /Users/runner/Export/reaper_csurf_integrator.dylib
           if-no-files-found: error
 
