@@ -47,6 +47,10 @@ jobs:
         if: runner.os == 'MacOs'
         uses: devbotsxyz/xcode-build@v1
 
+      - name: Package for Distribution
+        if: runner.os == 'MacOs'
+        run: ditto -V -c -k  "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator-macos.zip"
+
       - name: Archive production artifacts
         if: runner.os == 'MacOs'
         uses: actions/upload-artifact@v3
@@ -62,5 +66,5 @@ jobs:
         with:
           draft: true
           files: |
-            /Users/runner/Export/reaper_csurf_integrator.dylib
+            reaper_csurf_integrator-macos.zip
             D:\a\csi-reasonus\csi-reasonus\Windows\reaper_csurf_integrator\reaper_csurf_integrator\Release\reaper_csurf_integrator.dll
