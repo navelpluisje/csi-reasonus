@@ -111,7 +111,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
-          files: Release.txt
+          files: |
+            Release.txt
 
 
       # - name: Package for Distribution
