@@ -44,13 +44,16 @@ jobs:
       #- name: "Test"
       #  uses: devbotsxyz/xcode-test@v1
 
+
+      - name: "Build"
+        uses: devbotsxyz/xcode-build@v1
       #
       # First we do a developer build that we archive into an
       # .xcarchive.
       #
 
-      - name: "Archive"
-        uses: devbotsxyz/xcode-archive@v1
+      # - name: "Archive"
+      #   uses: devbotsxyz/xcode-archive@v1
 
       #
       # Next ask Xcode to export the product from the archived build
