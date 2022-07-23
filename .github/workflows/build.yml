@@ -66,4 +66,4 @@ jobs:
         with:
           draft: true
           files: |
-            **/*reaper_csurf_integrator.zip
+            **/*reaper_csurf_integrator-*.zip
