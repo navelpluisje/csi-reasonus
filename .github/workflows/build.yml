@@ -92,13 +92,16 @@ jobs:
       #
 
 
-      - run: mkdir out && cp /Users/runner/Export/reaper_csurf_integrator.dylib reaper_csurf_integrator.dylib
+      # - run: mkdir out && cp /Users/runner/Export/reaper_csurf_integrator.dylib reaper_csurf_integrator.dylib
+
+      - name: Package for Distribution
+        run: ditto -V -c -k --keepParent "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator.zip"
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: reaper_csurf_integrator
-          path: reaper_csurf_integrator.dylib
+          path: reaper_csurf_integrator.zip
           if-no-files-found: error
 
       - name: Release
@@ -109,11 +112,9 @@ jobs:
         with:
           draft: true
           files: |
-            /Users/runner/Export/reaper_csurf_integrator.dylib
+            reaper_csurf_integrator.zip
 
 
-      # - name: Package for Distribution
-      #   run: ditto -V -c -k --keepParent "/Users/runner/Export/reaper_csurf_integrator.dylib" "Rings.zip"
 
       # - name: Release app
       #   uses: softprops/action-gh-release@v1
