@@ -90,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: reaper_csurf_integrator.zip
-          path: /Users/runner/Export/reaper_csurf_integrator.dylib
+          path: /Users/runner/Export
           if-no-files-found: error
 
 
@@ -101,8 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
-          files: |
-            /Users/runner/Export/**/*.zip
+          files: /Users/runner/Export
 
 
       # - name: Package for Distribution
