@@ -47,16 +47,12 @@ jobs:
         if: runner.os == 'MacOs'
         uses: devbotsxyz/xcode-build@v1
 
-      - name: Package for Distribution
-        if: runner.os == 'MacOs'
-        run: ditto -V -c -k  "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator.zip"
-
       - name: Archive production artifacts
         if: runner.os == 'MacOs'
         uses: actions/upload-artifact@v3
         with:
           name: reaper_csurf_integrator-macos
-          path: reaper_csurf_integrator.zip
+          path: /Users/runner/Export/reaper_csurf_integrator.dylib
           if-no-files-found: error
 
       - name: Release
