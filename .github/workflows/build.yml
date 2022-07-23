@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: reaper_csurf_integrator
-          path: out/
+          path: /Users/runner/Export/reaper_csurf_integrator.dylib
           if-no-files-found: error
 
 
@@ -106,7 +106,7 @@ jobs:
         with:
           draft: true
           files: |
-            **/*.dylib
+            /Users/runner/Export/**/*.dylib
 
 
       # - name: Package for Distribution
