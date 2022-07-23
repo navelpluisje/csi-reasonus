@@ -58,8 +58,8 @@ jobs:
       # the "Developer ID" certificate.
       #
 
-      - name: "Export & Sign Release Build"
-        uses: devbotsxyz/xcode-export-archive@master
+      # - name: "Export & Sign Release Build"
+      #   uses: devbotsxyz/xcode-export-archive@master
 
       #
       # Now send the product to Apple's notarization service and then
