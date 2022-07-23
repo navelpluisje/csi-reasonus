@@ -91,6 +91,7 @@ jobs:
         with:
           name: reaper_csurf_integrator
           path: /Users/runner/Export/reaper_csurf_integrator.dylib
+          if-no-files-found: error
 
 
       - name: Release
@@ -100,8 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
-          files: |
-            **/*.dylib
+          files: reaper_csurf_integrator 
 
 
       # - name: Package for Distribution
