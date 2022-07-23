@@ -29,6 +29,14 @@ jobs:
         if: runner.os == 'Windows'
         run: msbuild Windows\reaper_csurf_integrator\reaper_csurf_integrator\reaper_csurf_integrator.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
 
+      - name: Archive production artifacts
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: reaper_csurf_integrator-windows
+          path: D:\a\csi-reasonus\csi-reasonus\Windows\reaper_csurf_integrator\reaper_csurf_integrator\Release\reaper_csurf_integrator.dll
+          if-no-files-found: error
+
       - name: "Select Xcode 13.2"
         if: runner.os == 'MacOs'
         uses: devbotsxyz/xcode-select@v1
@@ -44,26 +52,18 @@ jobs:
         run: ditto -V -c -k  "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator.zip"
 
       - name: Archive production artifacts
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v3
-        with:
-          name: reaper_csurf_integrator
-          path: D:\a\csi-reasonus\csi-reasonus\Windows\reaper_csurf_integrator\reaper_csurf_integrator\Release\reaper_csurf_integrator.dll
-          if-no-files-found: error
-
-      - name: Archive production artifacts
         if: runner.os == 'MacOs'
         uses: actions/upload-artifact@v3
         with:
-          name: reaper_csurf_integrator
+          name: reaper_csurf_integrator-macos
           path: reaper_csurf_integrator.zip
           if-no-files-found: error
 
-      # - name: Release
-      #   uses: softprops/action-gh-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     draft: true
-      #     files: |
-      #       reaper_csurf_integrator.zip
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          files: |
+            **/*reaper_csurf_integrator.zip
