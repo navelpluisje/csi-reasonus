@@ -18,9 +18,9 @@ jobs:
       #
 
       - name: "Select Xcode 13.3"
-        uses: devbotsxyz/xcode-select@master
+        uses: devbotsxyz/xcode-select@v1
         with:
-          version: "12.3"
+          version: "13.3"
 
       # - name: "Import Certificate: Development"
       #   uses: devbotsxyz/import-signing-certificate@main
