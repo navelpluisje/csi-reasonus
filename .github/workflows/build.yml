@@ -84,7 +84,7 @@ jobs:
       #
 
       - name: Package for Distribution
-        run: ditto -V -c -k --keepParent "Export/Rings.app" "Rings.zip"
+        run: ditto -V -c -k --keepParent "Products/reaper_csurf_integrator.dylib" "Rings.zip"
 
       - name: Release app
         uses: softprops/action-gh-release@v1
