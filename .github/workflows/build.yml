@@ -8,31 +8,40 @@ on:
 jobs:
   build:
     if: startsWith(github.ref, 'refs/tags/')
-    # runs-on: macos-latest
-    runs-on: windows-latest
     timeout-minutes: 15
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest]
+
     steps:
       - name: "Checkout Project"
         uses: actions/checkout@v2
 
       - name: Add msbuild to PATH
+        if: runner.os == 'windows-latest'
         uses: microsoft/setup-msbuild@v1.1
         with:
           msbuild-architecture: x64
 
       - name: Build app for release
+        if: runner.os == 'windows-latest'
         run: msbuild Windows\reaper_csurf_integrator\reaper_csurf_integrator\reaper_csurf_integrator.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
 
-      # - name: "Select Xcode 13.2"
-      #   uses: devbotsxyz/xcode-select@v1
-      #   with:
-      #     version: "13.2"
+      - name: "Select Xcode 13.2"
+        if: runner.os == 'macOs-latest'
+        uses: devbotsxyz/xcode-select@v1
+        with:
+          version: "13.2"
 
-      # - name: "Build"
-      #   uses: devbotsxyz/xcode-build@v1
+      - name: "Build"
+        if: runner.os == 'macOs-latest'
+        uses: devbotsxyz/xcode-build@v1
 
-      # - name: Package for Distribution
-      #   run: ditto -V -c -k  "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator.zip"
+      - name: Package for Distribution
+        if: runner.os == 'macOs-latest'
+        run: ditto -V -c -k  "/Users/runner/Export/reaper_csurf_integrator.dylib" "reaper_csurf_integrator.zip"
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
@@ -56,4 +65,3 @@ jobs:
       #     draft: true
       #     files: |
       #       reaper_csurf_integrator.zip
-      
