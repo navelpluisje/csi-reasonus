@@ -101,7 +101,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
-          files: reaper_csurf_integrator.zip
+          files: |
+            **/*.zip
 
 
       # - name: Package for Distribution
