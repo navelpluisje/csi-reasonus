@@ -38,11 +38,11 @@ jobs:
       #     path: reaper_csurf_integrator.zip
       #     if-no-files-found: error
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          path: reaper_csurf_integrator.zip
-          name: reaper_csurf_integrator
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: reaper_csurf_integrator.zip
+      #     name: reaper_csurf_integrator
 
       # - name: Release
       #   uses: softprops/action-gh-release@v1
@@ -54,14 +54,6 @@ jobs:
       #     files: |
       #       reaper_csurf_integrator.zip
 
-  release:
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: macos-latest
-    timeout-minutes: 15
-    needs: build
-    # outputs: 
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -73,9 +65,19 @@ jobs:
           draft: true
           prerelease: false
 
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v2
+      # - name: Download All Artifacts
+      #   uses: actions/download-artifact@v2
 
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./reaper_csurf_integrator.zip
+          asset_name: reaper_csurf_integrator.zip
+          asset_content_type: application/zip
       # - name: Release app
       #   uses: softprops/action-gh-release@v1
       #   with:
