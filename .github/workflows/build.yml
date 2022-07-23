@@ -101,6 +101,8 @@ jobs:
           path: reaper_csurf_integrator.dylib
           if-no-files-found: error
 
+      - name: Build
+        run: echo ${{ github.sha }} > Release.txt
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -109,7 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
-          files: reaper_csurf_integrator.dylib
+          files: Release.txt
 
 
       # - name: Package for Distribution
