@@ -101,7 +101,7 @@ jobs:
         with:
           draft: true
           files: |
-            reaper_csurf_integrator.dylib
+            **/*.dylib
 
 
       # - name: Package for Distribution
