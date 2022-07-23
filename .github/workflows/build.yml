@@ -11,6 +11,10 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
       - name: "Checkout Project"
         uses: actions/checkout@v2
 
@@ -93,7 +97,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: reaper_csurf_integrator-${GITHUB_REF/refs\/tags\//}
+          name: reaper_csurf_integrator-${{ steps.get_version.VERSION }}
           path: out/*.dylib
           if-no-files-found: error
 
