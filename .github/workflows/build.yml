@@ -93,7 +93,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: reaper_csurf_integrator-${{ github.ref }}
+          name: reaper_csurf_integrator-${GITHUB_REF/refs\/tags\//}
           path: out/*.dylib
           if-no-files-found: error
 
