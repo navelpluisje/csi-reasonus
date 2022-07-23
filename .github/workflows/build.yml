@@ -17,10 +17,10 @@ jobs:
       # Setup
       #
 
-      - name: "Select Xcode 13.3"
+      - name: "Select Xcode 13.2"
         uses: devbotsxyz/xcode-select@v1
         with:
-          version: "13.3"
+          version: "13.2"
 
       # - name: "Import Certificate: Development"
       #   uses: devbotsxyz/import-signing-certificate@main
