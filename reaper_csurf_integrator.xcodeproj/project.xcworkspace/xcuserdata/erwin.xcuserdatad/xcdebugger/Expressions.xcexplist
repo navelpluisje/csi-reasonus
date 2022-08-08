@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "ReaperAction::Do(ActionContext*, double):control_surface_action_contexts.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "context-&gt;GetIncrementCommandId()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

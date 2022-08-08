@@ -1627,6 +1627,18 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         {
             commandId_ =  atol(params[1].c_str());
         }
+        else if (params[1] == "[<" && params[4] == ">]")
+        {
+            incrementCommandId_ = DAW::NamedCommandLookup(params[2].c_str());
+
+            if(incrementCommandId_ == 0) // can't find it
+                incrementCommandId_ = 65535; // no-op
+
+            decrementCommandId_ = DAW::NamedCommandLookup(params[3].c_str());
+
+            if(decrementCommandId_ == 0) // can't find it
+                decrementCommandId_ = 65535; // no-op
+        }
         else // look up by string
         {
             commandId_ = DAW::NamedCommandLookup(params[1].c_str());
@@ -1635,6 +1647,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
                 commandId_ = 65535; // no-op
         }
     }
+
     
     if(actionName == "DisplayType" && params.size() > 1)
     {
@@ -1759,17 +1772,7 @@ void ActionContext::UpdateWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
-            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        UpdateTrackColor();
     }
 }
 
@@ -1796,17 +1799,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
-            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        UpdateTrackColor();
     }
 }
 
@@ -1844,17 +1837,26 @@ void ActionContext::ForceWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
+        UpdateTrackColor();
+    }
+}
+
+void ActionContext::UpdateTrackColor()
+{
+    if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+    {
+        int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
+        int rgb_colour = DAW::GetTrackColor(track);
+
+        int r = (rgb_colour >> 0) & 0xff;
+        int g = (rgb_colour >> 8) & 0xff;
+        int b = (rgb_colour >> 16) & 0xff;
+
+        #ifdef WIN32
             widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        #else
+            widget_->UpdateRGBValue(b / RGBIndexDivider, g/ RGBIndexDivider, r / RGBIndexDivider);
+        #endif
     }
 }
 

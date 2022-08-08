@@ -265,7 +265,9 @@ private:
     string fxParamDisplayName_ = "";
     
     int commandId_ = 0;
-    
+    int incrementCommandId_ = 0;
+    int decrementCommandId_ = 0;
+
     int displayType_ = 2;
     
     bool hasFPText_ = false;
@@ -320,6 +322,9 @@ public:
     int GetIntParam() { return intParam_; }
     string GetStringParam() { return stringParam_; }
     int GetCommandId() { return commandId_; }
+    int GetIncrementCommandId() { return incrementCommandId_; }
+    int GetDecrementCommandId() { return decrementCommandId_; }
+    
     int GetDisplayType() { return displayType_; }
     bool GetShouldUseDisplayStyle() { return shouldUseDisplayStyle_; }
     int GetDisplayStyle() { return displayStyle_; }
@@ -360,6 +365,7 @@ public:
     void UpdateWidgetValue(int param, double value);
     void UpdateWidgetValue(string value);
     void ForceWidgetValue(double value);
+    void UpdateTrackColor();
     
     void DoTouch(double value)
     {

@@ -41,8 +41,19 @@ public:
     
     virtual void Do(ActionContext* context, double value) override
     {
-        if(value != 0)
+        // Check the value and add increment and decrement values
+        if(value == 1 && context->GetIncrementCommandId() > 0)
+        {
+            DAW::SendCommandMessage(context->GetIncrementCommandId());
+        }
+        else if(value == -1 && context->GetDecrementCommandId() > 0)
+        {
+            DAW::SendCommandMessage(context->GetDecrementCommandId());
+        }
+        else if(value != 0)
+        {
             DAW::SendCommandMessage(context->GetCommandId());
+        }
     }
 };
 
