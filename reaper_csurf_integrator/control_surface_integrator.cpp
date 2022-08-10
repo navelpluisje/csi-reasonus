@@ -3,6 +3,7 @@
 //  reaper_control_surface_integrator
 //
 //
+#include<cmath>
 
 #include "control_surface_integrator.h"
 #include "control_surface_midi_widgets.h"
@@ -1486,7 +1487,7 @@ void Manager::Init()
             pages_[currentPageIndex_]->RestorePinnedTracks();
 
         // A bit of a hacky way to set the initial state of actions and show all tracks
-        int cmdId = NamedCommandLookup("_REASONUS_LED_STATE_MIX_ALL_BTN");
+        int cmdId = NamedCommandLookup("_REASONUS_INITIALISE");
         if (cmdId)
             Main_OnCommandEx(cmdId, 0, 0);
         
@@ -1629,15 +1630,15 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         }
         else if (params[1] == "[<" && params[4] == ">]")
         {
-            incrementCommandId_ = DAW::NamedCommandLookup(params[2].c_str());
-
-            if(incrementCommandId_ == 0) // can't find it
-                incrementCommandId_ = 65535; // no-op
-
-            decrementCommandId_ = DAW::NamedCommandLookup(params[3].c_str());
+            decrementCommandId_ = DAW::NamedCommandLookup(params[2].c_str());
 
             if(decrementCommandId_ == 0) // can't find it
                 decrementCommandId_ = 65535; // no-op
+
+            incrementCommandId_ = DAW::NamedCommandLookup(params[3].c_str());
+
+            if(incrementCommandId_ == 0) // can't find it
+                incrementCommandId_ = 65535; // no-op
         }
         else // look up by string
         {
@@ -1917,11 +1918,40 @@ void ActionContext::DoRelativeAction(int accelerationIndex, double delta)
 
 void ActionContext::DoRangeBoundAction(double value)
 {
+    double origValue = value;
+    string actionName;
+    actionName = action_->GetName();
+    string widgetName;
+    widgetName = widget_->GetName();
+    
     if(value > rangeMaximum_)
         value = rangeMaximum_;
     
     if(value < rangeMinimum_)
         value = rangeMinimum_;
+    
+    if (origValue > -1.0 && incrementCommandId_ > 0) {
+        value = 1;
+    }
+    if (origValue < -1.0 && decrementCommandId_ > 0) {
+        value = -1;
+    }
+    
+    if((widgetName == "RotarySmall" || widgetName == "RotaryBig") && (actionName == "FXMenuSlotBank" || actionName == "SendSlotBank" || actionName == "ReceiveSlotBank" || actionName == "TrackBank")) {
+        int currentValue = this->GetIntParam();
+        if (value > 0)
+        {
+            if (currentValue < 0) {
+                this->SetIntParam(abs(currentValue));
+            }
+            value = 1;
+        } else {
+            if (currentValue > 0) {
+                this->SetIntParam(-1 * currentValue);
+            }
+            value = -1;
+        }
+    }
     
     action_->Do(this, value);
 }
