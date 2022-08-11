@@ -3,6 +3,7 @@
 //  reaper_control_surface_integrator
 //
 //
+#include<cmath>
 
 #include "control_surface_integrator.h"
 #include "control_surface_midi_widgets.h"
@@ -1486,7 +1487,7 @@ void Manager::Init()
             pages_[currentPageIndex_]->RestorePinnedTracks();
 
         // A bit of a hacky way to set the initial state of actions and show all tracks
-        int cmdId = NamedCommandLookup("_REASONUS_LED_STATE_MIX_ALL_BTN");
+        int cmdId = NamedCommandLookup("_REASONUS_INITIALISE");
         if (cmdId)
             Main_OnCommandEx(cmdId, 0, 0);
         
@@ -1627,6 +1628,18 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
         {
             commandId_ =  atol(params[1].c_str());
         }
+        else if (params[1] == "[<" && params[4] == ">]")
+        {
+            decrementCommandId_ = DAW::NamedCommandLookup(params[2].c_str());
+
+            if(decrementCommandId_ == 0) // can't find it
+                decrementCommandId_ = 65535; // no-op
+
+            incrementCommandId_ = DAW::NamedCommandLookup(params[3].c_str());
+
+            if(incrementCommandId_ == 0) // can't find it
+                incrementCommandId_ = 65535; // no-op
+        }
         else // look up by string
         {
             commandId_ = DAW::NamedCommandLookup(params[1].c_str());
@@ -1635,6 +1648,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, Zone* zone, vector<
                 commandId_ = 65535; // no-op
         }
     }
+
     
     if(actionName == "DisplayType" && params.size() > 1)
     {
@@ -1759,17 +1773,7 @@ void ActionContext::UpdateWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
-            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        UpdateTrackColor();
     }
 }
 
@@ -1796,17 +1800,7 @@ void ActionContext::UpdateWidgetValue(int param, double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
-            widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        UpdateTrackColor();
     }
 }
 
@@ -1844,17 +1838,26 @@ void ActionContext::ForceWidgetValue(double value)
     }
     else if(supportsTrackColor_)
     {
-        if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
-        {
-            int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
-            unsigned int* rgb_colour = (unsigned int*)DAW::GetSetMediaTrackInfo(track, "I_CUSTOMCOLOR", NULL);
-            
-            int r = (*rgb_colour >> 16) & 0xff;
-            int g = (*rgb_colour >> 8) & 0xff;
-            int b = (*rgb_colour >> 0) & 0xff;
-            
+        UpdateTrackColor();
+    }
+}
+
+void ActionContext::UpdateTrackColor()
+{
+    if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
+    {
+        int RGBIndexDivider = IsTrackSelected(track) ? 1 : 9;
+        int rgb_colour = DAW::GetTrackColor(track);
+
+        int r = (rgb_colour >> 0) & 0xff;
+        int g = (rgb_colour >> 8) & 0xff;
+        int b = (rgb_colour >> 16) & 0xff;
+
+        #ifdef WIN32
             widget_->UpdateRGBValue(r / RGBIndexDivider, g/ RGBIndexDivider, b / RGBIndexDivider);
-        }
+        #else
+            widget_->UpdateRGBValue(b / RGBIndexDivider, g/ RGBIndexDivider, r / RGBIndexDivider);
+        #endif
     }
 }
 
@@ -1915,11 +1918,40 @@ void ActionContext::DoRelativeAction(int accelerationIndex, double delta)
 
 void ActionContext::DoRangeBoundAction(double value)
 {
+    double origValue = value;
+    string actionName;
+    actionName = action_->GetName();
+    string widgetName;
+    widgetName = widget_->GetName();
+    
     if(value > rangeMaximum_)
         value = rangeMaximum_;
     
     if(value < rangeMinimum_)
         value = rangeMinimum_;
+    
+    if (origValue > -1.0 && incrementCommandId_ > 0) {
+        value = 1;
+    }
+    if (origValue < -1.0 && decrementCommandId_ > 0) {
+        value = -1;
+    }
+    
+    if((widgetName == "RotarySmall" || widgetName == "RotaryBig") && (actionName == "FXMenuSlotBank" || actionName == "SendSlotBank" || actionName == "ReceiveSlotBank" || actionName == "TrackBank")) {
+        int currentValue = this->GetIntParam();
+        if (value > 0)
+        {
+            if (currentValue < 0) {
+                this->SetIntParam(abs(currentValue));
+            }
+            value = 1;
+        } else {
+            if (currentValue > 0) {
+                this->SetIntParam(-1 * currentValue);
+            }
+            value = -1;
+        }
+    }
     
     action_->Do(this, value);
 }

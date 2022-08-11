@@ -265,7 +265,9 @@ private:
     string fxParamDisplayName_ = "";
     
     int commandId_ = 0;
-    
+    int incrementCommandId_ = 0;
+    int decrementCommandId_ = 0;
+
     int displayType_ = 2;
     
     bool hasFPText_ = false;
@@ -318,8 +320,12 @@ public:
     Widget* GetAssociatedWidget() { return associatedWidget_; }
 
     int GetIntParam() { return intParam_; }
+    void SetIntParam(int param) { intParam_ = param; }
     string GetStringParam() { return stringParam_; }
     int GetCommandId() { return commandId_; }
+    int GetIncrementCommandId() { return incrementCommandId_; }
+    int GetDecrementCommandId() { return decrementCommandId_; }
+    
     int GetDisplayType() { return displayType_; }
     bool GetShouldUseDisplayStyle() { return shouldUseDisplayStyle_; }
     int GetDisplayStyle() { return displayStyle_; }
@@ -360,6 +366,7 @@ public:
     void UpdateWidgetValue(int param, double value);
     void UpdateWidgetValue(string value);
     void ForceWidgetValue(double value);
+    void UpdateTrackColor();
     
     void DoTouch(double value)
     {
@@ -1883,28 +1890,37 @@ public:
                     maxSendSlot_ = maxSendSlot;
                     AdjustSendSlotBank(0);
                 }
-             
+
                 int maxReceiveSlot = DAW::GetTrackNumSends(track, -1) - 1;
                 if(maxReceiveSlot > maxReceiveSlot_)
                 {
                     maxReceiveSlot_ = maxReceiveSlot;
-                    AdjustReceiveSlotBank(0);
+//                    This was messing with the receives. Maxed it to 2
+//                    AdjustReceiveSlotBank(0);
                 }
 
                 int maxFXMenuSlot = DAW::TrackFX_GetCount(track) - 1;
                 if(maxFXMenuSlot > maxFXMenuSlot_)
+                {
                     maxFXMenuSlot_ = maxFXMenuSlot;
+                }
                 
                 if(DAW::GetMediaTrackInfo_Value(track, "I_SELECTED"))
+                {
                     selectedTracks_.push_back(track);
+                }
                 
                 tracks_.push_back(track);
                                
                 if(DAW::GetTrackGroupMembership(track, "VOLUME_VCA_LEAD") != 0 && DAW::GetTrackGroupMembership(track, "VOLUME_VCA_FOLLOW") == 0)
+                {
                     vcaTopLeadTracks_.push_back(track);
+                }
                 
                 if(DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") != 0 && DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_FOLLOW") == 0)
+                {
                     vcaTopLeadTracks_.push_back(track);
+                }
                 
                 if(leadTrack != nullptr)
                 {

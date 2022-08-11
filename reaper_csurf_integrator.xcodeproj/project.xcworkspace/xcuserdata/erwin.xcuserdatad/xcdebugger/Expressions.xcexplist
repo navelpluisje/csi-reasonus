@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "Zone::GetActionContexts(Widget*):control_surface_integrator.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "actionContextDictionary_[widget][modifier]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "TrackBank::Do(ActionContext*, double):control_surface_manager_actions.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "context-&gt;GetIntParam()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ReceiveSlotBank::Do(ActionContext*, double):control_surface_manager_actions.h">
+      </ContextState>
+      <ContextState
+         contextName = "TrackNavigationManager::AdjustReceiveSlotBank(int):control_surface_integrator.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "receiveSlot_">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ActionContext::DoRangeBoundAction(double):control_surface_integrator.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "this-&gt;GetIntParam()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ReaperAction::Do(ActionContext*, double):control_surface_action_contexts.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "context-&gt;GetIncrementCommandId()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
